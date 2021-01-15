@@ -1,0 +1,404 @@
+diff -r source/alloc.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/alloc.F90
+105d104
+<       allocate(uptake_io(imt_global,jmt_global)) ! juanxiong he
+diff -r source/boundary.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/boundary.F90
+6,8d5
+< !
+< ! Update:  TianyiWang, 2016.01.16, allocate(imt_global,jmt_global,nproc)
+< 
+diff -r source/buf_mod.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/buf_mod.F90
+2c2,4
+< ! Update:  TianyiWang, 2017.09.16, OBM include 
+---
+> ! CVS $Id: buf_mod.F90,v 1.1 2001/05/08 16:25:38 mvertens Exp $
+> ! CVS $Source: /fs/cgd/csm/models/CVS.REPOS/ocn/docn5/buf_mod.F90,v $
+> ! CVS $Name: ccsm2_0_beta58 $
+6c8
+< #include <def-undef.h>  !TianyiWang ,2017.09.16
+---
+> #include <def-undef.h>
+diff -r source/cdf_mod.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/cdf_mod.F90
+1,4c1,2
+< !     ===================================================================================
+< !Update:  TianyiWang,JinrongJiang,2016.01.16, variables about Processor partitioning 
+< !                                             to nameliset
+< !     ===================================================================================
+---
+> !  CVS: $Id: cdf_mod.F90,v 1.1.1.1 2004/04/29 06:22:39 lhl Exp $
+> !     =================
+22,23c20
+< !TianyiWang,JinrongJiang,20160116
+< !      integer, parameter :: lon_len=imt_global,lat_len=jmt_global,lev_len=km,lev1_len=km+1,time_len=1
+---
+> !jjr      integer, parameter :: lon_len=imt_global,lat_len=jmt_global,lev_len=km,lev1_len=km+1,time_len=1
+57,58c54
+<       real(r8) t0_cdf
+< !TianyiWang,JinrongJiang,20160116 
+---
+>       real(r8) t0_cdf 
+62,63d57
+< !
+< 
+diff -r source/const.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/const.F90
+10,12c10,11
+< ! Update: TianyiWnag,             2015.09.10, stantardize name of namelist
+< !         TianyiWang,JinrongJiang,2016.01.16, variables about Processor partitioning    
+< !                                             to nameliset
+---
+> !
+> !
+39c38
+< !TianyiWang,JinrongJiang, 20160116
+---
+> 
+44d42
+< !TianyiWang,JinrongJiang, 20160116
+125d122
+< !Tianyiwang, 20150910
+187d183
+< !TianyiWang,JinrongJiang,2016.01.16
+205c201
+< !TianyiWang,JinrongJiang,2016.01.16
+---
+> !wangty
+219,220c215
+< !TianyiWang,JinrongJiang,2016.01.16
+< 
+---
+> !wangty
+227,228c222
+< !TianyiWang,20150910
+<       open(11,file='licom_in',form='formatted')
+---
+>       open(11,file='ocn.parm',form='formatted')
+230d223
+< !TianyiWang,JinrongJiang,2016.01.16
+235d227
+< !TianyiWang,JinrongJiang,2016.01.16
+238c230
+< !TianyiWang,JinrongJiang,2016.01.16                                                       
+---
+> !wangty                                                       
+244,245c236,237
+<         kmm1=km-1                                          
+< !TianyiWang,JinrongJiang,2016.01.16                                                       
+---
+>         kmm1=km-1                                            
+> !wangty                                                       
+diff -r source/def-undef.h /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/def-undef.h
+1,44c1,28
+< #define NX_PROC 20 
+< #define NY_PROC 6 
+< #define SPMD
+< #define  SYNCH
+< #undef  FRC_ANN
+< #define CDFIN
+< #undef  FRC_DAILY
+< #undef  FRC_CORE
+< #define SOLAR
+< #define  ACOS
+< #undef  BIHAR
+< #undef  SMAG_FZ
+< #undef  SMAG_OUT
+< #define NETCDF
+< #undef BOUNDARY
+< #define NODIAG
+< #undef  ICE
+< #undef SHOW_TIME
+< #define DEBUG
+< #define COUP
+< #define  ISO
+< #define D_PRECISION
+< #define  CANUTO
+< #undef SOLARCHLORO
+< #undef LDD97
+< #define TSPAS
+< #undef  SMAG
+< #define JMT_GLOBAL 196
+< #define  USE_OCN_CARBON
+< #undef   carbonC14
+< #undef   carbonC
+< #define  carbonBio
+< #define  Felimit
+< #undef   scav_moore08
+< #undef   carbonAbio
+< #define  preindustrial
+< #undef  murnane1999
+< #define  anderson1995
+< #undef   progca
+< #undef   buchang
+< #undef   carbonDebug
+< #undef   printcall
+< #undef   nc14wind
+< #define  o2limit
+---
+> #define NX_PROC 20
+> #define NY_PROC 6
+> #define SPMD
+> #define  SYNCH
+> #undef  FRC_ANN
+> #define CDFIN
+> #undef  FRC_DAILY
+> #undef  FRC_CORE
+> #define SOLAR
+> #define  ACOS
+> #undef  BIHAR
+> #undef  SMAG_FZ
+> #undef  SMAG_OUT
+> #define NETCDF
+> #undef BOUNDARY
+> #define NODIAG
+> #undef  ICE
+> #undef SHOW_TIME
+> #define DEBUG
+> #define COUP
+> #define  ISO
+> #define D_PRECISION
+> #define  CANUTO
+> #undef SOLARCHLORO
+> #undef LDD97
+> #undef TSPAS
+> #undef  SMAG
+> #define JMT_GLOBAL 196 
+Only in source: def-undef.h.backup
+diff -r source/dyn_mod.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/dyn_mod.F90
+1,4c1
+< !-----------------------------------------------------------------------
+< ! Update: TianyiWang,JinrongJiang,2016.01.16, variables about Processor partitioning
+< !                                             to nameliset
+< !-----------------------------------------------------------------------
+---
+> !  CVS: $Id: dyn_mod.F90,v 1.1.1.1 2004/04/29 06:22:39 lhl Exp $
+12,13d8
+< 
+< !TianyiWang,JinrongJiang,2016.01.16
+19,20d13
+< !TianyiWang,JinrongJiang,2016.01.16
+< 
+30d22
+< !TianyiWang,JinrongJiang,2016.01.16
+32d23
+< !TianyiWang,JinrongJiang,2016.01.16
+diff -r source/exchange.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/exchange.F90
+1,4c1
+< !-----------------------------------------------------------------------
+< ! Update: TianyiWang,2016.01.16, variables debug
+< !-----------------------------------------------------------------------
+< 
+---
+> !  CVS: $Id: exchange.F90,v 1.1.1.1 2004/04/29 06:22:39 lhl Exp $
+216,217c213,214
+<             bbb(j,k)=aa(2,j,k) !TianyiWang,20140910
+<             ccc(j,k)=aa(imt-1,j,k) !TianyiWang,20140910
+---
+>             bbb(j,k)=aa(2,j,k) 
+>             ccc(j,k)=aa(imt-1,j,k) 
+358,359c355,356
+<             bbb(k,j)=aa(2,k,j) !TianyiWang,20140910
+<             ccc(k,j)=aa(imt-1,k,j) !TianyiWang,20140910
+---
+>             bbb(k,j)=aa(2,k,j)
+>             ccc(k,j)=aa(imt-1,k,j)
+diff -r source/flux_cpl.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/flux_cpl.F90
+3d2
+< !
+8,10c7
+< !Update: TianyiWang,2016.01,16, start value debug
+< !        TianyiWang,2017.09.16, OBM control
+< !----------------------------------------------------------------------------
+---
+> !
+25d21
+< !TianyiWang, 20170916
+39c35
+< !TianyiWang,20160116
+---
+> !wangty bug
+43c39
+< !TianyiWang,20160116
+---
+> !wangty
+67c63
+<            if(vit(i,j,1)<0.5) q(i,j)=SHR_CONST_SPVAL !TianyiWang, 20160116
+---
+>            if(vit(i,j,1)<0.5) q(i,j)=SHR_CONST_SPVAL !wangty bug
+77c73
+< !TianyiWang, 20160116, debug mytid => iy
+---
+> !wangty bug mytid => iy
+93c89
+< !TianyiWang, 20160116, debug mytid => iy
+---
+> !wangty bug mytid => iy
+98d93
+< !TianyiWang, 20160116, debug mytid => iy
+109,110c104,105
+< !           if(vit(i,j,1)<0.5) U_cpl(i,j)=SHR_CONST_SPVAL !TianyiWang, 20160116, debug
+< !           if(vit(i,j,1)<0.5) v_cpl(i,j)=SHR_CONST_SPVAL !TianyiWang, 20160116, debug
+---
+> !           if(vit(i,j,1)<0.5) U_cpl(i,j)=SHR_CONST_SPVAL !wangty bug
+> !           if(vit(i,j,1)<0.5) v_cpl(i,j)=SHR_CONST_SPVAL !wangty bug
+121d115
+< !TianyiWang, 20170916
+diff -r source/grids.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/grids.F90
+11,14c11,12
+< !Update: TianyiWang,2016.01,16, start value debug
+< !        TianyiWang,JinrongJiang,2016.01.16, variables about Processor partitioning
+< !                                            to nameliset
+< !        TianyiWang,2017.09.16, OBM control       
+---
+> !
+> !
+diff -r source/isoadv.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/isoadv.F90
+1,4c1
+< !-----------------------------------------------------------------------
+< !Update: TianyiWang,JinrongJiang, 20150910, debug
+< !-----------------------------------------------------------------------
+< 
+---
+> !  CVS: $Id: isoadv.F90,v 1.1.1.1 2004/04/29 06:22:39 lhl Exp $
+diff -r source/isoflux.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/isoflux.F90
+1,4c1
+< !-----------------------------------------------------------------------
+< !Update: TianyiWang,JinrongJiang, 20150910, debug
+< !-----------------------------------------------------------------------
+< 
+---
+> !  CVS: $Id: isoflux.F90,v 1.1.1.1 2004/04/29 06:22:39 lhl Exp $
+diff -r source/isopyc_mod.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/isopyc_mod.F90
+1,5c1
+< !-----------------------------------------------------------------------
+< !Update: TianyiWang,JinrongJiang,2016.01.16, variables about Process partitioning
+< !                                            to nameliset
+< !-----------------------------------------------------------------------
+< 
+---
+> !  CVS: $Id: isopyc_mod.F90,v 1.1.1.1 2004/04/29 06:22:39 lhl Exp $
+diff -r source/licomcpl7.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/licomcpl7.F90
+16,19c16,17
+< !   !Update: TianyiWang,JinrongJiang,  2015.11.1, start value debug
+< !            TianyiWang, 2016.01.16, day-mean output debug
+< !            TianyiWang, 2017.09.16, OBM control       
+< !            TianyiWang, 2017.11.01, month-mean output debug
+---
+> !   !MODIFY: Tianyi wang
+> !   !DATE:2015/11/1
+711,717d708
+<            if (index_x2o_Sa_co2diag > 0) then
+<             pco2a(i,j) = x2o_o%rAttr(index_x2o_Sa_co2diag,n)
+<            endif
+<            if (index_x2o_Sa_co2prog > 0) then
+<             pco2a(i,j) = x2o_o%rAttr(index_x2o_Sa_co2prog,n)
+<            endif
+< 
+720c711
+<  
+---
+> 
+758a750,751
+> 
+> 
+786,788c779
+<          if (index_o2x_Faoo_fco2_ocn > 0) then
+<          o2x_o%rAttr(index_o2x_Faoo_fco2_ocn,n) =  co2_cpl(i,j) ! state: air-sea CO2 of ocean, mol
+<          end if   
+---
+> !         buffs(n,cpl_fields_o2c_co2)    = co2_cpl(i,j) ! state: air-sea CO2 of ocean  ~ mol
+813,815c804
+<          if (index_o2x_Faoo_fco2_ocn > 0) then
+<          o2x_o%rAttr(index_o2x_Faoo_fco2_ocn,n) =  co2_cpl(i,j) ! state: air-sea CO2 of ocean  ~ mol
+<          end if   
+---
+> !         buffs(n,cpl_fields_o2c_co2)    = co2_cpl(i,j) ! state: air-sea CO2 of ocean  ~ mol
+diff -r source/OBM.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/OBM.F90
+861c861
+< !      print *,'reading dust flux is ok,ncid',ncid
+---
+>       print *,'reading dust flux is ok,ncid',ncid
+868,871c868,871
+< !      print *,'i=',i,'j=',j,'t=',t
+< !      print *,'imt_global=',imt_global,'jmt_global=',jmt_global
+< !      print *,'fe_force(1,1,1)=',fe_force(i,j,t)
+< !      print *,'vit_global(1,1,1)=',vit_global(i,j,1)
+---
+>       print *,'i=',i,'j=',j,'t=',t
+>       print *,'imt_global=',imt_global,'jmt_global=',jmt_global
+>       print *,'fe_force(1,1,1)=',fe_force(i,j,t)
+>       print *,'vit_global(1,1,1)=',vit_global(i,j,1)
+873c873
+< !      print *,'i=',i,'j=',j,'t=',t
+---
+>       print *,'i=',i,'j=',j,'t=',t
+2166d2165
+< !             print *,'ISP=',ISP !juanxiong he
+2181a2181
+>  
+2358d2357
+<       USE control_mod,only:ncpl
+2459,2462d2457
+< 
+< !---------------------------------------------------------------------
+< ! use pco2a from the coupler, not derived from pco2dry, juanxiong he
+< !---------------------------------------------------------------------
+2464,2465c2459,2462
+< #else
+<       pco2dry=284.725  !for instant purpose
+---
+>  !      pco2dry=pco2(1,1)
+>  !      pco2s=284.725*1.0E-6
+>        pco2dry=284.725  !for instant purpose
+>       !if(mytid==0) write(6,*) 'the atmospheric carbon dioxide concentration(ppm) :', pco2dry
+2467,2468d2463
+< !      if(mytid==0) write(6,*) 'the atmospheric carbon dioxide concentration(ppm) , pco2a'
+< 
+2470d2464
+<      
+2476,2477d2469
+< #ifdef COUP
+< #else
+2479d2470
+< #endif
+2486,2489d2476
+< ! use pco2a from the coupler, not derived from pco2dry, juanxiong he
+< !---------------------------------------------------------------------
+< 
+< !---------------------------------------------------------------------
+2627a2615
+> !#ifdef carbonBio
+2638,2645d2625
+< #ifdef COUP
+< ! juanxiong he, nss never equal to nss/cpl+1, only equal to nss/cpl or 1
+<        if(ii==1.or.ii==nss/ncpl+1) uptake(i,j)=0.0_8
+< ! juanxiong he, uptake should be the averaged variable
+< ! not the accumulated variable over the whole grid
+< !       uptake(i,j)=uptake(i,j)+ssfc(i,j)*dxdyt(j)*vit(i,j,1)*1025.0_8*1.0E-6
+<        uptake(i,j)=uptake(i,j)+ssfc(i,j)*vit(i,j,1)*1025.0_8*1.0E-6
+< #endif
+2648,2657d2627
+< 
+< #ifdef COUP
+<       if(ii==nss/ncpl) then
+<          uptake(:,:)=uptake(:,:)/ii 
+< !      if(mytid==0) then
+< !       print *,'nss=', ii, nss, ncpl, uptake(1,:)
+< !      endif
+<       endif
+< #endif
+< 
+2660,2662c2630,2631
+< ! juanxiong he
+< !      PRINT*,'i,j,pco2a:',imt/2,jmt/2,pco2a(imt/2,jmt/2),'mytid=',mytid,"FLUX_PT"
+< !      PRINT*,'i,j,ssfc:',imt/2,jmt/2,ssfc(imt/2,jmt/2),'mytid=',mytid,"FLUX_PT"
+---
+>       PRINT*,'i,j,pco2a:',imt/2,jmt/2,pco2a(imt/2,jmt/2),'mytid=',mytid,"FLUX_PT"
+>       PRINT*,'i,j,ssfc:',imt/2,jmt/2,ssfc(imt/2,jmt/2),'mytid=',mytid,"FLUX_PT"
+2664,2666c2633,2634
+< ! juanxiong he
+< !      PRINT*,'i,j,pco2a:',imt/2,jmt/2,pco2a(imt/2,jmt/2),"FLUX_PT"
+< !      PRINT*,'i,j,ssfc:',imt/2,jmt/2,ssfc(imt/2,jmt/2),"FLUX_PT"
+---
+>       PRINT*,'i,j,pco2a:',imt/2,jmt/2,pco2a(imt/2,jmt/2),"FLUX_PT"
+>       PRINT*,'i,j,ssfc:',imt/2,jmt/2,ssfc(imt/2,jmt/2),"FLUX_PT"
+diff -r source/OBM_mod.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/ocn/licom/source/OBM_mod.F90
+271d270
+<       real*8,dimension(:,:),allocatable::uptake_io ! juanxiong he

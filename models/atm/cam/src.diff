@@ -1,0 +1,1972 @@
+Only in /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/: a
+Only in /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/control: a
+diff -r src/control/camsrfexch_types.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/control/camsrfexch_types.F90
+109a110
+> #ifdef wrf 
+110a112
+> #endif
+262a265
+> #ifdef wrf 
+263a267
+> #endif
+Only in /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/cpl_mct: a.diff
+diff -r src/cpl_mct/atm_comp_mct.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/cpl_mct/atm_comp_mct.F90
+1166d1165
+< 
+1171d1169
+< 
+1222d1219
+< ! don't need converting to kg/m2/s, lnd co2 unit is already kg/m2/s, juanxiong he
+1226,1227c1223
+< ! convert to kg/m2/s, juanxiong he
+<              cam_in(c)%fco2_ocn(i) = -x2a_a%rAttr(index_x2a_Faxx_fco2_ocn,ig)*mwco2*1.0e-3_r8
+---
+>              cam_in(c)%fco2_ocn(i) = -x2a_a%rAttr(index_x2a_Faxx_fco2_ocn,ig)
+1237c1233
+<        do k = 1, num_soil_layers
+---
+>        do k = 1, 4
+1275c1271
+<                 cam_in(c)%cflx(i,c_i(4)) = cam_in(c)%fco2_ocn(i)
+---
+>                 cam_in(c)%cflx(i,c_i(1)) = cam_in(c)%fco2_ocn(i)
+1277,1278c1273,1274
+<                ! convert from molesCO2/m2/s to kgCO2/m2/s
+<                 cam_in(c)%cflx(i,c_i(4)) = &
+---
+>                 ! convert from molesCO2/m2/s to kgCO2/m2/s
+>                 cam_in(c)%cflx(i,c_i(1)) = &
+1282c1278
+<                 cam_in(c)%cflx(i,c_i(4)) = 0._r8
+---
+>                 cam_in(c)%cflx(i,c_i(1)) = 0._r8
+1287c1283,1285
+<                 cam_in(c)%cflx(i,c_i(4)) =cam_in(c)%cflx(i,c_i(4))+ data_flux_fuel%co2flx(i,c)
+---
+>                 cam_in(c)%cflx(i,c_i(2)) = data_flux_fuel%co2flx(i,c)
+>              else
+>                 cam_in(c)%cflx(i,c_i(2)) = 0._r8
+1292c1290,1292
+<                 cam_in(c)%cflx(i,c_i(4)) =cam_in(c)%cflx(i,c_i(4)) +  cam_in(c)%fco2_lnd(i)
+---
+>                 cam_in(c)%cflx(i,c_i(3)) = cam_in(c)%fco2_lnd(i)
+>              else
+>                 cam_in(c)%cflx(i,c_i(3)) = 0._r8
+1294a1295,1298
+>              ! merged co2 flux
+>              cam_in(c)%cflx(i,c_i(4)) = cam_in(c)%cflx(i,c_i(1)) + &
+>                                         cam_in(c)%cflx(i,c_i(2)) + &
+>                                         cam_in(c)%cflx(i,c_i(3))
+1307,1308d1310
+<                 if(cam_in(c)%ts(i).lt.10) print *,'ts1=',i,cam_in(c)%ocnfrac(i),cam_in(c)%icefrac(i), &
+<                                                    cam_in(c)%landfrac(i)
+1314d1315
+< 
+1390,1392d1390
+<           if (index_a2x_Sa_co2diag /= 0) then
+<              a2x_a%rAttr(index_a2x_Sa_co2diag,ig) = cam_out(c)%co2diag(i) ! atm diagnostic co2
+<           end if
+1395a1394,1396
+>           if (index_a2x_Sa_co2diag /= 0) then
+>              a2x_a%rAttr(index_a2x_Sa_co2diag,ig) = cam_out(c)%co2diag(i) ! atm diagnostic co2
+>           end if
+Only in /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics: a
+diff -r src/dynamics/iap/comspe.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/comspe.F90
+14c14
+< ! Modified: ZhangHe, 2011-12-19
+---
+> ! Modified: ZhangHe, 2011-12-19
+46c46
+<   integer :: numm(0:plat-1) = bigint  ! number of Fourier wavenumbers owned per task
+---
+>   integer :: numm(0:plat-1) = bigint  ! number of Fourier wavenumbers owned per task
+diff -r src/dynamics/iap/copy_grid_dp.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/copy_grid_dp.F90
+12c12
+< !          Jiang Jinrong, 2012 OCT, for 2D parallel version
+---
+> !          Jiang Jinrong, 2012 OCT, for 2D parallel version
+14c14
+< !          Zhang He, 2013-03-12, removed transform of Q, Qliq, and Qice
+---
+> !          Zhang He, 2013-03-12, removed transform of Q, Qliq, and Qice
+69c69
+<                          beglev, endlev, beglatdynex, endlatdynex, npr_y, npr_z
+---
+>                          beglev, endlev, beglatdynex, endlatdynex, npr_y, npr_z
+75,82c75,82
+<    use spmd_utils, only: iam   !zhh 2013-03-13
+<    use dynamics_vars,   only: T_FVDYCORE_STATE         !zhh 2013-03-13
+<    use dyn_internal_state,   only : get_dyn_state      !zhh 2013-03-13
+< #if ( defined SPMD )
+<    use mod_comm, only: mp_send3d, mp_recv3d
+<    use spmd_dyn          , only:  comm_z
+<    use parutilitiesmodule, only: parcollective2d,parcollective,sumop
+< #endif
+---
+>    use spmd_utils, only: iam   !zhh 2013-03-13
+>    use dynamics_vars,   only: T_FVDYCORE_STATE         !zhh 2013-03-13
+>    use dyn_internal_state,   only : get_dyn_state      !zhh 2013-03-13
+> #if ( defined SPMD )
+>    use mod_comm, only: mp_send3d, mp_recv3d
+>    use spmd_dyn          , only:  comm_z
+>    use parutilitiesmodule, only: parcollective2d,parcollective,sumop
+> #endif
+100,101c100,101
+<    type (T_FVDYCORE_STATE), pointer :: dyn_state   !zhh 2013-03-13
+<    integer  :: commyz     !zhh 2013-03-13
+---
+>    type (T_FVDYCORE_STATE), pointer :: dyn_state   !zhh 2013-03-13
+>    integer  :: commyz     !zhh 2013-03-13
+103,105c103,105
+< !
+<    dyn_state => get_dyn_state()
+<    commyz = dyn_state%grid%commyz
+---
+> !
+>    dyn_state => get_dyn_state()
+>    commyz = dyn_state%grid%commyz
+114,123c114,123
+<    src1 = iam+1
+<    dest1  = iam-1
+<    if ( mod(iam,npr_y) == 0 ) dest1 = -1
+<    if ( mod(iam+1,npr_y) == 0 ) src1 = -1
+<    call mp_send3d( commyz, dest1, src1,NX,NL ,NY,                       &
+<                    1, NX,beglev,endlev, beglatdynex, endlatdynex,       &
+<                    1, NX,beglev,endlev, endlatdyn, endlatdyn,  V )
+<    call mp_recv3d( commyz, src1, NX,NL,  NY,                            &
+<                    1, NX,beglev,endlev, beglatdynex, endlatdynex,       &
+<                    1, NX, beglev,endlev,beglatdynex, beglatdynex, V )
+---
+>    src1 = iam+1
+>    dest1  = iam-1
+>    if ( mod(iam,npr_y) == 0 ) dest1 = -1
+>    if ( mod(iam+1,npr_y) == 0 ) src1 = -1
+>    call mp_send3d( commyz, dest1, src1,NX,NL ,NY,                       &
+>                    1, NX,beglev,endlev, beglatdynex, endlatdynex,       &
+>                    1, NX,beglev,endlev, endlatdyn, endlatdyn,  V )
+>    call mp_recv3d( commyz, src1, NX,NL,  NY,                            &
+>                    1, NX,beglev,endlev, beglatdynex, endlatdynex,       &
+>                    1, NX, beglev,endlev,beglatdynex, beglatdynex, V )
+148,149c148,149
+<             phis(I,JP) = 0.
+<             if(endlev.eq.NL)   phis(I, Jp) = Zg(I+EX,NZ,Jd) * GRAV    !zhh 2007.12.5
+---
+>             phis(I,JP) = 0.
+>             if(endlev.eq.NL)   phis(I, Jp) = Zg(I+EX,NZ,Jd) * GRAV    !zhh 2007.12.5
+182,189c182,189
+< 
+<    if (npr_z.gt.1) then
+< #if (defined SPMD)
+<       if ( Itrans == 1 ) then
+<          call parcollective(comm_z,sumop,plon,endlat-beglat+1,phis) !jjr
+<       endif
+< #endif
+<    endif
+---
+> 
+>    if (npr_z.gt.1) then
+> #if (defined SPMD)
+>       if ( Itrans == 1 ) then
+>          call parcollective(comm_z,sumop,plon,endlat-beglat+1,phis) !jjr
+>       endif
+> #endif
+>    endif
+Only in src/dynamics/iap: d2utmpcIzFCR
+diff -r src/dynamics/iap/diag_dynvar_ic.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/diag_dynvar_ic.F90
+8,10c8,10
+< ! Modified: Jiang Jinrong, October 2012, for 2D parellel 
+< !           Zhang He, 2013-03-21, written as 2D 
+< !           Zhang He, 2013-03-25, revised an error
+---
+> ! Modified: Jiang Jinrong, October 2012, for 2D parellel 
+> !           Zhang He, 2013-03-21, written as 2D 
+> !           Zhang He, 2013-03-25, revised an error
+25,32c25,32
+<     real(r8), intent(in) :: phis(beglonxy:endlonxy, beglatxy:endlatxy) ! Surface geopotential
+<     real(r8), intent(in) :: ps  (beglonxy:endlonxy, beglatxy:endlatxy) ! surface pressure
+<     real(r8), intent(in) :: t3  (beglonxy:endlonxy, plev, beglatxy:endlatxy) ! temperature
+<     real(r8), intent(in) :: u3  (beglonxy:endlonxy, plev, beglatxy:endlatxy) ! u-wind component
+<     real(r8), intent(in) :: v3  (beglonxy:endlonxy, plev, beglatxy:endlatxy) ! v-wind component
+<     real(r8), intent(in) :: q3  (beglonxy:endlonxy, plev, pcnst, beglatxy:endlatxy) ! constituents
+< !
+< ! Local workspace
+---
+>     real(r8), intent(in) :: phis(beglonxy:endlonxy, beglatxy:endlatxy) ! Surface geopotential
+>     real(r8), intent(in) :: ps  (beglonxy:endlonxy, beglatxy:endlatxy) ! surface pressure
+>     real(r8), intent(in) :: t3  (beglonxy:endlonxy, plev, beglatxy:endlatxy) ! temperature
+>     real(r8), intent(in) :: u3  (beglonxy:endlonxy, plev, beglatxy:endlatxy) ! u-wind component
+>     real(r8), intent(in) :: v3  (beglonxy:endlonxy, plev, beglatxy:endlatxy) ! v-wind component
+>     real(r8), intent(in) :: q3  (beglonxy:endlonxy, plev, pcnst, beglatxy:endlatxy) ! constituents
+> !
+> ! Local workspace
+39c39
+<     real(r8):: tmp(beglonxy:endlonxy, plev)
+---
+>     real(r8):: tmp(beglonxy:endlonxy, plev)
+42c42
+<     idim = endlonxy - beglonxy + 1
+---
+>     idim = endlonxy - beglonxy + 1
+50,80c50,80
+< !
+<           do k = 1, plev
+<              do i = beglonxy, endlonxy
+<                 tmp(i,k) = t3(i,k,j)
+<              enddo
+<           enddo
+<           call outfld('T&IC       ' , tmp, idim, j)
+< !
+<           do k = 1, plev
+<              do i = beglonxy, endlonxy
+<                 tmp(i,k) = u3(i,k,j)
+<              enddo
+<           enddo
+<           call outfld('U&IC       ' , tmp, idim, j)
+< !
+<           do k = 1, plev
+<              do i = beglonxy, endlonxy
+<                 tmp(i,k) = v3(i,k,j)
+<              enddo
+<           enddo
+<           call outfld('V&IC       ' , tmp, idim, j)
+< !
+<           do m = 1, pcnst
+< 		     do k = 1, plev
+<                 do i = beglonxy, endlonxy
+<                    tmp(i,k) = q3(i,k,m,j)
+<                 end do
+< 	         enddo
+<              call outfld(trim(cnst_name(m))//'&IC', tmp, idim, j)
+<           enddo
+< !
+---
+> !
+>           do k = 1, plev
+>              do i = beglonxy, endlonxy
+>                 tmp(i,k) = t3(i,k,j)
+>              enddo
+>           enddo
+>           call outfld('T&IC       ' , tmp, idim, j)
+> !
+>           do k = 1, plev
+>              do i = beglonxy, endlonxy
+>                 tmp(i,k) = u3(i,k,j)
+>              enddo
+>           enddo
+>           call outfld('U&IC       ' , tmp, idim, j)
+> !
+>           do k = 1, plev
+>              do i = beglonxy, endlonxy
+>                 tmp(i,k) = v3(i,k,j)
+>              enddo
+>           enddo
+>           call outfld('V&IC       ' , tmp, idim, j)
+> !
+>           do m = 1, pcnst
+> 		     do k = 1, plev
+>                 do i = beglonxy, endlonxy
+>                    tmp(i,k) = q3(i,k,m,j)
+>                 end do
+> 	         enddo
+>              call outfld(trim(cnst_name(m))//'&IC', tmp, idim, j)
+>           enddo
+> !
+diff -r src/dynamics/iap/diaghi.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/diaghi.F90
+10c10
+< !          October,2012, Jiang Jinrong, 2D parellel
+---
+> !          October,2012, Jiang Jinrong, 2D parellel
+20,25c20,25
+<    use pmgrid,     only : npr_y, npr_z, myid_z, beglatdyn, endlatdyn,beglev,endlev,endlevp
+< #if (defined SPMD)
+<    use mod_comm, only: mp_send3d, mp_recv3d
+<    use spmd_dyn          , only:  comm_z
+<    use parutilitiesmodule, only: parcollective3d,sumop
+< #endif
+---
+>    use pmgrid,     only : npr_y, npr_z, myid_z, beglatdyn, endlatdyn,beglev,endlev,endlevp
+> #if (defined SPMD)
+>    use mod_comm, only: mp_send3d, mp_recv3d
+>    use spmd_dyn          , only:  comm_z
+>    use parutilitiesmodule, only: parcollective3d,sumop
+> #endif
+31,34c31,34
+<    real(r8) :: DGH(NX,NL,beglatdyn:endlatdyn)     ! difference of GHI 
+<    real(r8) :: TT1(NX,NL,beglatdyn:endlatdyn)     ! difference of GHI 
+<    real(r8) :: GHI1(NX,NZ,beglatdyn:endlatdyn)     ! difference of GHI 
+<    integer  :: I,J,K,src,dest             ! loop index
+---
+>    real(r8) :: DGH(NX,NL,beglatdyn:endlatdyn)     ! difference of GHI 
+>    real(r8) :: TT1(NX,NL,beglatdyn:endlatdyn)     ! difference of GHI 
+>    real(r8) :: GHI1(NX,NZ,beglatdyn:endlatdyn)     ! difference of GHI 
+>    integer  :: I,J,K,src,dest             ! loop index
+36,58c36,58
+<    if(npr_z.gt.1) then
+< #if (defined SPMD)
+<       do j=beglatdyn,endlatdyn
+<          do k=1,nl
+<             do i=1,nx
+<                TT1(i,k,j)=0.
+<             end do
+<         end do
+<      end do
+< #endif
+<    endif
+<    do j=beglatdyn,endlatdyn
+<       do k=beglev,endlev
+<          do i=1,nx
+<             TT1(i,k,j)=TT(i,k,j)
+<          end do
+<       enddo
+<    end do
+<    if(npr_z.gt.1) then
+< #if (defined SPMD)
+<        call parcollective3d( comm_z, sumop, NX,NL, endlatdyn-beglatdyn+1,TT1)
+< #endif
+<    endif
+---
+>    if(npr_z.gt.1) then
+> #if (defined SPMD)
+>       do j=beglatdyn,endlatdyn
+>          do k=1,nl
+>             do i=1,nx
+>                TT1(i,k,j)=0.
+>             end do
+>         end do
+>      end do
+> #endif
+>    endif
+>    do j=beglatdyn,endlatdyn
+>       do k=beglev,endlev
+>          do i=1,nx
+>             TT1(i,k,j)=TT(i,k,j)
+>          end do
+>       enddo
+>    end do
+>    if(npr_z.gt.1) then
+> #if (defined SPMD)
+>        call parcollective3d( comm_z, sumop, NX,NL, endlatdyn-beglatdyn+1,TT1)
+> #endif
+>    endif
+60,109c60,109
+<    DO J = beglatdyn, endlatdyn
+<       DO I = 1 ,NX
+<        GHI1(I,NZ,J) = H0B(I,J) * Psa(I,J) + kappa2 * GZsm(I,J)    !P113 (4)    
+< !          H0B £½ Rd * TMSA(PSB)/PSB,   TMSA: temperature of standard atmosphere 
+<       END DO
+<    END DO
+<    DO J = beglatdyn, endlatdyn
+<       DO K = 1 ,NL
+<          DO I = 1 ,NX
+<             deltap(I,K,J) = PMTOP / PLY (I,K,J )
+<             DGH(I,K,J) = b0 * TT1(I,K,J) * (1.-deltap(I,K,J)) / (PT(I,J)*SIGL(K))*DSIG(K)
+< 			                                                                       !  (3.5)
+<          END DO
+<       END DO
+<    END DO
+< !JJR  need wait
+<    DO J = beglatdyn, endlatdyn
+<       DO K = NL,1 ,-1
+<          DO I = 1 ,NX
+<             GHI1(I,K,J) = GHI1(I,K+1,J) + DGH(I,K,J)
+<          END DO
+<       END DO
+<    END DO
+<    do j = beglatdyn, endlatdyn
+<       do k = beglev , endlev+1
+<          do i = 1 , NX
+<         GHI(i,k,j)=GHI1(i,k,j)
+<          end do
+<       end do 
+<    end do
+< 
+< !    Compute geopotential height Zg & GZ
+< !!   ID = IB - 1
+<    do j = beglatdyn, endlatdyn
+<       do k = beglev , endlev+1  
+<          do i = 1 , NX
+<             Zg(i,k,j) = ( GHI(i,k,j) + GHI0(i,k,j) ) / GRAV
+<          end do
+<       end do
+<    end do
+<    if ( IGZ == 1 ) then 
+<       do j = beglatdyn, endlatdyn
+<          do k = beglev , endlev+1  
+<             do i = IB , IE
+<                GZ(i,k,j) = GHI(i,k,j) + GHI0(i,k,j) - GHS(i,j)    ! 2007.5.14
+<             end do
+<             call period(GZ(1,k,j))
+<          end do
+<       end do
+<    end if
+---
+>    DO J = beglatdyn, endlatdyn
+>       DO I = 1 ,NX
+>        GHI1(I,NZ,J) = H0B(I,J) * Psa(I,J) + kappa2 * GZsm(I,J)    !P113 (4)    
+> !          H0B £½ Rd * TMSA(PSB)/PSB,   TMSA: temperature of standard atmosphere 
+>       END DO
+>    END DO
+>    DO J = beglatdyn, endlatdyn
+>       DO K = 1 ,NL
+>          DO I = 1 ,NX
+>             deltap(I,K,J) = PMTOP / PLY (I,K,J )
+>             DGH(I,K,J) = b0 * TT1(I,K,J) * (1.-deltap(I,K,J)) / (PT(I,J)*SIGL(K))*DSIG(K)
+> 			                                                                       !  (3.5)
+>          END DO
+>       END DO
+>    END DO
+> !JJR  need wait
+>    DO J = beglatdyn, endlatdyn
+>       DO K = NL,1 ,-1
+>          DO I = 1 ,NX
+>             GHI1(I,K,J) = GHI1(I,K+1,J) + DGH(I,K,J)
+>          END DO
+>       END DO
+>    END DO
+>    do j = beglatdyn, endlatdyn
+>       do k = beglev , endlev+1
+>          do i = 1 , NX
+>         GHI(i,k,j)=GHI1(i,k,j)
+>          end do
+>       end do 
+>    end do
+> 
+> !    Compute geopotential height Zg & GZ
+> !!   ID = IB - 1
+>    do j = beglatdyn, endlatdyn
+>       do k = beglev , endlev+1  
+>          do i = 1 , NX
+>             Zg(i,k,j) = ( GHI(i,k,j) + GHI0(i,k,j) ) / GRAV
+>          end do
+>       end do
+>    end do
+>    if ( IGZ == 1 ) then 
+>       do j = beglatdyn, endlatdyn
+>          do k = beglev , endlev+1  
+>             do i = IB , IE
+>                GZ(i,k,j) = GHI(i,k,j) + GHI0(i,k,j) - GHS(i,j)    ! 2007.5.14
+>             end do
+>             call period(GZ(1,k,j))
+>          end do
+>       end do
+>    end if
+diff -r src/dynamics/iap/dyfram.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/dyfram.F90
+18,25c18,25
+< !          ZhangHe, 2010.8.10, added NSLT 
+< !          ZhangHe, 2010.8.12, modified UVW0  
+< !          ZhangHe, 2011.05.04, do not call scanslt_run if adiabatic run
+< !          Jiang Jinrong, October 2012, for 2D parellel
+< ! Reviewed: ZhangHe, 2011-11-18
+< !           ZhangHe, 2012-10-23
+< !           ZhangHe, 2013-02-05
+< ! Modified: ZhangHe, 2013-03-29, use dynamic arrays 
+---
+> !          ZhangHe, 2010.8.10, added NSLT 
+> !          ZhangHe, 2010.8.12, modified UVW0  
+> !          ZhangHe, 2011.05.04, do not call scanslt_run if adiabatic run
+> !          Jiang Jinrong, October 2012, for 2D parellel
+> ! Reviewed: ZhangHe, 2011-11-18
+> !           ZhangHe, 2012-10-23
+> !           ZhangHe, 2013-02-05
+> ! Modified: ZhangHe, 2013-03-29, use dynamic arrays 
+36,37c36,37
+<    use pmgrid,     only: plon, plat, plev, beglat, endlat,   &   
+<                          beglatdyn, endlatdyn,beglev,endlev,endlevp   !jjr 2012.09
+---
+>    use pmgrid,     only: plon, plat, plev, beglat, endlat,   &   
+>                          beglatdyn, endlatdyn,beglev,endlev,endlevp   !jjr 2012.09
+42c42
+<    use cam_control_mod, only: adiabatic, ideal_phys    !zhh, 2011-11-18
+---
+>    use cam_control_mod, only: adiabatic, ideal_phys    !zhh, 2011-11-18
+49c49
+<    integer,  intent(in) :: NSLT     ! slt computation times of every DTadv
+---
+>    integer,  intent(in) :: NSLT     ! slt computation times of every DTadv
+53,57c53,57
+<    real(r8), intent(inout) :: t3(plon,beglev:endlev,beglat:endlat,npt)    ! temperature
+<    real(r8), intent(inout) :: u3(plon, beglev:endlev,beglat:endlat,npt)    ! u-wind component
+<    real(r8), intent(inout) :: v3(plon,beglev:endlev,beglat:endlat,npt)    ! v-wind component
+<    real(r8), intent(inout) :: q3(plon,beglev:endlev,pcnst,beglat:endlat,npt)   ! specific humidity
+<    real(r8), intent(inout) :: omga(plon,beglev:endlev,beglat:endlat)      ! p-surface vertical velocity
+---
+>    real(r8), intent(inout) :: t3(plon,beglev:endlev,beglat:endlat,npt)    ! temperature
+>    real(r8), intent(inout) :: u3(plon, beglev:endlev,beglat:endlat,npt)    ! u-wind component
+>    real(r8), intent(inout) :: v3(plon,beglev:endlev,beglat:endlat,npt)    ! v-wind component
+>    real(r8), intent(inout) :: q3(plon,beglev:endlev,pcnst,beglat:endlat,npt)   ! specific humidity
+>    real(r8), intent(inout) :: omga(plon,beglev:endlev,beglat:endlat)      ! p-surface vertical velocity
+66,69c66,69
+<    real(r8), allocatable :: Un(:,:,:,:)
+<    real(r8), allocatable :: Vn(:,:,:,:)
+<    real(r8), allocatable :: Wn(:,:,:,:)
+<    integer  :: I, J, K, NCYC, NI, jd        ! loop index
+---
+>    real(r8), allocatable :: Un(:,:,:,:)
+>    real(r8), allocatable :: Vn(:,:,:,:)
+>    real(r8), allocatable :: Wn(:,:,:,:)
+>    integer  :: I, J, K, NCYC, NI, jd        ! loop index
+71,74c71,74
+< ! allocate arrays
+<    allocate ( Un(NX,beglev:endlev,beglatdyn:endlatdyn,0:NSLT) )
+<    allocate ( Vn(NX,beglev:endlev,beglatdyn:endlatdyn,0:NSLT) )
+<    allocate ( Wn(NX,beglev:endlev,beglatdyn:endlatdyn,0:NSLT) )
+---
+> ! allocate arrays
+>    allocate ( Un(NX,beglev:endlev,beglatdyn:endlatdyn,0:NSLT) )
+>    allocate ( Vn(NX,beglev:endlev,beglatdyn:endlatdyn,0:NSLT) )
+>    allocate ( Wn(NX,beglev:endlev,beglatdyn:endlatdyn,0:NSLT) )
+85c85
+< !
+---
+> !
+88,98c88,98
+< ! ============================ zhh 2010.8.12 =============================
+<       DO J = beglatdyn, endlatdyn
+<          DO K = beglev ,endlev
+<             DO I = 1 ,NX
+<                UVW0(I,K,J,1)  = U (I,K,J)
+<                UVW0(I,K,J,2)  = V (I,K,J)
+<                UVW0(I,K,J,3)  = WS(I,K,J)
+<             ENDDO
+<          ENDDO
+<       ENDDO
+< ! ============================ zhh 2010.8.12 =============================
+---
+> ! ============================ zhh 2010.8.12 =============================
+>       DO J = beglatdyn, endlatdyn
+>          DO K = beglev ,endlev
+>             DO I = 1 ,NX
+>                UVW0(I,K,J,1)  = U (I,K,J)
+>                UVW0(I,K,J,2)  = V (I,K,J)
+>                UVW0(I,K,J,3)  = WS(I,K,J)
+>             ENDDO
+>          ENDDO
+>       ENDDO
+> ! ============================ zhh 2010.8.12 =============================
+108,138c108,138
+< 
+<       do NI = 0, NSLT    !zhh 2010.08.12
+<          do J = beglatdyn, endlatdyn
+<             do K = beglev ,endlev
+<                do I = 1 ,NX
+<                   Un(I,K,J,NI) = UVW0(I,K,J,1) + dble(NI)/dble(NSLT) * (U(I,K,J)-UVW0(I,K,J,1))
+<                   Vn(I,K,J,NI) = UVW0(I,K,J,2) + dble(NI)/dble(NSLT) * (V(I,K,J)-UVW0(I,K,J,2))
+<                   Wn(I,K,J,NI) = UVW0(I,K,J,3) + dble(NI)/dble(NSLT) * (WS(I,K,J)-UVW0(I,K,J,3))
+<                end do
+<             end do
+<          end do
+<       end do
+< !
+<       call t_startf('scanslt_run')
+<       do NI = 1, NSLT    !zhh 2010.08.10
+<          do J = beglatdyn, endlatdyn
+<             do K =  beglev,endlev
+<                do I = 1 ,NX
+<                   UVW0(I,K,J,1) = Un(I,K,J,NI-1) + Un(I,K,J,NI) - U(I,K,J)
+<                   UVW0(I,K,J,2) = Vn(I,K,J,NI-1) + Vn(I,K,J,NI) - V(I,K,J)
+<                   UVW0(I,K,J,3) = Wn(I,K,J,NI-1) + Wn(I,K,J,NI) - WS(I,K,J)
+<                end do
+<             end do
+<          end do
+< !
+<          if ((.not. ideal_phys) .and. (.not. adiabatic)) then
+<             call scanslt_run( adv_state, DTIMEQ, detam, etamid, cwava ) !zhh 2010.08.10
+<          end if 
+<       end do
+<       call t_stopf('scanslt_run')
+< !
+---
+> 
+>       do NI = 0, NSLT    !zhh 2010.08.12
+>          do J = beglatdyn, endlatdyn
+>             do K = beglev ,endlev
+>                do I = 1 ,NX
+>                   Un(I,K,J,NI) = UVW0(I,K,J,1) + dble(NI)/dble(NSLT) * (U(I,K,J)-UVW0(I,K,J,1))
+>                   Vn(I,K,J,NI) = UVW0(I,K,J,2) + dble(NI)/dble(NSLT) * (V(I,K,J)-UVW0(I,K,J,2))
+>                   Wn(I,K,J,NI) = UVW0(I,K,J,3) + dble(NI)/dble(NSLT) * (WS(I,K,J)-UVW0(I,K,J,3))
+>                end do
+>             end do
+>          end do
+>       end do
+> !
+>       call t_startf('scanslt_run')
+>       do NI = 1, NSLT    !zhh 2010.08.10
+>          do J = beglatdyn, endlatdyn
+>             do K =  beglev,endlev
+>                do I = 1 ,NX
+>                   UVW0(I,K,J,1) = Un(I,K,J,NI-1) + Un(I,K,J,NI) - U(I,K,J)
+>                   UVW0(I,K,J,2) = Vn(I,K,J,NI-1) + Vn(I,K,J,NI) - V(I,K,J)
+>                   UVW0(I,K,J,3) = Wn(I,K,J,NI-1) + Wn(I,K,J,NI) - WS(I,K,J)
+>                end do
+>             end do
+>          end do
+> !
+>          if ((.not. ideal_phys) .and. (.not. adiabatic)) then
+>             call scanslt_run( adv_state, DTIMEQ, detam, etamid, cwava ) !zhh 2010.08.10
+>          end if 
+>       end do
+>       call t_stopf('scanslt_run')
+> !
+144c144
+<       DO K = beglev ,endlev+1
+---
+>       DO K = beglev ,endlev+1
+151c151
+<       DO K = beglev ,endlev+1
+---
+>       DO K = beglev ,endlev+1
+168,171c168,171
+< ! deallocate arrays
+<    deallocate(Un)
+<    deallocate(Vn)
+<    deallocate(Wn)
+---
+> ! deallocate arrays
+>    deallocate(Un)
+>    deallocate(Vn)
+>    deallocate(Wn)
+diff -r src/dynamics/iap/dyn_comp.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/dyn_comp.F90
+132c132
+< !   Zhang, He 2013-04-15, added Uxy, Vxy
+---
+> !   Zhang, He 2013-04-15, added Uxy, Vxy
+1004,1037c1004,1037
+< ! ---------- U -----------
+<       do j = beglat, endlat
+<          jd = plat+1-j
+<          do k = beglev, endlev
+<             do i = 1, plon      
+<                tmp3d(i,j,k) = U(i+EX,k,jd)  
+<             end do
+<          end do
+<       end do
+< !
+<       call mp_sendirr( grid%commxy, grid%ijk_yz_to_xy%SendDesc,                    &
+<                        grid%ijk_yz_to_xy%RecvDesc, tmp3d, Uxy,                     &
+<                        modc=grid%modc_dynrun )
+<       call mp_recvirr( grid%commxy, grid%ijk_yz_to_xy%SendDesc,                    &
+<                        grid%ijk_yz_to_xy%RecvDesc, tmp3d, Uxy,                     &
+<                        modc=grid%modc_dynrun )
+< !
+< ! ---------- U -----------
+<       do j = beglat, endlat
+<          jd = plat+1-j
+<          do k = beglev, endlev
+<             do i = 1, plon      
+<                tmp3d(i,j,k) = V(i+EX,k,jd)  
+<             end do
+<          end do
+<       end do
+< !
+<       call mp_sendirr( grid%commxy, grid%ijk_yz_to_xy%SendDesc,                    &
+<                        grid%ijk_yz_to_xy%RecvDesc, tmp3d, Vxy,                     &
+<                        modc=grid%modc_dynrun )
+<       call mp_recvirr( grid%commxy, grid%ijk_yz_to_xy%SendDesc,                    &
+<                        grid%ijk_yz_to_xy%RecvDesc, tmp3d, Vxy,                     &
+<                        modc=grid%modc_dynrun )
+< !
+---
+> ! ---------- U -----------
+>       do j = beglat, endlat
+>          jd = plat+1-j
+>          do k = beglev, endlev
+>             do i = 1, plon      
+>                tmp3d(i,j,k) = U(i+EX,k,jd)  
+>             end do
+>          end do
+>       end do
+> !
+>       call mp_sendirr( grid%commxy, grid%ijk_yz_to_xy%SendDesc,                    &
+>                        grid%ijk_yz_to_xy%RecvDesc, tmp3d, Uxy,                     &
+>                        modc=grid%modc_dynrun )
+>       call mp_recvirr( grid%commxy, grid%ijk_yz_to_xy%SendDesc,                    &
+>                        grid%ijk_yz_to_xy%RecvDesc, tmp3d, Uxy,                     &
+>                        modc=grid%modc_dynrun )
+> !
+> ! ---------- U -----------
+>       do j = beglat, endlat
+>          jd = plat+1-j
+>          do k = beglev, endlev
+>             do i = 1, plon      
+>                tmp3d(i,j,k) = V(i+EX,k,jd)  
+>             end do
+>          end do
+>       end do
+> !
+>       call mp_sendirr( grid%commxy, grid%ijk_yz_to_xy%SendDesc,                    &
+>                        grid%ijk_yz_to_xy%RecvDesc, tmp3d, Vxy,                     &
+>                        modc=grid%modc_dynrun )
+>       call mp_recvirr( grid%commxy, grid%ijk_yz_to_xy%SendDesc,                    &
+>                        grid%ijk_yz_to_xy%RecvDesc, tmp3d, Vxy,                     &
+>                        modc=grid%modc_dynrun )
+> !
+1274,1275c1274,1275
+<                Uxy(i,j,k)  = U(i+EX,k,jd)  
+<                Vxy(i,j,k)  = V(i+EX,k,jd)  
+---
+>                Uxy(i,j,k)  = U(i+EX,k,jd)  
+>                Vxy(i,j,k)  = V(i+EX,k,jd)  
+1448,1483c1448,1483
+< !
+< ! ---------- U -----------
+<        call mp_sendirr( grid%commxy, grid%ijk_xy_to_yz%SendDesc,                    &
+<                         grid%ijk_xy_to_yz%RecvDesc, Uxy, tmp3d,                   &
+<                         modc=grid%modc_dynrun )
+<        call mp_recvirr( grid%commxy, grid%ijk_xy_to_yz%SendDesc,                    &
+<                         grid%ijk_xy_to_yz%RecvDesc, Uxy, tmp3d,                  &
+<                         modc=grid%modc_dynrun )
+< !
+<       do j = beglat, endlat
+<          jd = plat+1-j
+<          do k = beglev, endlev
+<             do i = 1, plon      
+<                U(i+EX,k,jd) = tmp3d(i,j,k) 
+<             end do
+<             call period( U(1,k,jd) )
+<          end do
+<       end do
+< !
+< ! ---------- V -----------
+<        call mp_sendirr( grid%commxy, grid%ijk_xy_to_yz%SendDesc,                    &
+<                         grid%ijk_xy_to_yz%RecvDesc, Vxy, tmp3d,                   &
+<                         modc=grid%modc_dynrun )
+<        call mp_recvirr( grid%commxy, grid%ijk_xy_to_yz%SendDesc,                    &
+<                         grid%ijk_xy_to_yz%RecvDesc, Vxy, tmp3d,                  &
+<                         modc=grid%modc_dynrun )
+< !
+<       do j = beglat, endlat
+<          jd = plat+1-j
+<          do k = beglev, endlev
+<             do i = 1, plon      
+<                V(i+EX,k,jd) = tmp3d(i,j,k) 
+<             end do
+<             call period( V(1,k,jd) )
+<          end do
+<       end do
+---
+> !
+> ! ---------- U -----------
+>        call mp_sendirr( grid%commxy, grid%ijk_xy_to_yz%SendDesc,                    &
+>                         grid%ijk_xy_to_yz%RecvDesc, Uxy, tmp3d,                   &
+>                         modc=grid%modc_dynrun )
+>        call mp_recvirr( grid%commxy, grid%ijk_xy_to_yz%SendDesc,                    &
+>                         grid%ijk_xy_to_yz%RecvDesc, Uxy, tmp3d,                  &
+>                         modc=grid%modc_dynrun )
+> !
+>       do j = beglat, endlat
+>          jd = plat+1-j
+>          do k = beglev, endlev
+>             do i = 1, plon      
+>                U(i+EX,k,jd) = tmp3d(i,j,k) 
+>             end do
+>             call period( U(1,k,jd) )
+>          end do
+>       end do
+> !
+> ! ---------- V -----------
+>        call mp_sendirr( grid%commxy, grid%ijk_xy_to_yz%SendDesc,                    &
+>                         grid%ijk_xy_to_yz%RecvDesc, Vxy, tmp3d,                   &
+>                         modc=grid%modc_dynrun )
+>        call mp_recvirr( grid%commxy, grid%ijk_xy_to_yz%SendDesc,                    &
+>                         grid%ijk_xy_to_yz%RecvDesc, Vxy, tmp3d,                  &
+>                         modc=grid%modc_dynrun )
+> !
+>       do j = beglat, endlat
+>          jd = plat+1-j
+>          do k = beglev, endlev
+>             do i = 1, plon      
+>                V(i+EX,k,jd) = tmp3d(i,j,k) 
+>             end do
+>             call period( V(1,k,jd) )
+>          end do
+>       end do
+1723,1724c1723,1724
+<                 U(i+EX,k,jd)  = Uxy(i,j,k) 
+<                 V(i+EX,k,jd)  = Vxy(i,j,k) 
+---
+>                 U(i+EX,k,jd)  = Uxy(i,j,k) 
+>                 V(i+EX,k,jd)  = Vxy(i,j,k) 
+1727,1728c1727,1728
+<              call period( U(1,k,jd) )
+<              call period( V(1,k,jd) )
+---
+>              call period( U(1,k,jd) )
+>              call period( V(1,k,jd) )
+diff -r src/dynamics/iap/Engy_const.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/Engy_const.F90
+16c16
+< ! Modified: Zhang He, 2013-03-29, removed Q and added qtmp in sub. GMPRFL
+---
+> ! Modified: Zhang He, 2013-03-29, removed Q and added qtmp in sub. GMPRFL
+21c21
+<    use pmgrid,    only: beglatdyn, endlatdyn, loc_JB, loc_JE, beglev, endlev, plon, plat, plev, &
+---
+>    use pmgrid,    only: beglatdyn, endlatdyn, loc_JB, loc_JE, beglev, endlev, plon, plat, plev, &
+251c251
+<       use prognostics, only: q3, n3
+---
+>       use prognostics, only: q3, n3
+264c264
+<       real(r8), allocatable :: qtmp(:,:,:)    ! specific humidity 
+---
+>       real(r8), allocatable :: qtmp(:,:,:)    ! specific humidity 
+266,275c266,275
+< 
+<       allocate(qtmp(NX,beglev:endlev,beglatdynex:endlatdynex))
+<       do j = beglatdyn, endlatdyn
+<          jp = plat + 1 - j
+<          do k = beglev,endlev
+<             do i = 1, plon
+<                qtmp(I+EX,K,J) = q3(I,K,1,Jp,n3)
+<             end do
+<          end do
+<       end do
+---
+> 
+>       allocate(qtmp(NX,beglev:endlev,beglatdynex:endlatdynex))
+>       do j = beglatdyn, endlatdyn
+>          jp = plat + 1 - j
+>          do k = beglev,endlev
+>             do i = 1, plon
+>                qtmp(I+EX,K,J) = q3(I,K,1,Jp,n3)
+>             end do
+>          end do
+>       end do
+340,342c340,342
+< 
+<       deallocate(qtmp)
+< 
+---
+> 
+>       deallocate(qtmp)
+> 
+diff -r src/dynamics/iap/Filt.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/Filt.F90
+10c10
+< ! Review: ZhangHe, 2011-11-18
+---
+> ! Review: ZhangHe, 2011-11-18
+diff -r src/dynamics/iap/IAP_prog.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/IAP_prog.F90
+13c13
+< !             2013-03-29, Zhang He, removed Q, Qliq, Qice, QT, QTliq, QTice
+---
+> !             2013-03-29, Zhang He, removed Q, Qliq, Qice, QT, QTliq, QTice
+55,60c55,60
+< ! ================================== zhh ====================================
+<    real(r8), allocatable :: Qliq(:,:,:)   ! cloud liquid water (unit: kg/kg)
+<    real(r8), allocatable :: Qice(:,:,:)   ! cloud ice water (unit: kg/kg)
+< !!   real(r8), allocatable :: QTliq(:,:,:)  ! QTliq = Pes*Qliq
+< !!   real(r8), allocatable :: QTice(:,:,:)  ! QTice = Pes*Qice
+< ! ===============================  2007.12.20 ================================
+---
+> ! ================================== zhh ====================================
+>    real(r8), allocatable :: Qliq(:,:,:)   ! cloud liquid water (unit: kg/kg)
+>    real(r8), allocatable :: Qice(:,:,:)   ! cloud ice water (unit: kg/kg)
+> !!   real(r8), allocatable :: QTliq(:,:,:)  ! QTliq = Pes*Qliq
+> !!   real(r8), allocatable :: QTice(:,:,:)  ! QTice = Pes*Qice
+> ! ===============================  2007.12.20 ================================
+104,107c104,107
+<       allocate ( Qliq  (NX,NL,beglatdynex:endlatdynex) )
+<       allocate ( Qice  (NX,NL,beglatdynex:endlatdynex) )
+< !!      allocate ( QTliq (NX,NL,beglatdynex:endlatdynex) )
+< !!      allocate ( QTice (NX,NL,beglatdynex:endlatdynex) )
+---
+>       allocate ( Qliq  (NX,NL,beglatdynex:endlatdynex) )
+>       allocate ( Qice  (NX,NL,beglatdynex:endlatdynex) )
+> !!      allocate ( QTliq (NX,NL,beglatdynex:endlatdynex) )
+> !!      allocate ( QTice (NX,NL,beglatdynex:endlatdynex) )
+151,154c151,154
+<       Qliq(:,:,:)   = inf
+<       Qice(:,:,:)   = inf
+< !!      QTliq(:,:,:)  = inf
+< !!      QTice(:,:,:)  = inf
+---
+>       Qliq(:,:,:)   = inf
+>       Qice(:,:,:)   = inf
+> !!      QTliq(:,:,:)  = inf
+> !!      QTice(:,:,:)  = inf
+diff -r src/dynamics/iap/inidat.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/inidat.F90
+183,187c183
+< !------------------------------------------------------------------------
+< ! juanxiong he
+< !------------------------------------------------------------------------
+< !       if(cnst_read_iv(m)) &
+<        if(cnst_read_iv(m).and.fieldname.ne.'CO2    ') then
+---
+>        if(cnst_read_iv(m)) &
+191,206d186
+<        end if
+<        if(fieldname.eq.'CO2    ') then
+<         do j=1,plat
+<            arr3d_a(:,:,j) = (287.0e-6)*(1+0.1*sin(j*1.0/plat*3.1415926))
+<         end do
+< !$omp parallel do private(j,k)
+<         do k = 1, plev
+<         do j = 1, plat
+<            arr3d_b(:,j,k) = arr3d_a(:,k,j)
+<         enddo
+<         enddo
+<         call scatter_q_field_to_block(arr3d_b, m)
+<       end if
+< !------------------------------------------------------------------------
+< ! juanxiong he
+< !------------------------------------------------------------------------
+642,645c622,624
+<        ! juanxiong he
+<        !    else if (co2_implements_cnst(cnst_name(m_cnst))) then
+<        !       call co2_init_cnst(cnst_name(m_cnst), arr3d_a(:,:,j), gcid)
+<        !       if(masterproc) write(iulog,*) '          ', cnst_name(m_cnst), ' initialized by "co2_init_cnst"'
+---
+>            else if (co2_implements_cnst(cnst_name(m_cnst))) then
+>               call co2_init_cnst(cnst_name(m_cnst), arr3d_a(:,:,j), gcid)
+>               if(masterproc) write(iulog,*) '          ', cnst_name(m_cnst), ' initialized by "co2_init_cnst"'
+diff -r src/dynamics/iap/init_trans_IAP.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/init_trans_IAP.F90
+12c12
+< !           Zhang He, 2013-04-17, moved DIAGPP and DIAGBB from MDINIT 
+---
+> !           Zhang He, 2013-04-17, moved DIAGPP and DIAGBB from MDINIT 
+35c35
+<          P  (I,J) = PS2(I,J) - PMTOP
+---
+>          P  (I,J) = PS2(I,J) - PMTOP
+39c39
+<          PT(I,J)     = sqrt( Pstar1(I,J)/P00 )
+---
+>          PT(I,J)     = sqrt( Pstar1(I,J)/P00 )
+43,46c43,46
+< !------------------ COMPUTE PRESSURE AT MODEL & INTERFACE SIGMA LAYERS ----------------------
+<    CALL DIAGPP
+< !--------------- SET MSA TEMPERATURE, GEOPOTENTIAL & CHARACTERISTIC PHASE-SPEED -------------
+<    CALL DIAGBB( 3 )
+---
+> !------------------ COMPUTE PRESSURE AT MODEL & INTERFACE SIGMA LAYERS ----------------------
+>    CALL DIAGPP
+> !--------------- SET MSA TEMPERATURE, GEOPOTENTIAL & CHARACTERISTIC PHASE-SPEED -------------
+>    CALL DIAGBB( 3 )
+diff -r src/dynamics/iap/init_trans_pd.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/init_trans_pd.F90
+16,19c16,19
+< !          Zhang He, 2013-03-12, removed transform of Q, Qliq, and Qice
+< ! Reviewed: Zhang He, 2013-03-27
+< ! Modified: Zhang He, 2013-04-16, separated initial run and restart run 
+< !                     2013-04-17, removed calculation of P
+---
+> !          Zhang He, 2013-03-12, removed transform of Q, Qliq, and Qice
+> ! Reviewed: Zhang He, 2013-03-27
+> ! Modified: Zhang He, 2013-04-16, separated initial run and restart run 
+> !                     2013-04-17, removed calculation of P
+51,132c51,132
+<    if (is_first_step()) then    ! for initial run only
+< 
+<       dyn_state => get_dyn_state()
+<       commyz = dyn_state%grid%commyz
+< !
+<       allocate(utmp(NX,beglev:endlev,beglatdynex:endlatdynex))
+<       allocate(vtmp(NX,beglev:endlev,beglatdynex:endlatdynex))
+< !
+< ! for 2D variables
+<       DO Jp = beglat, endlat
+<          Jd = plat + 1 - Jp
+<          DO I = 1, plon
+<             GHS(I+EX,Jd) = phis(I,Jp)
+<          END DO
+<          call period( GHS(1,Jd) )
+<       END DO  
+< !
+< !   for 3D variables
+<       DO Jp = beglat, endlat
+<          Jd = plat + 1 - Jp
+<          DO K = beglev,endlev    ! jjr
+<             DO I = 1, plon
+<                utmp(I+EX,K,Jd) = u3(I,K,Jp,n3m1)
+<                vtmp(I+EX,K,Jd) = -v3(I,K,Jp,n3m1)
+<             END DO
+<             call period( utmp(1,K,Jd) )
+<             call period( vtmp(1,K,Jd) )
+<          END DO
+<       END DO       
+< !
+< !      TRANSFORM (U,V) FROM P-GRID TO (U,V)-GRID
+< !     
+< #if (defined SPMD)
+<       src = iam-1
+<       dest  = iam+1
+<       if ( mod(iam,npr_y) == 0 ) src = -1
+<       if ( mod(iam+1,npr_y) == 0 ) dest = -1
+<       call mp_send3d( commyz, dest, src, NX, NL, NY,                       &
+<                       1, NX,beglev,endlev, beglatdynex, endlatdynex,       &
+<                       1, NX,beglev,endlev, beglatdyn, beglatdyn,  vtmp )
+<       call mp_recv3d( commyz, src, NX, NL, NY,                             &
+<                       1, NX, beglev,endlev,beglatdynex, endlatdynex,       &
+<                       1, NX, beglev,endlev,endlatdynex, endlatdynex, vtmp )
+< #endif
+< !
+<       DO J = beglatdyn, endlatdyn
+<          if ( J>1 .and. J<plat ) then
+<             DO K = beglev, endlev
+<                DO I = IB, IE
+<                   U(I,K,J) = ( utmp(I,K,J) + utmp(I-1,K,J) ) * HALF
+<                   V(I,K,J) = vtmp(I,K,J)*DXPVN(J) + vtmp(I,K,J+1)*DXPVS(J)
+<                END DO
+<                call period( U(1,K,J) )
+<                call period( V(1,K,J) )
+<             END DO
+< 
+<          else if ( J==1 ) then
+<             DO K = beglev, endlev
+<                DO I = IB, IE
+<                   U(I,K,J) = ZERO
+<                   V(I,K,J) = vtmp(I,K,J)*DXPVN(J) + vtmp(I,K,J+1)*DXPVS(J)
+<                END DO
+<                call period( U(1,K,J) )
+<                call period( V(1,K,J) )
+<             END DO
+< 
+<          else  ! J = plat       
+<             DO K = beglev, endlev
+<                DO I = 1, NX
+<                   U(I,K,J) = ZERO
+<                   V(I,K,J) = ZERO
+<                END DO
+<             END DO
+<          end if
+<       END DO
+< !
+<       deallocate(utmp)
+<       deallocate(vtmp)
+< !
+<    end if
+< !
+< !  for both initial run and restart run
+---
+>    if (is_first_step()) then    ! for initial run only
+> 
+>       dyn_state => get_dyn_state()
+>       commyz = dyn_state%grid%commyz
+> !
+>       allocate(utmp(NX,beglev:endlev,beglatdynex:endlatdynex))
+>       allocate(vtmp(NX,beglev:endlev,beglatdynex:endlatdynex))
+> !
+> ! for 2D variables
+>       DO Jp = beglat, endlat
+>          Jd = plat + 1 - Jp
+>          DO I = 1, plon
+>             GHS(I+EX,Jd) = phis(I,Jp)
+>          END DO
+>          call period( GHS(1,Jd) )
+>       END DO  
+> !
+> !   for 3D variables
+>       DO Jp = beglat, endlat
+>          Jd = plat + 1 - Jp
+>          DO K = beglev,endlev    ! jjr
+>             DO I = 1, plon
+>                utmp(I+EX,K,Jd) = u3(I,K,Jp,n3m1)
+>                vtmp(I+EX,K,Jd) = -v3(I,K,Jp,n3m1)
+>             END DO
+>             call period( utmp(1,K,Jd) )
+>             call period( vtmp(1,K,Jd) )
+>          END DO
+>       END DO       
+> !
+> !      TRANSFORM (U,V) FROM P-GRID TO (U,V)-GRID
+> !     
+> #if (defined SPMD)
+>       src = iam-1
+>       dest  = iam+1
+>       if ( mod(iam,npr_y) == 0 ) src = -1
+>       if ( mod(iam+1,npr_y) == 0 ) dest = -1
+>       call mp_send3d( commyz, dest, src, NX, NL, NY,                       &
+>                       1, NX,beglev,endlev, beglatdynex, endlatdynex,       &
+>                       1, NX,beglev,endlev, beglatdyn, beglatdyn,  vtmp )
+>       call mp_recv3d( commyz, src, NX, NL, NY,                             &
+>                       1, NX, beglev,endlev,beglatdynex, endlatdynex,       &
+>                       1, NX, beglev,endlev,endlatdynex, endlatdynex, vtmp )
+> #endif
+> !
+>       DO J = beglatdyn, endlatdyn
+>          if ( J>1 .and. J<plat ) then
+>             DO K = beglev, endlev
+>                DO I = IB, IE
+>                   U(I,K,J) = ( utmp(I,K,J) + utmp(I-1,K,J) ) * HALF
+>                   V(I,K,J) = vtmp(I,K,J)*DXPVN(J) + vtmp(I,K,J+1)*DXPVS(J)
+>                END DO
+>                call period( U(1,K,J) )
+>                call period( V(1,K,J) )
+>             END DO
+> 
+>          else if ( J==1 ) then
+>             DO K = beglev, endlev
+>                DO I = IB, IE
+>                   U(I,K,J) = ZERO
+>                   V(I,K,J) = vtmp(I,K,J)*DXPVN(J) + vtmp(I,K,J+1)*DXPVS(J)
+>                END DO
+>                call period( U(1,K,J) )
+>                call period( V(1,K,J) )
+>             END DO
+> 
+>          else  ! J = plat       
+>             DO K = beglev, endlev
+>                DO I = 1, NX
+>                   U(I,K,J) = ZERO
+>                   V(I,K,J) = ZERO
+>                END DO
+>             END DO
+>          end if
+>       END DO
+> !
+>       deallocate(utmp)
+>       deallocate(vtmp)
+> !
+>    end if
+> !
+> !  for both initial run and restart run
+diff -r src/dynamics/iap/kdpfnd1.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/kdpfnd1.F90
+48c48
+<   do k=1,plev 
+---
+>   do k=1,pkdim
+diff -r src/dynamics/iap/mpisub.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/mpisub.F90
+1,12c1,12
+< !----------------------------------------------------------------------------------
+< !   mpi_move_left, recieve data from the south neighbor latitude and 
+< !	           send data to the north latitud
+< !   mpi_move_right,recieve data from the north neighbor latitude and 
+< !	           send data to the south latitudw        	
+< ! Author: Wu Jiangping, 2008.4
+< !   He Juanxiong, 2010.08, revised	
+< ! Reviewed: ZhangHe, 2011-11-18
+< ! Modified: Jiang Jinrong, 2012 October
+< ! Reviewed: Zhang He, 2012-10-31
+< !           Zhang He, 2013-02-05
+< !----------------------------------------------------------------------------------
+---
+> !----------------------------------------------------------------------------------
+> !   mpi_move_left, recieve data from the south neighbor latitude and 
+> !	           send data to the north latitud
+> !   mpi_move_right,recieve data from the north neighbor latitude and 
+> !	           send data to the south latitudw        	
+> ! Author: Wu Jiangping, 2008.4
+> !   He Juanxiong, 2010.08, revised	
+> ! Reviewed: ZhangHe, 2011-11-18
+> ! Modified: Jiang Jinrong, 2012 October
+> ! Reviewed: Zhang He, 2012-10-31
+> !           Zhang He, 2013-02-05
+> !----------------------------------------------------------------------------------
+18,21c18,21
+<       use pmgrid,       only: myid_y,npr_y,myid_z
+<       use spmd_dyn,     only: comm_y,lreq
+< 
+<       implicit none
+---
+>       use pmgrid,       only: myid_y,npr_y,myid_z
+>       use spmd_dyn,     only: comm_y,lreq
+> 
+>       implicit none
+26c26
+< !-----------------------------------------------------------------------
+---
+> !-----------------------------------------------------------------------
+28,30c28,30
+<        lreq=MPI_REQUEST_NULL
+<       if(myid_y.ne.0)      call mpi_isend(sbuf,leng,mpir8,myid_y-1,10,comm_y,lreq(1),ierr)
+<       if(myid_y.ne.(npr_y-1)) call mpi_irecv( rbuf,leng,mpir8,myid_y+1,10,comm_y,lreq(2),ierr)
+---
+>        lreq=MPI_REQUEST_NULL
+>       if(myid_y.ne.0)      call mpi_isend(sbuf,leng,mpir8,myid_y-1,10,comm_y,lreq(1),ierr)
+>       if(myid_y.ne.(npr_y-1)) call mpi_irecv( rbuf,leng,mpir8,myid_y+1,10,comm_y,lreq(2),ierr)
+34c34
+< !===================================================================================
+---
+> !===================================================================================
+38,41c38,41
+<       use pmgrid,       only: myid_y,npr_y,myid_z
+<       use spmd_dyn,     only: comm_y,rreq
+< 
+<       implicit none
+---
+>       use pmgrid,       only: myid_y,npr_y,myid_z
+>       use spmd_dyn,     only: comm_y,rreq
+> 
+>       implicit none
+46c46
+< !-----------------------------------------------------------------------
+---
+> !-----------------------------------------------------------------------
+48,50c48,50
+<       rreq=MPI_REQUEST_NULL
+<       if(myid_y.ne.0)      call mpi_irecv( rbuf,leng,mpir8,myid_y-1,10+myid_z,comm_y,rreq(2),ierr)
+<       if(myid_y.ne.(npr_y-1)) call mpi_isend(sbuf,leng,mpir8,myid_y+1,10+myid_z,comm_y,rreq(1),ierr)
+---
+>       rreq=MPI_REQUEST_NULL
+>       if(myid_y.ne.0)      call mpi_irecv( rbuf,leng,mpir8,myid_y-1,10+myid_z,comm_y,rreq(2),ierr)
+>       if(myid_y.ne.(npr_y-1)) call mpi_isend(sbuf,leng,mpir8,myid_y+1,10+myid_z,comm_y,rreq(1),ierr)
+53,68c53,68
+< 
+< !===================================================================================
+<    subroutine mpi_w_a(req)
+<       use pmgrid,       only: myid_y,npr_y
+<       implicit none
+<       include 'mpif.h'
+<       integer  req(2)
+<       integer status(mpi_status_size,2),ierr
+< !-----------------------------------------------------------------------
+< !      if(myid_y.ne.0.and.myid_y.ne.(npr_y-1))  call mpi_waitall(n,req,status,ierr)
+<        call mpi_waitall(2,req,status,ierr)
+< !      if(myid_y.ne.0) call mpi_wait(req(1),status,ierr)
+< !      if(myid_y.ne.(npr_y-1)) call mpi_wait(req(2),status,ierr)
+<       return
+<    end subroutine
+< !
+---
+> 
+> !===================================================================================
+>    subroutine mpi_w_a(req)
+>       use pmgrid,       only: myid_y,npr_y
+>       implicit none
+>       include 'mpif.h'
+>       integer  req(2)
+>       integer status(mpi_status_size,2),ierr
+> !-----------------------------------------------------------------------
+> !      if(myid_y.ne.0.and.myid_y.ne.(npr_y-1))  call mpi_waitall(n,req,status,ierr)
+>        call mpi_waitall(2,req,status,ierr)
+> !      if(myid_y.ne.0) call mpi_wait(req(1),status,ierr)
+> !      if(myid_y.ne.(npr_y-1)) call mpi_wait(req(2),status,ierr)
+>       return
+>    end subroutine
+> !
+diff -r src/dynamics/iap/nliter_uvt.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/nliter_uvt.F90
+9c9
+< !          October 2012, Jiang Jinrong, for 2D parallel
+---
+> !          October 2012, Jiang Jinrong, for 2D parallel
+17c17
+<    use perf_mod,  only : t_startf, t_stopf       ! zhh  2013-02-06
+---
+>    use perf_mod,  only : t_startf, t_stopf       ! zhh  2013-02-06
+21,23c21,23
+<    real(r8), intent(in) :: CCU(NX,beglev:endlev,beglatdyn:endlatdyn)   ! input prognostic variables for iteration,  UT
+<    real(r8), intent(in) :: CCV(NX,beglev:endlev,beglatdyn:endlatdyn)   ! input prognostic variables for iteration,  VT
+<    real(r8), intent(in) :: CCT(NX,beglev:endlev,beglatdyn:endlatdyn)   ! input prognostic variables for iteration,  TT
+---
+>    real(r8), intent(in) :: CCU(NX,beglev:endlev,beglatdyn:endlatdyn)   ! input prognostic variables for iteration,  UT
+>    real(r8), intent(in) :: CCV(NX,beglev:endlev,beglatdyn:endlatdyn)   ! input prognostic variables for iteration,  VT
+>    real(r8), intent(in) :: CCT(NX,beglev:endlev,beglatdyn:endlatdyn)   ! input prognostic variables for iteration,  TT
+29c29
+<    call t_startf('nliter_uvt')
+---
+>    call t_startf('nliter_uvt')
+32c32
+<          DO K = beglev ,endlev
+---
+>          DO K = beglev ,endlev
+50c50
+<          DO K = beglev ,endlev
+---
+>          DO K = beglev ,endlev
+62c62
+<          DO K = beglev ,endlev
+---
+>          DO K = beglev ,endlev
+72c72
+<      call t_stopf('nliter_uvt')
+---
+>      call t_stopf('nliter_uvt')
+diff -r src/dynamics/iap/nliter_uvtp.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/nliter_uvtp.F90
+10c10
+< !          October 2012, Jiang Jinrong, for 2D parallel
+---
+> !          October 2012, Jiang Jinrong, for 2D parallel
+20c20
+<    use perf_mod,   only : t_startf, t_stopf       ! zhh  2013-02-06
+---
+>    use perf_mod,   only : t_startf, t_stopf       ! zhh  2013-02-06
+24,26c24,26
+<    real(r8), intent(in) :: CCU(NX,beglev:endlev,beglatdyn:endlatdyn)   ! input prognostic variables for iteration,  UT
+<    real(r8), intent(in) :: CCV(NX,beglev:endlev,beglatdyn:endlatdyn)   ! input prognostic variables for iteration,  VT
+<    real(r8), intent(in) :: CCT(NX,beglev:endlev,beglatdyn:endlatdyn)   ! input prognostic variables for iteration,  TT
+---
+>    real(r8), intent(in) :: CCU(NX,beglev:endlev,beglatdyn:endlatdyn)   ! input prognostic variables for iteration,  UT
+>    real(r8), intent(in) :: CCV(NX,beglev:endlev,beglatdyn:endlatdyn)   ! input prognostic variables for iteration,  VT
+>    real(r8), intent(in) :: CCT(NX,beglev:endlev,beglatdyn:endlatdyn)   ! input prognostic variables for iteration,  TT
+36c36
+<    call t_startf('nliter_uvtp')
+---
+>    call t_startf('nliter_uvtp')
+39c39
+<          DO K = beglev ,endlev
+---
+>          DO K = beglev ,endlev
+57c57
+<          DO K = beglev ,endlev
+---
+>          DO K = beglev ,endlev
+69c69
+<          DO K = beglev ,endlev
+---
+>          DO K = beglev ,endlev
+120,121c120,121
+<    call t_stopf('nliter_uvtp')
+< 
+---
+>    call t_stopf('nliter_uvtp')
+> 
+diff -r src/dynamics/iap/nlitti.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/nlitti.F90
+19,23c19,23
+< !             October 2012, Jiang Jinrong, for 2D parallel
+< ! Reviewed: ZhangHe, 2011-11-19
+< !           ZhangHe, 2012-10-31
+< !           ZhangHe, 2013-03-27
+< ! Modified: ZhangHe, 2013-03-29, use dynamic arrays 
+---
+> !             October 2012, Jiang Jinrong, for 2D parallel
+> ! Reviewed: ZhangHe, 2011-11-19
+> !           ZhangHe, 2012-10-31
+> !           ZhangHe, 2013-03-27
+> ! Modified: ZhangHe, 2013-03-29, use dynamic arrays 
+34,35c34,35
+<    use perf_mod, only : t_startf, t_stopf ! zhh  2013-02-06
+<    use tendency,  only: DU, DV, DT   !debug
+---
+>    use perf_mod, only : t_startf, t_stopf ! zhh  2013-02-06
+>    use tendency,  only: DU, DV, DT   !debug
+41,43c41,43
+<    real(r8), allocatable :: UL(:,:,:)
+<    real(r8), allocatable :: VL(:,:,:)
+<    real(r8), allocatable :: TL(:,:,:)
+---
+>    real(r8), allocatable :: UL(:,:,:)
+>    real(r8), allocatable :: VL(:,:,:)
+>    real(r8), allocatable :: TL(:,:,:)
+46,51c46,51
+< ! allacate temporary arrays
+<    allocate ( PsaL(NX,beglatdyn:endlatdyn) )
+<    allocate ( PstL(NX,beglatdyn:endlatdyn) )
+<    allocate ( UL(NX,beglev:endlev,beglatdyn:endlatdyn) )
+<    allocate ( VL(NX,beglev:endlev,beglatdyn:endlatdyn) )
+<    allocate ( TL(NX,beglev:endlev,beglatdyn:endlatdyn) )
+---
+> ! allacate temporary arrays
+>    allocate ( PsaL(NX,beglatdyn:endlatdyn) )
+>    allocate ( PstL(NX,beglatdyn:endlatdyn) )
+>    allocate ( UL(NX,beglev:endlev,beglatdyn:endlatdyn) )
+>    allocate ( VL(NX,beglev:endlev,beglatdyn:endlatdyn) )
+>    allocate ( TL(NX,beglev:endlev,beglatdyn:endlatdyn) )
+62c62
+<          DO K = beglev,endlev 
+---
+>          DO K = beglev,endlev 
+95c95
+<             DO K = beglev,endlev 
+---
+>             DO K = beglev,endlev 
+114c114
+< 
+---
+> 
+119c119
+<          DO K = beglev,endlev 
+---
+>          DO K = beglev,endlev 
+141c141
+<             DO K = beglev, endlev
+---
+>             DO K = beglev, endlev
+157,158c157,158
+<       call t_startf('smooth in nlitti')
+< 
+---
+>       call t_startf('smooth in nlitti')
+> 
+163,164c163,164
+< 
+<       call t_stopf('smooth in nlitti')
+---
+> 
+>       call t_stopf('smooth in nlitti')
+166,172c166,172
+< ! deallocate
+<    deallocate(PsaL)
+<    deallocate(PstL)
+<    deallocate(UL)
+<    deallocate(VL)
+<    deallocate(TL)
+< 
+---
+> ! deallocate
+>    deallocate(PsaL)
+>    deallocate(PstL)
+>    deallocate(UL)
+>    deallocate(VL)
+>    deallocate(TL)
+> 
+diff -r src/dynamics/iap/prognostics.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/prognostics.F90
+19c19
+< !            : Zhang He, 2013-04-15, uxy, vxy, txy --> u3xy, v3xy, t3xy, added Uxy, Vxy 
+---
+> !            : Zhang He, 2013-04-15, uxy, vxy, txy --> u3xy, v3xy, t3xy, added Uxy, Vxy 
+69,70c69,70
+<    real(r8), allocatable :: Uxy(:,:,:)        ! u-wind component
+<    real(r8), allocatable :: Vxy(:,:,:)        ! v-wind component
+---
+>    real(r8), allocatable :: Uxy(:,:,:)        ! u-wind component
+>    real(r8), allocatable :: Vxy(:,:,:)        ! v-wind component
+106,107c106,107
+<       allocate(Uxy(beglonxy:endlonxy, beglatxy:endlatxy, plev))
+<       allocate(Vxy(beglonxy:endlonxy, beglatxy:endlatxy, plev))
+---
+>       allocate(Uxy(beglonxy:endlonxy, beglatxy:endlatxy, plev))
+>       allocate(Vxy(beglonxy:endlonxy, beglatxy:endlatxy, plev))
+134,135c134,135
+<       Uxy(:,:,:)        = inf
+<       Vxy(:,:,:)        = inf
+---
+>       Uxy(:,:,:)        = inf
+>       Vxy(:,:,:)        = inf
+diff -r src/dynamics/iap/scanslt.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics/iap/scanslt.F90
+822c822
+<       do k = beglev,endlev
+---
+>       do k = beglev,endlevp
+Only in /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics: kdpfnd1.F90
+Only in /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/dynamics: scanslt.F90
+diff -r src/physics/cam/cam_diagnostics.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/physics/cam/cam_diagnostics.F90
+41a42,43
+> !wangty modify
+> #ifdef wrf
+44c46,48
+< 
+---
+> #else
+>    diag_physvar_ic
+> #endif
+373a378,379
+> !wangty modify
+> #ifdef wrf
+375c381
+<    ! juanxiong he 
+---
+>    ! juanxiong he
+377,378d382
+<    call addfld ('CO2     ','ug/m3     ',pver ,'A','CO2',phys_decomp)
+< 
+382a387
+> #endif
+406,410d410
+<    !---------------------------------------------
+<    ! juanxiong he
+<    !---------------------------------------------
+<    call add_default ('CO2     ', 1, ' ')
+< 
+422a423,424
+> !wangty modify
+> #ifdef wrf
+424c426
+<    ! juanxiong he 
+---
+>    ! juanxiong he
+429a432
+> #endif
+671c674
+<     use co2_cycle,          only: c_i, co2_transport, co2_readFlux_fuel
+---
+>     use co2_cycle,          only: c_i, co2_transport
+674d676
+<     use phys_buffer,        only: pbuf,pbuf_get_fld_idx ! juanxiong he
+684,687d685
+<     ! juanxiong he   
+<     real(r8), pointer, dimension(:,:) :: aerosol3d 
+<     integer :: aidx
+<  
+727,741c725,729
+<     !---------------------------------------------
+<     ! juanxiong he
+<     !---------------------------------------------
+< !    if (co2_transport()) then
+< !       do m = 1,4
+< !          call outfld(trim(cnst_name(c_i(m)))//'_BOT', state%q(1,pver,c_i(m)), pcols, lchnk)
+< !       end do
+< !    end if
+< 
+<     ftem(:ncol,:) = state%q(:ncol,:,pcnst)
+<     call outfld('CO2', ftem,  pcols, lchnk)
+< 
+<     !---------------------------------------------
+<     ! juanxiong he
+<     !---------------------------------------------
+---
+>     if (co2_transport()) then
+>        do m = 1,4
+>           call outfld(trim(cnst_name(c_i(m)))//'_BOT', state%q(1,pver,c_i(m)), pcols, lchnk)
+>        end do
+>     end if
+879c867,870
+<           state%rh(:ncol,:) = ftem(:ncol,:)  ! added by juanxiong he
+---
+> !wangty modify
+> #ifdef wrf
+>           state%rh(:ncol,:) = ftem(:ncol,:)  ! added by juanxiong he          
+> #endif
+927a919,920
+> !wangty modify
+> #ifdef wrf
+928a922
+> #endif
+1255c1249
+<    use co2_cycle,        only: c_i, co2_transport, data_flux_fuel, co2_readflux_fuel ! juanxiong he
+---
+>    use co2_cycle,        only: c_i, co2_transport
+1261a1256,1257
+> !wangty modify
+> #ifdef wrf
+1262a1259,1261
+> #else
+>     type(cam_in_t),  intent(in) :: cam_in
+> #endif
+1293a1293,1294
+> !wangty modify
+> #ifdef wrf
+1297d1297
+< #ifdef wrf   
+1308a1309,1310
+> !wangty modify
+> #ifdef wrf
+1318c1320
+<       
+---
+> #endif
+1320a1323
+> 
+1358,1360d1360
+<     !------------------------------------------------------------------
+<     ! juanxiong he
+<     !------------------------------------------------------------------
+1362,1367c1362,1364
+<           call outfld(sflxnam(pcnst+1),cam_in%fco2_ocn, pcols, lchnk)
+<           call outfld(sflxnam(pcnst+3),cam_in%fco2_lnd, pcols, lchnk)
+<           call outfld(sflxnam(pcnst+4),cam_out%co2prog, pcols, lchnk)
+<     end if
+<     if (co2_readFlux_fuel) then
+<           call outfld(sflxnam(pcnst+2),data_flux_fuel%co2flx, pcols, lchnk)
+---
+>        do m = 1,4
+>           call outfld(sflxnam(c_i(m)), cam_in%cflx(:,c_i(m)), pcols, lchnk)
+>        end do
+1368a1366
+> 
+1672,1673c1670,1672
+< 
+< !=============================================================================== 
+---
+> !wangty modify
+> #ifdef wrf
+> !===============================================================================
+1676,1677c1675,1676
+< !----------------------------------------------------------------------- 
+< ! 
+---
+> !-----------------------------------------------------------------------
+> !
+1711c1710
+<        call aqsat (state(lchnk)%t    ,state(lchnk)%pmid  ,tem2    ,ftem    ,pcols   , &
+---
+>        call aqsat (state(lchnk)%t    ,state(lchnk)%pmid  ,tem2    ,ftem ,pcols   , &
+1726c1725
+< 
+---
+> #endif
+diff -r src/physics/cam/co2_cycle.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/physics/cam/co2_cycle.F90
+49c49
+< public c_i                           ! global index for new constituents,juanxiong he
+---
+> public c_i                           ! global index for new constituents
+52c52
+< public c_names                       ! constituent names, juanxiong he
+---
+> 
+55c55
+< logical :: co2_flag            = .true.      ! true => turn on co2 code, namelist variable
+---
+> logical :: co2_flag            = .false.      ! true => turn on co2 code, namelist variable
+57c57
+< logical :: co2_readFlux_fuel   = .true.      ! true => read co2 flux from fuel, namelist variable
+---
+> logical :: co2_readFlux_fuel   = .false.      ! true => read co2 flux from fuel, namelist variable
+59c59
+< character(len=256) :: co2flux_fuel_file = '/work1/jjr/wangyz/data/inputdata/atm/cam/ggas/co2flux_fossil_1751-2006-monthly_iap_c20170807w.nc' ! co2 flux from fossil fuel            
+---
+> character(len=256) :: co2flux_fuel_file = 'unset' ! co2 flux from fossil fuel                       
+135,139d134
+< !---------------------------------------------
+< ! juanxiong he
+< !---------------------------------------------
+<     call cnst_add(c_names(4), c_mw(4), c_cp(4), c_qmin(4), c_i(4),longname=c_names(4), mixtype='dry')
+<  
+141,143c136,138
+< !   do i = 1, ncnst
+< !      call cnst_add(c_names(i), c_mw(i), c_cp(i), c_qmin(i), c_i(i), longname=c_names(i), mixtype='dry')
+< !   end do
+---
+>    do i = 1, ncnst
+>       call cnst_add(c_names(i), c_mw(i), c_cp(i), c_qmin(i), c_i(i), longname=c_names(i), mixtype='dry')
+>    end do
+205d199
+<     use constituents, only: pcnst
+212,220c206,211
+< !--------------------------------------------------------
+< ! juanxiong he
+< !--------------------------------------------------------
+<     do m = 1, ncnst-1
+< !       call cnst_get_ind(c_names(m), mm)
+< 
+< !       call addfld(trim(cnst_name(mm))//'_BOT', 'kg/kg',     1, 'A', trim(cnst_longname(mm))//', Bottom Layer', phys_decomp)
+< !       call addfld(cnst_name(mm),               'kg/kg',  pver, 'A', cnst_longname(mm), phys_decomp)
+<        call addfld(sflxnam(pcnst+m),            'kg/m2/s',   1, 'A', trim(c_names(m))//' surface flux', phys_decomp)
+---
+>     do m = 1, ncnst
+>        call cnst_get_ind(c_names(m), mm)
+> 
+>        call addfld(trim(cnst_name(mm))//'_BOT', 'kg/kg',     1, 'A', trim(cnst_longname(mm))//', Bottom Layer', phys_decomp)
+>        call addfld(cnst_name(mm),               'kg/kg',  pver, 'A', cnst_longname(mm), phys_decomp)
+>        call addfld(sflxnam(mm),                 'kg/m2/s',   1, 'A', trim(cnst_name(mm))//' surface flux', phys_decomp)
+222,223c213,214
+< !       call add_default(cnst_name(mm), 1, ' ')
+<        call add_default(sflxnam(pcnst+m),   1, ' ')
+---
+>        call add_default(cnst_name(mm), 1, ' ')
+>        call add_default(sflxnam(mm),   1, ' ')
+227c218
+< !       call add_default('TM'//trim(cnst_name(mm)), 1, ' ')
+---
+>        call add_default('TM'//trim(cnst_name(mm)), 1, ' ')
+229,230d219
+<        call addfld(sflxnam(pcnst+ncnst),           'kg/m2/s',   1, 'A', 'CO2 OUT', phys_decomp)
+<        call add_default(sflxnam(pcnst+ncnst),   1, ' ')
+Only in src/physics/cam: co2_cycle.F90.bk
+diff -r src/physics/cam/constituents.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/physics/cam/constituents.F90
+40c40,43
+<   integer, parameter, public :: pcnst  = PCNST      ! number of advected constituents (including water vapor)
+---
+>   integer, parameter, public :: pcnst  = PCNST      ! number of advected constituents (including water vapor)
+> !--------------zhh test ----------------
+> !!  integer, parameter, public :: pcnst  = 3      ! number of advected constituents (including water vapor)
+> !--------------zhh test ----------------
+69c72
+<    character(len=16), public :: sflxnam   (pcnst+4)   ! names of surface fluxes of species, juanxiong he
+---
+>    character(len=16), public :: sflxnam   (pcnst)   ! names of surface fluxes of species
+352,358c355,356
+<     !-------------------------------------
+<     ! juanxiong he
+<     !-------------------------------------
+<        sflxnam(pcnst+1)     = 'SFCO2_OCN'
+<        sflxnam(pcnst+2)     = 'SFCO2_FFF'
+<        sflxnam(pcnst+3)     = 'SFCO2_LND'
+<        sflxnam(pcnst+4)     = 'CO2_OUT'
+---
+> 
+> 
+diff -r src/physics/cam/diffusion_solver.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/physics/cam/diffusion_solver.F90
+644c644
+<         
+---
+> 
+diff -r src/physics/cam/ghg_data.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/physics/cam/ghg_data.F90
+86,92d85
+< !----------------------------------------------------------------     
+< ! juanxiong he
+< !----------------------------------------------------------------     
+<      if (cnst_names(iconst) == 'CO2') then
+<       pbuf(pbuf_idx(iconst))%fld_ptr(1,:,:,lchnk,1)=rmwco2*state(lchnk)%q(:,:,PCNST)
+<      End if
+< 
+diff -r src/physics/cam/hb_diff.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/physics/cam/hb_diff.F90
+792,795d791
+<     ! juanxiong he
+<     if (ktopblmn.eq.0) then 
+<     print *,ktopblmn,ktopbl(i),z(i,k),pblh(i)
+<     end if
+diff -r src/physics/cam/physics_types.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/physics/cam/physics_types.F90
+54a55
+> #ifdef wrf
+55a57
+> #endif
+62a65
+> #ifdef wrf
+63a67
+> #endif
+450,456d453
+<        ! juanxiong he
+<        do i=1,ncol
+<        do k=1,pver
+<        if(isnan(state%zm(i,k))) print *,'s=',i,k,state%s(i,k)
+<        end do
+<        end do
+< 
+diff -r src/physics/cam/physpkg.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/physics/cam/physpkg.F90
+92,95d91
+< !---------------------------- test zhh ------------------------
+< !   if (masterproc) print*, 'At beginning of sub. phys_inidat'
+< !---------------------------- test zhh ------------------------
+< !
+110,112d105
+< !---------------------------- test zhh ------------------------
+< !     if (masterproc) print*, 'success infld SGH'
+< !---------------------------- test zhh ------------------------
+121,123d113
+< !---------------------------- test zhh ------------------------
+< !     if (masterproc) print*, 'success infld SGH30'
+< !---------------------------- test zhh ------------------------
+129,131d118
+< !---------------------------- test zhh ------------------------
+< !     if (masterproc) print*, 'success infld LANDM_COSLAT'
+< !---------------------------- test zhh ------------------------
+136,138d122
+< !---------------------------- test zhh ------------------------
+< !!   if (masterproc) print*, 'found =', found
+< !---------------------------- test zhh ------------------------
+142,144d125
+< !---------------------------- test zhh ------------------------
+< !!     print*, 'PBLH initialized to 0'
+< !---------------------------- test zhh ------------------------
+147,150d127
+< !---------------------------- test zhh ------------------------
+< !   if (masterproc) print*, 'success infld PBLH'
+< !---------------------------- test zhh ------------------------
+< 
+157,159d133
+< !---------------------------- test zhh ------------------------
+< !   if (masterproc) print*, 'success infld TPERT'
+< !---------------------------- test zhh ------------------------
+174,176d147
+< !---------------------------- test zhh ------------------------
+< !   if (masterproc) print*, 'success infld QPERT'
+< !---------------------------- test zhh ------------------------
+196,199d166
+< 
+< !---------------------------- test zhh ------------------------
+< !   if (masterproc) print*, 'success infld CUSH'
+< !---------------------------- test zhh ------------------------
+222,224d188
+< !---------------------------- test zhh ------------------------
+< !   if (masterproc) print*, 'success infld CLOUD'
+< !---------------------------- test zhh ------------------------
+233,235d196
+< !---------------------------- test zhh ------------------------
+< !!   if (masterproc) print*, '--------QCWAT1'
+< !---------------------------- test zhh ------------------------
+238,244d198
+< !---------------------------- test zhh ------------------------
+< !!   if (masterproc) print*, '--------QCWAT2'
+< !!   if (masterproc) print*, 'found =', found
+< !!   if (masterproc) print*, 'pcols =', pcols, '  dim1name =', dim1name
+< !!   print*, 'begchunk =', begchunk, 'endchunk =', endchunk
+< !!   if (masterproc) print*, 'begchunk =', begchunk, '  endchunk =', endchunk
+< !---------------------------- test zhh ------------------------
+248,250d201
+< !---------------------------- test zhh ------------------------
+< !!     if (masterproc) print*, '--------QCWAT3'
+< !---------------------------- test zhh ------------------------
+258,260d208
+< !---------------------------- test zhh ------------------------
+< !!   if (masterproc) print*, '--------QCWAT4'
+< !---------------------------- test zhh ------------------------
+264,266d211
+< !---------------------------- test zhh ------------------------
+< !!   if (masterproc) print*, 'success infld QCWAT'
+< !---------------------------- test zhh ------------------------
+300,302d244
+< !---------------------------- test zhh ------------------------
+< !   if (masterproc) print*, 'success infld ICCWAT'
+< !---------------------------- test zhh ------------------------
+342,344d283
+< !---------------------------- test zhh ------------------------
+< !   if (masterproc) print*, 'success infld CLDLIQ'
+< !---------------------------- test zhh ------------------------
+694,696c633,637
+<    call t_startf ('chk_en_gmean')
+<    call check_energy_gmean(phys_state, pbuf, ztodt, nstep)
+<    call t_stopf ('chk_en_gmean')
+---
+>    if(.not. ideal_phys) then   !zhh 2017-07-21
+>       call t_startf ('chk_en_gmean')
+>       call check_energy_gmean(phys_state, pbuf, ztodt, nstep)
+>       call t_stopf ('chk_en_gmean')
+>    end if
+746a688,696
+> !======================== zhh debug 2012-02-09 =======================
+> !         if (c==1155) then 
+> !            print*, '----------------- before tphysbc -------------------'
+> !            print*, 'phys_state(1155)%q(8,1,17) =', phys_state(1155)%q(8,1,17)
+> !!            print*, 'phys_state(1155)%q(8,1,:) =', phys_state(1155)%q(8,1,:)
+> !            print*, 'phys_state(1155)%pdeldry(8,1) =', phys_state(1155)%pdeldry(8,1)
+> !            print*, '-----------------------------------------------------'
+> !         end if
+> !======================== zhh debug 2012-02-09 =======================
+877d826
+<    use ppgrid,         only: pver, pverp !juanxiong he
+896d844
+<    integer :: i,k !juanxiong he
+932,938c880,887
+<        ! juanxiong he
+<        do i=1,ncol
+<        do k=1,pver
+<        if(isnan(phys_state(c)%zm(i,k))) print *,'zm=',i,k,c
+<        end do
+<        end do
+< 
+---
+> !======================== zhh debug =======================
+> !!      if (c==2049) then 
+> !!         print*, '----------------- before tphysac -------------------'
+> !!         print*, 'phys_state(2049)%t(15,1) =', phys_state(2049)%t(15,1), ' phys_state(2049)%v(15,1) =', phys_state(2049)%v(15,1)
+> !!         print*, 'phys_tend(2049)%dtdt(15,1) =', phys_tend(2049)%dtdt(15,1), ' phys_tend(2049)%dvdt(15,1) =', phys_tend(2049)%dvdt(15,1)
+> !!         print*, '-----------------------------------------------------'
+> !!      end if
+> !======================== zhh debug =======================
+941a891,898
+> !======================== zhh debug =======================
+> !!      if (c==2049) then 
+> !!         print*, '----------------- after tphysac -------------------'
+> !!         print*, 'phys_state(2049)%t(15,1) =', phys_state(2049)%t(15,1), ' phys_state(2049)%v(15,1) =', phys_state(2049)%v(15,1)
+> !!         print*, 'phys_tend(2049)%dtdt(15,1) =', phys_tend(2049)%dtdt(15,1), ' phys_tend(2049)%dvdt(15,1) =', phys_tend(2049)%dvdt(15,1)
+> !!         print*, '-----------------------------------------------------'
+> !!      end if
+> !======================== zhh debug =======================
+944a902,904
+> !======================== zhh debug =======================
+> !!   stop
+> !======================== zhh debug =======================
+diff -r src/physics/cam/radae.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/physics/cam/radae.F90
+1183,1184d1182
+<           ! juanxiong he
+<           if(isnan(abstot(i,k1,k2))) print *,'abstot=',abso(i,1),abso(i,2),abso(i,3),abso(i,4),abstrc(i)
+1618,1619d1615
+<           ! juanxiong he
+<           ! print *,'********radabs************'
+3628,3629d3623
+<      if(isnan(aco22)) print *,'aco22=',func(du21,dbetc1),func(du22,dbetc1),func(du23,dbetc2),tw(i,4) ! juanxiong he
+<      if(isnan(aco22)) print *,'aco22-abplnk=',tcfc3,tcfc6,sqti(i),abplnk1(1,i,k2) ! juanxiong he
+3636d3629
+<      if(isnan(abstrc(i))) print *,'abstrc=',ach4,aco21,aco22 ! juanxiong he
+4264d4256
+<             if(isnan(abplnk1(wvl,i,k))) print *,'abplnk1=',tint(i,k),exp(f3(wvl)/tint(i,k)),i,k
+diff -r src/physics/cam/radiation.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/physics/cam/radiation.F90
+871,881d870
+<        ! juanxiong he
+<           do k=1,pver
+<            do i=1,ncol
+<             if(isnan(qrl(i,k))) print*,'qrl=',co2_col_mean(i),cfc11(i,k),cfc12(i,k),n2o(i,k),ch4(i,k),o3(i,k)
+<             if(isnan(qrl(i,k))) print*,'odap=',odap_aer(i,k,:)
+<             if(isnan(qrl(i,k))) print*,'cloud=',emis(i,k),cld(i,k),lwupcgs(i)
+<             if(isnan(qrl(i,k))) print*,'pressure=',pbr(i,k),pnm(i,k),state%lnpmid(i,k),state%lnpint(i,k)
+<             if(isnan(qrl(i,k))) print*,'sp_hum=',sp_hum(i,k),pmxrgn(i,k),nmxrgn(i)
+<            end do
+<           end do
+< 
+978,979d966
+<        ! juanxiong he
+<        if(isnan(ptend%s(i,k))) print *,'radiation_heat=',qrs(i,k),qrl(i,k),state%pdel(i,k),state%t(i,k)
+diff -r src/physics/cam/radlw.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/physics/cam/radlw.F90
+258,260d257
+<    nullify(abstot)
+<    nullify(absnxt)
+<    nullify(emstot)
+275,280d271
+<    ! juanxiong he
+<    do k=1,pverp
+<    do i=1,ncol
+<    if(tint(i,k).lt.10) print *,'tint=',tint(i,k),lwupcgs(i)/1000,i,k
+<    end do
+<    end do
+405,406d395
+<          if(isnan(fsul(i,k))) print *,'fsul=',abstot_3d(i,k,pverp,lchnk),tmp(i)
+<          if(isnan(fsdl(i,k))) print *,'fsdl=',tplnke(i),emstot(i,k),s(i,k,k+1)
+410c399,400
+< ! Store the downward emission from level 1 = total gas emission * sigma! t**4.  fsdl does not yet include all terms
+---
+> ! Store the downward emission from level 1 = total gas emission * sigma
+> ! t**4.  fsdl does not yet include all terms
+1045,1046d1034
+<          if(isnan(ful(i,k))) print *,'ful=',ful(i,k) ! juanxiong he
+<          if(isnan(fdl(i,k))) print *,'fdl=',fdl(i,k) ! juanxiong he
+diff -r src/physics/cam/tphysac.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/physics/cam/tphysac.F90
+133,142d132
+< ! juanxiong he
+<    nullify(teout)
+<    nullify(tini) 
+<    nullify(cld)
+<    nullify(kvh) 
+<    nullify(qini) 
+<    nullify(cldliqini) 
+<    nullify(cldiceini) 
+<    nullify(dtcore) 
+<    nullify(ast) 
+214a205
+> 
+diff -r src/physics/cam/tphysbc.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/physics/cam/tphysbc.F90
+335,341d334
+<        ! juanxiong he
+<        do i=1,ncol
+<        do k=1,pver
+<        if(isnan(state%zm(i,k))) print *,'convect_deep_tend=zm=',i,k
+<        end do
+<        end do
+< 
+361,367d353
+<        ! juanxiong he
+<        do i=1,ncol
+<        do k=1,pver
+<        if(isnan(state%zm(i,k))) print *,'convect_shallow_tend=zm=',i,k
+<        end do
+<        end do
+< 
+447,452d432
+<        ! juanxiong he
+<        do i=1,ncol
+<        do k=1,pver
+<        if(isnan(state%zm(i,k))) print *,'microp_tend=zm=',i,k
+<        end do
+<        end do
+480,485d459
+<        ! juanxiong he
+<        do i=1,ncol
+<        do k=1,pver
+<        if(isnan(state%zm(i,k))) print *,'convect_deep_tend_2=zm=',i,k
+<        end do
+<        end do
+510,516d483
+<        ! juanxiong he
+<        do i=1,ncol
+<        do k=1,pver
+<        if(isnan(state%zm(i,k))) print *,'diag_conv=zm=',i,k
+<        if(isnan(state%s(i,k))) print *,'diag_conv=s=',i,k
+<        end do
+<        end do
+542,548d508
+<        ! juanxiong he
+<        do i=1,ncol
+<        do k=1,pver
+<        if(isnan(state%zm(i,k))) print *,'radiation_tend=zm=',i,k
+<        if(isnan(state%s(i,k))) print *,'radiation_tend=s=',i,k
+<        end do
+<        end do
+554,559d513
+<        ! juanxiong he
+<        do i=1,ncol
+<        do k=1,pver
+<        if(isnan(state%zm(i,k))) print *,'radiation_tend111=zm=',i,k,state%t(i,k)
+<        end do
+<        end do
+572,577d525
+<        ! juanxiong he
+<        do i=1,ncol
+<        do k=1,pver
+<        if(isnan(state%zm(i,k))) print *,'srfxfer=zm=',i,k
+<        end do
+<        end do
+diff -r src/physics/cam/vertical_diffusion.F90 /work2/jjr/wangty/CAS_ESM_wtywrf/models/atm/cam/src/physics/cam/vertical_diffusion.F90
+733,738d732
+<        ! juanxiong he
+<        do i=1,ncol
+<        do k=1,pver
+<        if(isnan(state%zm(i,k))) print *,'zm=',state%zm(i,k),i,k
+<        end do
+<        end do

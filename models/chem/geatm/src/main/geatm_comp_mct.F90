@@ -1,0 +1,5497 @@
+!----------------------------------------------------------------------------
+!    This program bases on the original GEATM.  It refactorys the original
+!    GEATM with the new modulization and stratification. The new top layer
+!    program is added to embed GEATM wihtin CESM. The output method is 
+!    is replaced with the new method to make sure the efficiency.
+!     
+!    Juanxiong He, 2013-06-30
+!    Juanxiong He, 2017-03-19
+!----------------------------------------------------------------------------
+
+module geatm_comp_mct
+  use mct_mod
+  use esmf_mod
+  use seq_flds_mod
+  use seq_flds_indices
+  use seq_cdata_mod
+  use seq_infodata_mod
+  use seq_timemgr_mod
+  use seq_comm_mct, only:seq_comm_iamroot,seq_comm_iamin
+  use shr_kind_mod     , only: r8 => shr_kind_r8, cl=>shr_kind_cl
+  use shr_file_mod     , only: shr_file_getunit, shr_file_freeunit, &
+                               shr_file_setLogUnit, shr_file_setLogLevel, &
+                               shr_file_getLogUnit, shr_file_getLogLevel, &
+                               shr_file_setIO
+  use shr_sys_mod      , only: shr_sys_flush, shr_sys_abort
+
+ use geatm_vartype 
+ use naqpms_varlist
+ use naqpms_gridinfo
+ use apm_varlist
+ use aqchem_varlist
+ use met_fields
+ use work_vars
+ use inout3
+ use cputime
+ use module_gtiming
+ use smpsulf_var, only: igassmp,allo_smpchem_var
+
+  public :: geatm_init_mct
+  public :: geatm_run_mct
+  public :: geatm_final_mct
+
+  private :: geatm_import_mct
+  private :: geatm_export_mct
+  private :: geatm_domain_mct
+  private :: geatm_SetgsMap_mct
+ 
+  integer, parameter  :: nlen = 256     ! Length of character strings
+  integer :: kdusttop,hh ! the parameter used both in geatm_init_mct and geatm_run_mct
+  integer :: start_ymd,start_tod,end_ymd,end_tod
+  logical :: read_met ! input.dat
+  integer :: io_form ! input.dat
+
+!
+! Time averaged counter for flux fields
+!
+  integer :: avg_count
+
+  type wrfgrid_c
+  integer :: num_wrfgrid_soil_levels, num_wrfgrid_levels, num_wrfgrid_lat, num_wrfgrid_lon
+  real(8),dimension(:),allocatable::sigma
+  real(8),dimension(:,:,:),allocatable::u3d,v3d,t3d,qv3d,qi3d,qc3d,rh3d,p3d,z3d,taucldv3d,taucldi3d,&
+                                           soilt,soilm,soildepth,soilthick, &
+                                           dust01,dust02,dust03,dust04,sea01,sea02,sea03,sea04,&
+                                           bc,oc,so4,nh4,ppm,no3,h2o2,so2,dms,nh3
+  real(8),dimension(:,:),allocatable::ps,ht,swdown,raincv,rainncv,clflo,clfmi,clfhi,&
+                                   pblh,rmol,ust,u10,v10,t2,rh2,&
+                                   tsk,xland, sst, xice, snowh
+  end type wrfgrid_c
+
+  type camgrid_c
+  integer :: num_camgrid_soil_levels, num_camgrid_levels, num_camgrid_lat, num_camgrid_lon
+  real(8),dimension(:,:,:),allocatable::u3d,v3d,t3d,qv3d,qi3d,qc3d,rh3d,p3d,z3d,taucldv3d,taucldi3d,&
+                                           soilt,soilm,soildepth,soilthick,&
+                                           dust01,dust02,dust03,dust04,sea01,sea02,sea03,sea04,&
+                                           bc,oc,so4,nh4,ppm,no3,h2o2,so2,dms,nh3                                     
+  real(8),dimension(:,:),allocatable::xlat,xlon,ps,ht,swdown,raincv,rainncv,clflo,clfmi,clfhi,&
+                                   pblh,rmol,ust,u10,v10,t2,rh2,&
+                                   tsk,xland, sst, xice, snowh
+  end type camgrid_c
+  type(camgrid_c):: camgrid
+  type(wrfgrid_c):: wrfgrid  
+
+contains
+
+subroutine geatm_init_mct(EClock, cdata_ge, x2c_c1, x2c_c2, c2x_c, geatm_feedback)
+    use geatm_vartype
+    include 'mpif.h'
+ 
+    type(ESMF_Clock),intent(in)                 :: EClock
+    type(seq_cdata), intent(inout)              :: cdata_ge
+    type(mct_aVect), intent(inout)              :: x2c_c1
+    type(mct_aVect), intent(inout)              :: x2c_c2
+    type(mct_aVect), intent(inout)              :: c2x_c   
+
+    type(mct_gsMap), pointer   :: gsMap_ge
+    type(mct_gGrid), pointer   :: dom_ge
+    type(seq_infodata_type),pointer :: infodata
+    logical :: geatm_feedback
+   
+    integer :: GEATMID    
+    integer :: mpicom_atm
+    integer :: lsize    
+    logical :: exists           ! true if file exists    
+    integer :: stepno           ! time step                      
+    integer :: dtime_sync       ! integer timestep size
+    integer :: currentymd       ! current year-month-day
+    integer :: dtime            ! time step increment (sec)
+    integer :: geatm_cpl_dt       ! driver geatm coupling time step 
+    integer :: dtime_geatm        ! Time-step increment (sec)
+    integer :: ymd              ! CAM current date (YYYYMMDD)
+    integer :: yr               ! CAM current year
+    integer :: mon              ! CAM current month
+    integer :: day              ! CAM current day
+    integer :: tod              ! CAM current time of day (sec)
+    integer :: ref_ymd          ! Reference date (YYYYMMDD)
+    integer :: ref_tod          ! Reference time of day (sec)
+    integer :: stop_ymd         ! Stop date (YYYYMMDD)
+    integer :: stop_tod         ! Stop time of day (sec)
+    integer :: shrlogunit,shrloglev ! old values
+    logical,save :: first_time = .true.
+    character(len=SHR_KIND_CS) :: calendar  ! Calendar type
+    character(len=SHR_KIND_CS) :: starttype ! infodata start type
+    integer :: lbnum
+    integer :: i, j, k, ne, iiaer, ig, ierr, iisize,mpi_ierr
+    integer :: iulog
+    integer,dimension(:),allocatable :: cpuid
+    integer,dimension(2) ::     buffer
+    integer status(MPI_STATUS_SIZE)
+
+    character*40, dimension(102) :: GC_Unit,GC_NAME
+    integer :: ifunit95,ifunit96,ifunit97,ifunit98,ifunit99
+    integer, dimension(8,200) :: ISNDMRK    
+    integer :: iwritegas
+    integer :: numTGRV
+    integer :: itt,it1,iPrintTermGas,IPSMARK
+    integer :: idm,iemittype
+    integer :: ixy,i0,i02,i03,i04,i05,i00,ia,is,ism,ib5,jb5,igg,itsp,iduc,i05c
+    integer :: iwb,ieb,jsb,jeb,ne1
+    integer :: iaersp,iaerbin,i04aer
+    integer :: i059,i0510,i0511,i0512,i0513,i0514,i0515,i0516
+    integer :: i03_1,i03p1,i0_1,i04_so2,i04_hno3,i05_1,i05_2
+    real :: dt,dt_naqpms,dt_cbmz,dcost
+    integer :: iia,ii,iii,ikl,ikk,IR,icpu
+    integer :: ictg,iz
+    integer :: ipoint,ipoint1B,ipoint1E,ipoint1
+    integer :: jpoint,jpoint1B,jpoint1E,jpoint1
+    integer :: np,ib,IPS,ibeibei,ips1,ip,jp
+    integer :: ifunit,imonthEmit,ilay_ems,iapm,igo,kk
+    integer :: ifindit,ifindnum
+    integer :: NSNDMRK,NPSR
+    integer :: ifadsm
+    integer :: nspe_sm
+    integer :: lx0,ly0,lx1,ly1
+    integer :: IXX,IXC
+    integer :: iopen,irechgt,km,loop
+
+    integer :: slength
+    integer :: iyear,imonth,idate,ihour,iminuate,isecond
+    TYPE(esmf_Time) :: current_time,end_time
+    type(esmf_TimeInterval) :: off  
+
+    include 'apm_parm.inc'
+    include 'chm1.inc'
+    include 'gas1.inc'
+    include 'params1'
+    include 'tuv.inc'
+
+    call shr_file_getLogUnit (shrlogunit)
+    call shr_file_getLogLevel(shrloglev)
+    call shr_file_setLogUnit (iulog)
+
+       call seq_cdata_setptrs(cdata_ge, ID=GEATMID, mpicom=mpicom_atm,&
+                              ntasks=numprocs,gsMap=gsMap_ge, dom=dom_ge, infodata=infodata)
+
+       
+if(first_time) then
+	    
+       if (seq_comm_iamroot(GEATMID)) then
+          inquire(file='gea_modelio.nml',exist=exists)
+          if (exists) then
+             iulog = shr_file_getUnit()
+             call shr_file_setIO('gea_modelio.nml',iulog)
+          endif
+          write(iulog,*) "GEATM initialization"
+       endif
+
+       call mpi_comm_rank( mpicom_atm, myid, ierr )       
+       local_com = mpicom_atm
+       print *,'***mpi_communicator_geatm***',mpicom_atm,numprocs,myid
+
+!--------------------------------------------------------------------
+!   parameter reading
+!--------------------------------------------------------------------   
+! juanxiong he, read cam param
+ OPEN(31,FILE='input.dat',form='formatted')    
+    read(31,*) camgrid%num_camgrid_lon, camgrid%num_camgrid_lat, &
+               camgrid%num_camgrid_levels, camgrid%num_camgrid_soil_levels
+    read(31,*)read_met
+    read(31,*)geatm_feedback
+    read(31,*)io_form
+ close(31)
+
+ naqpms_dir='.'
+
+ OPEN(31,FILE='apm-input.dat',form='formatted')
+ read(31,*)iyear1,imonth1,idate1,ihour1
+ iminute1=0
+ read(31,*)nest
+ read(31,*) lglbrun
+ read(31,*) lgaschemsmp
+ if(lgaschemsmp) then
+   iopt_gaschem=2
+ else
+   iopt_gaschem=1
+ endif
+
+ read(31,*) lapm   ! shun : flag for apm
+ if(lapm) laer=.false.
+ if(lgaschemsmp) lapm=.false.
+ read(31,*) ctdway ! shun : the way coated mass to be processed
+ read(31,*) laqchem
+ read(31,*) lnaqpms_pso4
+ read(31,*) lnaqpms_ems
+ read(31,*) lrd_lai
+ 
+ agtflag='apm3sp'
+ if(.not.lapm) then
+   agtflag='efolding'
+ endif
+
+ if(nest.gt.5)then
+   print *,'the maxinum domains are set as five(5),please revise it'
+   stop 
+ endif
+
+ read(31,*)ntt
+ do i=1,nest
+ read(31,*)ntbeg(i),ntend(i)
+ enddo
+
+ !-------------calculate end time-------------------
+ start_ymd=iyear1*10000+imonth1*100+idate1
+ start_tod=ihour1*3600
+ call  ESMF_timeset(current_time, yy=iyear1, mm=imonth1, dd=idate1, h=ihour1, m=0,s=0) 
+ slength=ntt*3600
+ call  ESMF_TimeIntervalSet( off, s=slength) 
+ end_time = current_time +  off
+ call  ESMF_timeget(end_time, yy=iyear, mm=imonth, dd=idate, h=ihour, m=iminuate,s=isecond) 
+ end_ymd=iyear*10000+imonth*100+idate
+ end_tod=ihour*3600+iminuate*60+isecond
+ !-------------calculate end time-------------------
+
+ read(31,*) flagadv
+ read(31,*)idifvert      ! to select the diffusion shceme 1: local 2: acm2
+ read(31,*)ichemgas      ! to select gas chem
+ read(31,*)idry      ! to select drydepostion scheme 1: constant 2: calculated
+ if(idry.eq.2) then
+   ddep_flag='W89'
+ elseif(idry.eq.3) then
+   ddep_flag='Z03'
+ endif
+
+ read(31,*)iglobal       ! to select global conditions
+ read(31,*)imodis        ! to set modis landuse(1);0 is USGS landuse
+ read(31,*)press         ! to read the height(hpa) of NAQPMS top conditions from global
+ read(31,*)hh            ! the top height of naqpms
+ read(31,*)nzz
+
+!chenxsh@20181206
+ read(31,*) degres
+
+ do ne=1,nest
+ read(31,*)nx(ne),ny(ne),nz(ne),nxlo(ne),nylo(ne)
+ enddo
+
+ read(31,*) (dtstep_syn(ne),ne=1,nest)  !nhfq_updtmet
+ read(31,*) (nhfq_updtmet(ne),ne=1,nest)  !nhfq_updtmet
+ read(31,*) (nhfq_output(ne),ne=1,nest)  !nhfq_updtmet
+ 
+ read(31,*) caveoutclab
+
+ read (31,*) ratio       ! to determine the dx and dy resolution ratio between mother and child domian 
+ read(31,*) isize        ! to determine the size of aerosols
+ read(31,*) iaer         ! to determine the type of aerosols
+
+ allocate(gravel(isize,iaer))
+
+ do iiaer=1,iaer
+   read(31,*)(gravel(iisize,iiaer),iisize=1,isize)
+ enddo
+
+! LUO (2009)
+!  11.348127E-04,43.162551E-04,10.8355374E-03,37.5083238E-03 !Sea Salt Gravel
+!  1.8913545E-04,7.1937585E-04,1.8059229E-03,6.2513873E-03 !Dust Gravel
+! Wang (1997)
+! 4.01E-05, 1.46E-04, 5.34E-04, 1.96E-03 ! DUST Gravel 
+
+ ALLOCATE (MSIZDIS(ISIZE+1),MSIZDID(ISIZE+1)) ! SEA SALT AND DUST PARTICLES SIZE DISTRIBUTION
+ READ(31,*) (MSIZDID(IISIZE),IISIZE = 1, ISIZE+1 ) ! DUST
+ READ(31,*) (MSIZDIS(IISIZE),IISIZE = 1, ISIZE+1 ) ! SEA
+ 
+ KDUSTTOP = 6 ! DUST CAN TRANSPORTED TO 1KM TOP
+
+! chenxsh@20181206
+ nxxppt  = 360.0/degres
+ nxxppt2 = 2*nxxppt
+ nxxpptb = nxxppt/2
+
+
+ IPOLARNUM = nxxppt2 ! chenxsh@20181206
+
+ !!!!!!!!!!!!!!!!!!!!!
+ ! For Source Mark
+ read(31,*)(ifsm(ne),ne=1,nest)    ! if we need Source Mark ?
+ ifsmt=0
+ do ne=1,nest
+    ifsmt=ifsm(ne)+ifsmt
+ enddo
+ read(31,*)idmSet,iSrcDefined,ismMax,iHgtLMax
+              ! idmSet to define how many species
+              ! iSrcDefined to define how many locations
+              ! how many sourceis to mark; it should be ismMax=3+IsrcDefined*iHgtLMax
+              ! iHgtLMax to define how many types of emissions
+ ismMaxHere=3+IsrcDefined*iHgtLMax
+ if(ismMax.ne.ismMaxHere)then
+        print *, 'ismMax should be equel to 3+IsrcDefined*iHgtLMax'
+        print *, ismMax,ismMaxHere
+        stop
+ endif
+
+ allocate(igMark(idmSet))
+ allocate(iaMarkAer(idmSet))
+ allocate(iaMarkSiz(idmSet))
+                          ! to define how many types of emissions
+ allocate(TmpSM(ismMax))
+ do idm=1,idmSet
+   read(31,*)igMark(idm),iaMarkAer(idm),iaMarkSiz(idm) 
+ enddo
+                          ! to define how many locations
+                          ! how many sourceis to mark
+ close(31)
+
+ CLOSE(999)
+ OPEN(999,FILE='emitinput.dat')
+ READ(999,*)  NEMIT    ! THE NUMBER OF EMISSION SPECIES
+ READ(999,*)  NLAY_EM  ! THE TYPE OF EMISSION 
+ ALLOCATE(IPIG(NEMIT))
+ READ(999,*) (IPIG(I),I=1,NEMIT) ! THE IG OFEMISSIONS SPECE IN MODEL
+
+ allocate( emt2d_zfrc(nzz,NLAY_EM) ); emt2d_zfrc=0
+ allocate( cfmode(NLAY_EM) )
+
+  
+ do ictg=1,NLAY_EM
+   if(NLAY_EM.eq.nzz) then
+     read(999,*) cfmode(ictg),(emt2d_zfrc(iz,ictg),iz=1,nzz) ! shun
+   else
+     read(999,*) cfmode(ictg),(emt2d_zfrc(iz,ictg),iz=1,4) ! shun
+   endif
+ enddo
+
+ if(.not.allocated(ratioem1)) then
+    allocate( ratioem1(nzz) &
+             ,ratioem2(nzz) &
+             ,ratioem3(nzz) &
+             ,ratioem4(nzz) &
+             ,ratioem5(nzz) &
+             ,ratioem6(nzz))
+ endif
+
+      if(.not.allocated(emsfrc)) allocate(emsfrc(NEMIT,NLAY_EM))
+      if(.not.allocated(ipig_ems))  allocate(ipig_ems(NEMIT))
+    ! shun emit.sen
+    if(lnaqpms_ems) then
+      if(myid.eq.0) print*,'lnaqpms_ems=',lnaqpms_ems
+      call get_funit(iemsfunit)
+      open(iemsfunit,file=trim(naqpms_dir)//'/emit/emsfrc.txt')
+      read(iemsfunit,*) emsflag,emsallfrc
+      if(emsflag.eq.'all') then
+        emsfrc=emsallfrc
+      elseif(emsflag.eq.'spc') then
+        do idxems=1,NEMIT
+          read(iemsfunit,*) ipig_ems(idxems) &
+                           ,(emsfrc(idxems,ilay_ems),ilay_ems=1,NLAY_EM)
+        enddo
+      endif
+      close(iemsfunit)
+    endif
+ 
+  igas = 102
+  igasCBM = 74 
+  iopen = 1
+  iprecise = 1  ! 1 best precise, 2 the second
+  ikosaline = 1 ! 1 on-line       2 off-line
+  imasskeep = 1 ! 1 to keep mass-keeping
+
+  lprocess=.false.
+  iprocess=24   ! number of process analysis 
+
+  time = 0
+  NSOA = 6      ! TOTAL NUMBERS OF SOA
+  ndustcom =  11 ! dust aerosols compositions numbers
+  nseacom = 8  ! sea salt compositions numbers
+
+!------------------------------------------------------
+
+! shun@20151215
+ iedgas=igasCBM
+
+ if(lgaschemsmp) then
+   iedgas=igassmp
+ endif
+
+ itotalspe=iedgas+iaer*isize
+  !!!!!!!!!!!!!!!!!
+  ! for Source Mark
+  if(ifsmt>0)then
+   itotalspe=itotalspe+ismMax*idmSet
+   print *,'itotalspe=',itotalspe
+  endif
+ ! for sea salt and dust composition
+   itotalspe = itotalspe + nseacom*isize + ndustcom*isize
+
+!shun@20151214
+!===========================================
+  if(laerv2) then
+    ist_aerom=iedgas+1
+    ied_aerom=iedgas+naersp*naerbin
+    ntr_aerom=naersp*naerbin
+    itotalspe = itotalspe + naersp*naerbin
+  endif
+!===========================================
+
+ !> itotalspe including apm
+  IF(lapm) THEN
+    itotalspe = itotalspe + NSO4 + NSEA + NDSTB + NBCOCT + 4 +   1 &
+               +nbincb+nbincb
+ !                       salfate  seasalt  dust    BCOC coating suferic vapor
+  ENDIF
+ !<
+
+ isrnum = itotalspe
+ 
+ if(lglbrun) then
+   itotalspe=itotalspe+1+1 ! +u+v
+ endif
+
+ allocate(atestR(nzz,itotalspe),atestS(nzz,itotalspe))
+ allocate(atestR0(itotalspe),atestS0(itotalspe))
+
+ if(lglbrun) then
+    nv4poltr=12
+    ALLOCATE(ATESTR4W(NZZ,1000),ATESTS4W(NZZ,1000))
+    ALLOCATE(ATESTR4W0(nv4poltr),ATESTS4W0(nv4poltr))
+  endif
+
+!--------------------------------------------------------------------
+!    parallel
+!--------------------------------------------------------------------   
+  if(lglbrun) then ! shun@20161206
+   MEMARK=4*NUMPROCS
+   ALLOCATE(STAMARK(MEMARK))
+  endif
+
+  allocate(sxc(0:numprocs-1,nest))
+  allocate(exc(0:numprocs-1,nest))
+  allocate(syc(0:numprocs-1,nest))
+  allocate(eyc(0:numprocs-1,nest))
+
+  cdnum='c000'
+  write(cdnum(2:4),'(i3.3)')myid
+  call get_funit(ifunit99)
+  open(ifunit99,file='out/grid.dat'//cdnum,form='formatted')
+
+  do ne= 1, nest
+ 
+       dims(1,ne) = 0
+       dims(2,ne) = 0
+       call mpi_dims_create( numprocs, 2, dims(1,ne), ierr )
+       call mpi_cart_create( mpicom_atm, 2, dims(1,ne),  &
+                        periods(1,ne), .true.,  &
+                        comm2d(ne), ierr )
+       call mpi_cart_shift( comm2d(ne), 0, 1, nbrleft(ne), nbrright(ne), ierr )
+       call mpi_cart_shift( comm2d(ne), 1, 1, nbrbottom(ne), nbrtop(ne), ierr )
+
+       local_com2d=comm2d(ne)
+       call mpi_comm_rank( comm2d(ne), myid2d, ierr )
+       CALL mpi_cart_coords( comm2d(ne), myid2d, 2, coords(1,ne), ierr )
+       myid_x = coords(1,ne)   ! col task (x)
+       myid_y = coords(2,ne)   ! row task (y)       
+       allocate(procs(0:dims(2,ne)-1,0:dims(1,ne)-1)) ! dims(2,ne) corresponds to ntasks_y
+       procs(myid_y,myid_x)=myid2d
+       if (myid.eq.0) then
+         do i=1,numprocs-1
+            call MPI_Recv(buffer, 2, MPI_INTEGER, i, MPI_ANY_TAG, comm2d(ne), status, mpi_ierr)
+            procs(buffer(1), buffer(2)) = status(MPI_SOURCE)
+         end do
+       else
+         buffer(1) = myid_y
+         buffer(2) = myid_x
+         call MPI_Send(buffer, 2, MPI_INTEGER, 0, myid2d, comm2d(ne), mpi_ierr)
+       end if
+
+       allocate(cpuid(1:numprocs))
+       if(myid2d.eq.0) then
+       ig=0
+       do i=0,dims(1,ne)-1
+       do j=0,dims(2,ne)-1
+         ig=ig+1
+         cpuid(ig)=procs(j,i)
+       end do
+       end do
+       endif
+       call MPI_Bcast(cpuid, numprocs, MPI_INTEGER, 0, comm2d(ne), mpi_ierr)
+       if(myid.ne.0) then
+       ig=0
+       do i=0,dims(1,ne)-1
+       do j=0,dims(2,ne)-1
+         ig=ig+1
+         procs(j,i)=cpuid(ig)
+       end do
+       end do
+       endif
+       deallocate(cpuid)
+
+  end do ! ne
+!--------------------------------------------------------------------
+!    Initial GEATM VARIABLES
+!-------------------------------------------------------------------- 
+       call initial_geatm_var
+
+!--------------------------------------------------------------------
+!    Initial GRID AND DOMAIN INFO
+!--------------------------------------------------------------------
+  do ne=1,nest
+  if(lglbrun) then 
+   if(myid.eq.0) print*,'kk_glbrun wr_grid ne=',ne
+   if(ne==1.and.numprocs>1)then
+   call exinfo(myid,numprocs,nbrleft(1),nbrright(1),nbrbottom(1),nbrtop(1),&
+              stamark,memark)
+   endif
+   if(numprocs>1)call mpi_barrier( local_com,ierr )
+  end if
+
+  call mpi_cart_get( comm2d(ne), 2, dims(1,ne), periods(1,ne),  &
+                     coords(1,ne), ierr )
+  call mpe_decomp1d( nx(ne), dims(1,ne), coords(1,ne), sx(ne), ex(ne) )
+  call mpe_decomp1d( ny(ne), dims(2,ne), coords(2,ne), sy(ne), ey(ne) )
+  cnx(ne)=nx(ne)
+  cny(ne)=ny(ne)
+  call mpe_decomp1d( cnx(ne), dims(1,ne), coords(1,ne), csx(ne), cex(ne) )
+  call mpe_decomp1d( cny(ne), dims(2,ne), coords(2,ne), csy(ne), cey(ne) )
+
+!--------------------------------------------------------------------
+!    Initial WRFGRID and CAMGRID
+!--------------------------------------------------------------------    
+       call initial_wrfgrid(wrfgrid)
+       call initial_camgrid(camgrid)
+       call init_gea_pio
+
+  !    record GRID AND DOMAIN INFO
+  if(numprocs .gt. 1) call MPI_BARRIER( LOCAL_COM, ierr )
+
+  if(myid.eq.0) print*,'kk4 wr_grid ne=',ne
+
+   if(myid == 0 )then
+    cdnum2='d0'
+    write(cdnum2(2:2),'(i1)')ne
+    call get_funit(ifunit98)
+    open(ifunit98,file='out/head.dat'//cdnum2,form='formatted')
+    call get_funit(ifunit97)
+    open(ifunit97,file='out/rhead.dat'//cdnum2,form='formatted')
+    if(ifsmt.gt.0.and.ifsm(ne).eq.1)  then
+     call get_funit(ifunit96)
+     call get_funit(ifunit95)
+     open(ifunit96,file='sm/head.dat'//cdnum2,form='formatted')
+     open(ifunit95,file='sm/rhead.dat'//cdnum2,form='formatted')
+    endif
+    write(ifunit98,11) numprocs, nx(ne), ny(ne), nzz, &   
+                    ntbeg(ne), ntend(ne), isize, iaer
+    write(ifunit97,11) numprocs, nx(ne), ny(ne), nzz, &     
+               ntbeg(ne), ntend(ne)-12, isize, iaer ! restart, Yan,20130507
+
+    if(ifsmt.gt.0.and.ifsm(ne).eq.1)  then
+     write(ifunit96,11) numprocs, nx(ne), ny(ne), nzz, &     !sm/head.dat,Yan,20130710
+               ntbeg(ne), ntend(ne), isize, iaer
+     write(ifunit95,11) numprocs, nx(ne), ny(ne), nzz, &     ! sm/rhead.dat,Yan,20130710
+               ntbeg(ne), ntend(ne)-12, isize, iaer !Yan,20130507
+    endif
+    iwritegas=0
+    do ig=1,igas
+    if(PrintGas(ig)==1)iwritegas=iwritegas+1
+    enddo
+    write(ifunit98,12)iwritegas
+    write(ifunit97,12)igas                       
+    if(ifsmt.gt.0.and.ifsm(ne).eq.1)  then
+     if(ifadsm.eq.1) then  !! chenhs, 20150409
+      write(ifunit96,12)nspe_sm
+     else
+      write(ifunit96,12)igas                               ! sm/head.dat,Yan,20130710
+     endif
+     write(ifunit95,12)igas                               ! sm/rhead.dat,Yan,20130710
+    endif
+
+  12 format(1x,I6,3x,A,3x,A)
+
+    iwritegas=0
+    do ig=1,igas
+     if(PrintGas(ig)==1)then
+       iwritegas=iwritegas+1
+       write(ifunit98,12)iwritegas, GC_NAME(ig), GC_Unit(ig)
+     endif
+     write(ifunit97,12) ig, GC_NAME(ig), GC_Unit(ig) 
+
+     if(ifsmt.gt.0.and.ifsm(ne).eq.1)  then
+       if(ifadsm.ne.1) then   !! chenhs, 20150409
+       write(ifunit96,12) ig, GC_NAME(ig), GC_Unit(ig) ! sm/head.dat,Yan,20130710
+       endif
+       write(ifunit95,12) ig, GC_NAME(ig), GC_Unit(ig) ! sm/rhead.dat,Yan,20130710
+     endif
+    enddo
+
+ ! for Source Mark
+    if(ifsmt.gt.0.and.ifsm(ne).eq.1)  then
+      write(ifunit96,*)ifsmt                                ! sm/head.dat,Yan,20130710
+      write(ifunit95,*)ifsmt                                ! sm/rhead.dat,Yan,20130710
+     if(ifsmt>0)then
+       write(ifunit95,*)idmSet,iSrcDefined,ismMax,iHgtLMax   ! sm/rhead.dat,Yan,20130710
+      if(ifadsm.eq.1) then                            ! chenhs, 20150409
+       write(ifunit96,*)nspe_sm,iSrcDefined,ismMax,iHgtLMax   ! sm/head.dat 
+      else
+       write(ifunit96,*)idmSet,iSrcDefined,ismMax,iHgtLMax   ! sm/head.dat,Yan,20130710
+      endif
+
+     do idm=1,idmSet
+      if(ifadsm.ne.1) then   ! chenhs, 20150409
+      write(ifunit96,*)igMark(idm),iaMarkAer(idm),iaMarkSiz(idm) !sm/head.dat,Yan,20130710
+      endif
+      write(ifunit95,*)igMark(idm),iaMarkAer(idm),iaMarkSiz(idm) !sm/rhead.dat,Yan,20130710
+     enddo
+    endif !ifsmt>0
+ 
+    if(ifadsm.eq.1) then   ! chenhs, 20150409
+     iia=0
+     do idm=1,nspe_sm
+      write(ifunit96,*) idm, iia, iia
+     enddo
+    endif
+
+   close(ifunit96) ! juanxiong he
+   close(ifunit95) ! juanxiong he             
+   endif ! ifsmt.gt.0.and.ifsm(ne).eq.1
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+   close(ifunit98)
+   close(ifunit97)
+    11 format(1x,8I6)                           
+  endif !myid == 0
+
+  write(ifunit99,10)myid, numprocs, sx(ne),ex(ne),ex(ne)-sx(ne)+1, &
+             sy(ne),ey(ne),ey(ne)-sy(ne)+1, ne
+  10 format( "Process ", i3, " of ", i3, " sx-ex-nx: ",  &
+             3I4," sy-ey,ny: ",3I4, ' nest=',i4)
+
+  if(myid.eq.0) print*,'kk6 wr_grid ne=',ne
+
+ enddo
+
+  close(ifunit99)
+
+ IF(NUMPROCS .GT. 1) CALL MPI_BARRIER( LOCAL_COM,IERR )
+  do i=0,numprocs-1
+   cdnum='c000'
+   write(cdnum(2:4),'(i3.3)')i
+   call get_funit(ifunit)
+   open(ifunit,file='out/grid.dat'//cdnum,form='formatted')
+   do ne=1,nest
+    read(ifunit,10)ii, ii, sxc(i,ne),exc(i,ne),ii, &
+             syc(i,ne),eyc(i,ne),ii, ii
+   enddo
+   close(ifunit)
+  enddo
+
+ IF(NUMPROCS .GT. 1) CALL MPI_BARRIER( LOCAL_COM,IERR )
+ if(myid.eq.0) print*,'bf grid.info'
+
+  if(myid==0)then
+   print*,'write grid.info'
+   call get_funit(ifunit)
+   open(ifunit,file='out/grid.info')
+   do ne=1,nest
+    do i=0,numprocs-1
+     write(ifunit,*) i, 'process',  sxc(i,ne),exc(i,ne), syc(i,ne),eyc(i,ne)
+    enddo
+   enddo
+   close(ifunit)
+  endif
+
+ IF(NUMPROCS .GT. 1) CALL MPI_BARRIER( LOCAL_COM,IERR )
+ if(myid.eq.0) print*,'af grid.info'
+
+!==============================================
+ if(lglbrun) then
+  IF(NUMPROCS .GT. 1) CALL MPI_BARRIER( LOCAL_COM,IERR )
+  if(myid.eq.0) then
+     call get_funit(ifunit)
+     open(ifunit,file='out/grid.polar')
+     DO NE=1,NEST
+
+       IF(NE==1) THEN
+
+         DO I=0,NUMPROCS-1
+
+         !!!for South Boundary
+         IF(SYC(I,NE)==1) THEN
+           DO IXX=SXC(I,NE),EXC(I,NE)
+             IF(IXX.LE.nxxpptb) THEN
+               IXC=IXX+nxxpptb
+             ELSE
+               IXC=IXX-nxxpptb
+             ENDIF
+             DO J=0,NUMPROCS-1
+                IF(SYC(J,NE)==1) THEN
+                  IF(IXC.GE.SXC(J,NE).AND.IXC.LE.EXC(J,NE)) THEN
+                    write(ifunit,*) I,J,IXX,IXC,SYC(I,NE)
+                  ENDIF
+                ENDIF
+             ENDDO
+           ENDDO
+         ENDIF
+
+         !!!for North Boundary
+         IF(EYC(I,NE)==NY(NE)) THEN
+           DO IXX=SXC(I,NE),EXC(I,NE)
+             IF(IXX.LE.nxxpptb) THEN
+               IXC=IXX+nxxpptb
+             ELSE
+               IXC=IXX-nxxpptb
+             ENDIF
+             DO J=0,NUMPROCS-1
+               IF(EYC(J,NE)==NY(NE)) THEN
+                 IF(IXC.GE.SXC(J,NE).AND.IXC.LE.EXC(J,NE)) THEN
+                   write(ifunit,*) I,J,IXX,IXC,EYC(I,NE)
+                 ENDIF
+               ENDIF
+             ENDDO
+           ENDDO
+         ENDIF
+
+         ENDDO
+       ENDIF ! NE==1
+     ENDDO ! do  ne
+     close(ifunit)
+ endif ! myid.eq.0
+
+  IF(NUMPROCS .GT. 1) CALL MPI_BARRIER( LOCAL_COM,IERR )
+
+  call get_funit(ifunit)
+  OPEN(ifunit,file='out/grid.polar',form='formatted')
+  DO I=1,IPOLARNUM
+    READ(ifunit,*) (IPOLARMRK(J,I),J=1,5)
+  ENDDO
+  CLOSE(ifunit)
+
+  IF(NUMPROCS .GT. 1) CALL MPI_BARRIER( LOCAL_COM,IERR )
+
+ endif ! lglbrun
+!==================================================================
+
+if(myid.eq.0) print*,'bf prepare my own send-rev'
+
+!  to prepare my own send-rev
+  do ne=1,nest-1
+
+   ! nxlo(ne+1),   nxlo(ne+1)+nx(ne+1)/3
+   ! nylo(ne+1),   nylo(ne+1)+ny(ne+1)/3
+   ! find the botumn line
+   !     [nxlo(ne+1),nylo(ne+1)]-->[nxlo(ne+1)+nx(ne+1)/3,nylo(ne+1)]
+
+  lx0=nxlo(ne+1)
+  ly0=nylo(ne+1)
+  lx1=nxlo(ne+1)+nx(ne+1)/ratio
+  ly1=nylo(ne+1)+ny(ne+1)/ratio
+
+  do iii=1,4    ! 1,south 2,north 3,west 4,east
+   bdysx(iii,ne) = 0
+   bdyex(iii,ne) = -1
+   bdysy(iii,ne) = 0
+   bdyey(iii,ne) = -1
+  enddo
+
+!! south boundary
+  if(ly0 .ge. sy(ne) .and. ly0 .le. ey(ne))then
+    ifindit=1 
+    ifindnum=0
+    do ikl=sx(ne),ex(ne)
+    do ikk = lx0,lx1
+      if(ikk==ikl) then
+         ifindnum=ifindnum+1
+         if(ifindit==1)then
+            bdysx(1,ne)=ikl
+            ifindit=0
+         endif
+      endif
+    enddo
+    enddo
+    if(ifindnum>0) then
+        bdyex(1,ne)=bdysx(1,ne)+ifindnum-1
+        bdysy(1,ne)=ly0
+        bdyey(1,ne)=ly0
+    endif
+  endif
+
+!!! northboundary
+  if(ly1 .ge. sy(ne) .and. ly1 .le. ey(ne))then
+    ifindit=1
+    ifindnum=0
+     do ikl=sx(ne),ex(ne)
+     do ikk = lx0,lx1
+       if(ikk==ikl) then
+         ifindnum=ifindnum+1
+         if(ifindit==1)then
+            bdysx(2,ne)=ikl
+            ifindit=0
+         endif
+       endif
+     enddo
+     enddo
+     if(ifindnum>0) then
+        bdyex(2,ne)=bdysx(2,ne)+ifindnum-1
+        bdysy(2,ne)=ly1
+        bdyey(2,ne)=ly1
+     endif
+  endif
+
+!!! West boundary
+  if(lx0 .ge. sx(ne) .and. lx0 .le. ex(ne))then
+    ifindit=1
+    ifindnum=0
+     do ikl=sy(ne),ey(ne)
+     do ikk = ly0,ly1
+      if(ikk==ikl) then
+         ifindnum=ifindnum+1
+         if(ifindit==1)then
+            bdysy(3,ne)=ikl
+            ifindit=0
+         endif
+      endif
+     enddo
+     enddo
+     if(ifindnum>0) then
+        bdyey(3,ne)=bdysy(3,ne)+ifindnum-1
+        bdysx(3,ne)=lx0
+        bdyex(3,ne)=lx0
+     endif
+  endif
+
+!! East boundary
+  if(lx1 .ge. sx(ne) .and. lx1 .le. ex(ne))then
+    ifindit=1
+    ifindnum=0
+     do ikl=sy(ne),ey(ne)
+     do ikk = ly0,ly1
+       if(ikk==ikl) then
+         ifindnum=ifindnum+1
+         if(ifindit==1)then
+            bdysy(4,ne)=ikl
+            ifindit=0
+           endif
+       endif
+     enddo
+     enddo
+     if(ifindnum>0) then
+        bdyey(4,ne)=bdysy(4,ne)+ifindnum-1
+        bdysx(4,ne)=lx1
+        bdyex(4,ne)=lx1
+     endif
+  endif
+
+enddo ! do nest loop
+
+if(myid.eq.0) print*,'bf check the position(CPU)'
+
+!---------------------------------------------------------------------
+! to check the position(CPU) of the line in  nest domain
+!---------------------------------------------------------------------
+  ! now my id is myid
+  if(numprocs .gt. 1) call mpi_barrier( local_com, ierr )
+
+  cdnum='c000'
+  write(cdnum(2:4),'(i3.3)')myid
+  open(99,file='out/nest.bdy'//cdnum,form='formatted')
+
+        do ne=1,nest-1  ! modified by chenhs for more children domain
+        
+        ! for south and north boundary
+        do iii=1,2
+           if( bdysy(iii,ne) .gt. 0 )then
+              if( bdysx(iii,ne).le. bdyex(iii,ne))then
+               write(99, 201) bdysy(iii,ne),bdysx(iii,ne),bdyex(iii,ne), &
+                              bdyex(iii,ne)-bdysx(iii,ne)+1,&
+                              iii,myid,ne  
+              endif
+           endif
+        enddo
+        
+        do iii=3,4
+        
+           if( bdysx(iii,ne) .gt. 0 )then
+              if( bdysy(iii,ne).le. bdyey(iii,ne))then
+               write(99, 201) bdysx(iii,ne),bdysy(iii,ne),bdyey(iii,ne), &
+                              bdyey(iii,ne)-bdysy(iii,ne)+1,&
+                              iii,myid,ne
+               endif
+            endif
+         enddo
+        
+        enddo
+        
+        close(99)
+        
+        201 format(1x,12i5)
+        
+      if(numprocs .gt. 1)   call mpi_barrier( local_com, ierr )
+
+   NSNDMRK=1
+  do i=0,numprocs-1
+   cdnum='c000'
+   write(cdnum(2:4),'(i3.3)')i
+   open(99,file='out/nest.bdy'//cdnum,form='formatted')
+   do ne=1,500
+    read(99,201,ERR=199,END=199)(ISNDMRK(j,NSNDMRK),j=1,7)
+    NSNDMRK=NSNDMRK+1
+    IF(NSNDMRK.GT.200)THEN
+            print *, '200 so small'
+            STOP 200
+    ENDIF
+   enddo
+   199  close(99)
+  enddo
+
+  NSNDMRK=NSNDMRK-1
+
+  do i=1,NSNDMRK
+   ISNDMRK(8,i)=ISNDMRK(5,i)*1000+ISNDMRK(6,i)*100+ISNDMRK(7,i)
+  enddo
+
+!---------- new
+!---------- to send data from domain ne --> ne + 1
+  cdnum='c000'
+  write(cdnum(2:4),'(i3.3)')myid
+  open(99,file='out/locate.bdy'//cdnum,form='formatted')
+
+    
+  DO IR=1,NSNDMRK
+     ! ISNDMRK(8,IR)
+     !         x--> 7 (CPU) 
+     !         x--> 6 (NE)  Domains
+     !         x--> 5 (boundary number mark: 1 south, 2 north, 3 west, 4 east)
+     !         x--> 4 ( grid numbers in this CPU need to send)
+     !         x--> 3 ( end point )
+     !         x--> 2 ( start point )
+     !         x--> 1 ( location, x or y depends on boundary numbert mark
+ 
+    if( ISNDMRK(7,IR) == myid ) then    
+              !! this CPU has boundary condition to next domain
+      ne = ISNDMRK(6,IR)
+    !south boundary---------------------------------------
+      if(ISNDMRK(5,IR)==1)then   
+         do ipoint=ISNDMRK(2,IR),ISNDMRK(3,IR)   ! These Big Grids need to send
+            ! to put each point to other CPU
+          ipoint1B = (ipoint - nxlo(ne+1))* ratio + 1
+          ipoint1E = (ipoint - nxlo(ne+1))* ratio + ratio
+          !!!!    
+          do ipoint1=ipoint1B,ipoint1E
+            do icpu=0,numprocs-1   ! to check each CPU to receive
+              ! sxc(icpu,ne+1)-->exc(icpu,ne+1)
+              ! syc(icpu,ne+1)-->eyc(icpu,ne+1)
+              if( syc(icpu,ne+1) .eq. 1 )then
+                if(ipoint1.ge.sxc(icpu,ne+1) .and.  &
+                   ipoint1.le. exc(icpu,ne+1))then 
+                        write(99,204)myid,icpu,ipoint,ISNDMRK(1,IR),&
+                                     ISNDMRK(5,IR),ISNDMRK(6,IR), &
+                                     ipoint1, 0
+                                     !ipoint1, syc(icpu,ne+1)
+                endif 
+              endif
+            enddo                  ! to check each CPU to receive
+          enddo 
+          !!!!!
+         enddo                                  ! These Big Grids need to send
+      endif
+     !north boundary---------------------------------------
+      if(ISNDMRK(5,IR)==2)then
+         do ipoint=ISNDMRK(2,IR),ISNDMRK(3,IR)
+            ! to put each point to other CPU
+          ipoint1B = (ipoint - nxlo(ne+1))* ratio + 1
+          ipoint1E = (ipoint - nxlo(ne+1))* ratio + ratio
+          !!!!    
+          do ipoint1=ipoint1B,ipoint1E
+            do icpu=0,numprocs-1
+              ! sxc(icpu,ne+1)-->exc(icpu,ne+1)
+              ! syc(icpu,ne+1)-->eyc(icpu,ne+1)
+              if( eyc(icpu,ne+1) .eq. ny(ne+1) )then
+                if(ipoint1.ge.sxc(icpu,ne+1) .and.  &
+                   ipoint1.le. exc(icpu,ne+1))then
+                        write(99,204)myid,icpu,ipoint,ISNDMRK(1,IR),&
+                                     ISNDMRK(5,IR),ISNDMRK(6,IR), &
+                                     ipoint1, ny(ne+1)+1
+                                     !ipoint1, syc(icpu,ne+1)
+                endif
+              endif
+            enddo           
+           enddo           
+         enddo 
+      endif
+
+      if(ISNDMRK(5,IR)==3 )then   ! west boundary 
+         do jpoint=ISNDMRK(2,IR),ISNDMRK(3,IR)
+            ! to put each point to other CPU
+          jpoint1B = (jpoint - nylo(ne+1))* ratio + 1
+          jpoint1E = (jpoint - nylo(ne+1))* ratio + ratio
+          do jpoint1 = jpoint1B,  jpoint1E
+            do icpu=0,numprocs-1
+              ! sxc(icpu,ne+1)-->exc(icpu,ne+1)
+              ! syc(icpu,ne+1)-->eyc(icpu,ne+1)
+              if( sxc(icpu,ne+1) .eq. 1) then
+                if(jpoint1.ge.syc(icpu,ne+1) .and.  &
+                   jpoint1.le. eyc(icpu,ne+1))then
+                        write(99,204)myid,icpu,ISNDMRK(1,IR),jpoint,&
+                                     ISNDMRK(5,IR),ISNDMRK(6,IR), &
+                                     0,jpoint1
+                                     !sxc(icpu,ne+1),jpoint1
+                endif
+              endif
+            enddo
+            enddo
+         enddo
+      endif
+
+      if(ISNDMRK(5,IR)==4 )then   ! east boundary 
+         do jpoint=ISNDMRK(2,IR),ISNDMRK(3,IR)
+            ! to put each point to other CPU
+          jpoint1B = (jpoint - nylo(ne+1))* ratio + 1
+          jpoint1E = (jpoint - nylo(ne+1))* ratio + ratio
+          do jpoint1 = jpoint1B,  jpoint1E
+            do icpu=0,numprocs-1
+              ! sxc(icpu,ne+1)-->exc(icpu,ne+1)
+              ! syc(icpu,ne+1)-->eyc(icpu,ne+1)
+              if( exc(icpu,ne+1) .eq. nx(ne+1)) then
+                if(jpoint1.ge.syc(icpu,ne+1) .and.  &
+                   jpoint1.le. eyc(icpu,ne+1))then
+                        write(99,204)myid,icpu,ISNDMRK(1,IR),jpoint,&
+                                     ISNDMRK(5,IR),ISNDMRK(6,IR), &
+                                     nx(ne+1)+1,jpoint1
+                                     !sxc(icpu,ne+1),jpoint1
+                endif
+              endif
+            enddo
+           enddo
+         enddo
+      endif
+
+    endif
+  ENDDO     ! DO IR=1,NSNDMRK loop 
+
+ 204 format(1x,8I6)
+  CLOSE(99)
+    
+  if(numprocs .gt. 1) call mpi_barrier( local_com, ierr )
+
+  NPSR=1   !numbers need to send and receive
+  do i=0,numprocs-1
+  cdnum='c000'
+  write(cdnum(2:4),'(i3.3)')i
+  open(99,file='out/locate.bdy'//cdnum,form='formatted')
+  do np=1,2000
+  read(99,204,ERR=399,END=399)IISCPU(NPSR),IIRCPU(NPSR),&
+     IsLocX(NPSR),IsLocY(NPSR),IsSNWE(NPSR),IsNest(NPSR), &
+     IrLocX(NPSR),IrLocY(NPSR) 
+     !         x--> 6 (NE)  Domains
+     !         x--> 5 (boundary number mark: 1 south, 2 north, 3 west, 4 east)
+     !         x--> 4 ( grid numbers in this CPU need to send)
+     !         x--> 3 ( end point )
+     !         x--> 2 ( start point )
+     !         x--> 1 ( location, x or y depends on boundary numbert mark
+  NPSR = NPSR + 1
+  IF(NPSR.GT.4000)THEN
+           print *, '4000 so small'
+           STOP 4000
+         ENDIF
+  enddo
+  399  close(99)
+  enddo
+
+  NPSR = NPSR - 1
+  
+  if(myid == 0 )then
+      open(99,file='out/needsend.dat')
+      write(99,*)NPSR
+      do ne=1,nest-1
+      do ib=1,4
+      do np=1,NPSR
+      if(IsNest(np)==ne .and. IsSNWE(np) == ib )then
+      write(99,204)IISCPU(np),IIRCPU(np),IsLocX(np),IsLocY(np), &
+                   IsSNWE(np),IsNest(np),IrLocX(np),IrLocY(np) 
+      endif
+      enddo
+      enddo
+      enddo
+      close(99)
+  endif
+       
+!=-=-=-=-=---------------------------------------------=-=-=-=
+
+if(myid.eq.0) print*,'af needsend.dat'
+
+do ne=1,nest
+  if(numprocs .gt. 1)then
+     call MPI_TYPE_VECTOR( ey(ne)-sy(ne)+3, 1, ex(ne)-sx(ne)+3, &
+                           MPI_REAL, stride(ne), ierr )
+     call MPI_TYPE_COMMIT( stride(ne), ierr )
+  endif
+enddo
+
+
+if(myid.eq.0) print*,'end mpi'
+        
+!--------------------------------------------------------------------
+!   Initial AVECT, added by Juanxiong He
+!--------------------------------------------------------------------
+       ! Initialize MCT gsMap, domain and attribute vectors
+       ! initial processors map
+       call geatm_SetgsMap_mct(wrfgrid, mpicom_atm, GEATMID, gsMap_ge )
+       lsize = mct_gsMap_lsize(gsMap_ge, mpicom_atm)
+       ! initial domain       
+       call geatm_domain_mct(wrfgrid, lsize, gsMap_ge, dom_ge )
+
+       !
+       ! Initialize MCT attribute vectors
+       !             
+        call mct_aVect_init(x2c_c1, rList=seq_flds_x2ge_fields, lsize=lsize)
+        call mct_aVect_zero(x2c_c1)
+
+        call mct_aVect_init(x2c_c2, rList=seq_flds_x2ge_fields, lsize=lsize)
+        call mct_aVect_zero(x2c_c2)
+
+        call mct_aVect_init(c2x_c, rList=seq_flds_ge2x_fields, lsize=lsize)
+        call mct_aVect_zero(c2x_c)
+
+!--------------------------------------------------------------------
+!    Initial FIELD 
+!--------------------------------------------------------------------
+do ne=1,nest
+  mem_per_block(ne) = (ex(ne)-sx(ne)+3)*(ey(ne)-sy(ne)+3)
+enddo
+
+call allo_naqpms_var(nx,ny,nzz,nest,sx,ex,sy,ey,mem_per_block &
+                    ,igas,IAER,ISIZE,ndustcom,nseacom &
+                    ,ifsmt,ifsm,idmSet,ismMax,igMark &
+                    ,NLAY_EM,lprocess,iprocess,PrintTermGas &
+                    ,mem2d,mem3d,mem4d,mem5d,mem2dgas,mem3daer,mem_emt2d )
+call allo_met_var(nx,ny,nzz,nest,sx,ex,sy,ey,mem_per_block,lrd_lai)
+call allo_grid_var(nx,ny,nzz,nest,sx,ex,sy,ey,mem_per_block) 
+call allo_tmpwork_var(nx,ny,nzz,nest,sx,ex,sy,ey,mem_per_block &
+                     ,igas,IAER,ISIZE,ndustcom,nseacom &
+                     ,ifsmt,ifsm,idmSet,ismMax,igMark &
+                     ,imasskeep )
+if(lgaschemsmp) then
+ call allo_smpchem_var(lgaschemsmp,nx,ny,nzz,nest,sx,ex,sy,ey,mem_per_block)
+endif
+
+!============================================================================|
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++|
+!> shun : apm memory and location of first element for apm vars in each layer
+
+IF(lapm) THEN ! apm flag
+
+ if(myid.eq.0) print*,'run apm'
+
+ call allo_apm(nx,ny,nzz,nest,ctdway,sx,ex,sy,ey,mem_per_block)
+
+ call get_funit(ifunit)
+ open(ifunit,file=trim(naqpms_dir)//'/namelist.apm')
+ read(ifunit,apm_lvar)
+ read(ifunit,apm_ldyn)
+ read(ifunit,apm_sensitivity)
+ close(ifunit)
+ ls2bcoc=.not.ls2sulf
+
+ call  apm_basic_var(naqpms_dir)
+
+ENDIF ! apm flag
+!< end of apm memory allocation
+!============================================================================!
+
+call  allo_aqchem(nx,ny,nzz,nest,sx,ex,sy,ey,mem_per_block)
+
+!=============================================================================|
+
+call initialize_naqpms( myid,iyear1,imonth1,idate1,ihour1,iminute1 &
+                  ,nest,nzz,nx,ny,nz,sx,ex,sy,ey,ne &
+                  ,igas,isize,iaer &
+                  ,ndustcom &
+                  ,ifsmt,ifsm,idmSet,ismMax,igMark )
+
+do ne=1,nest
+iitime = (ntbeg(ne)-1)*3600
+call getnewdate( iyear1,imonth1,idate1,ihour1,iitime  &
+               &,iyear2,imonth2,iday2, ihour2,iminute2 )
+call naqpms_tracer_output &
+ & ( myid &
+ &  ,iyear2,imonth2,iday2,ihour2,iminute2 &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,mem2d,tropp &
+ &  ,mem3d &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,PrintGas )
+enddo
+
+!==============================================================
+!> apm initial condition
+
+if(lapm) then
+if(myid.eq.0) print*,'Shun : initialize APM'
+DO ne=1,nest
+ !> shun : initialize apm vars if nessary (lapm=.true.)
+ IF(lapm.and.lapm_init) then
+    if(.not.lapm_restart) then
+      call apm_ic(myid,lapm,ne,nx,ny,nzz,nest,sy,ey,sx,ex,ip3mem)
+    else
+      if(myid.eq.0) print*,'restart apm'
+      call apm_ic(myid,lapm,ne,nx,ny,nzz,nest,sy,ey,sx,ex,ip3mem)
+      iitime = (ntbeg(ne)-1)*3600
+      call getnewdate( iyear1,imonth1,idate1,ihour1,iitime  &
+                     &,iyear2,imonth2,iday2, ihour2,iminute2)
+      call apm_rst( myid,lapm,ne,nx,ny,nzz,nest,sy,ey,sx,ex,ip3mem &
+                  &,naqpms_dir,iyear2,imonth2,iday2,ihour2 )
+    endif
+ ENDIF
+
+  !cycle
+  !> shun : write apm initial data
+ if(lapm.and.lapm_wr00) then
+  iitime = (ntbeg(ne)-1)*3600    ! in seconds
+  call getnewdate(iyear1,imonth1,idate1,ihour1,iitime, &
+                iyear2,imonth2,iday2, ihour2,iminute2)
+  call wr_apm_var( myid,lapm &
+                  ,iyear2,imonth2,iday2,ihour2,iminute2 &
+                  ,nest,nzz,sx,ex,sy,ey,ne &
+                  ,ip2mem,ip3mem,mem2d,mem3d &
+                  ,u,v,rh1,clw,rnw,RAINCON,RAINNON )
+ endif
+  !<
+ if(lapm_dust00)  then
+   call keep_dust_zero( myid,lapm,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex )
+ endif
+
+ call apm_shun_check( myid,lapm,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+                      ,ip3mem,mem3d,'apm_ic' )
+
+ENDDO
+endif
+!< end of apm initial condition
+!===================================================================
+
+! read model grid information
+call read_gridinfo( myid,nest,sx,ex,sy,ey,nx,ny,nzz )
+
+IF(IMODIS==1) THEN
+do ne=1,nest
+     i0= ip2mem(ne)
+     CALL MODISLAND(myid,land_USE(i0),sx(ne),ex(ne),sy(ne),ey(ne),ne)
+enddo
+ENDIF
+
+do ne=1,nest
+if(myid.eq.0) print*,'dim : ',sx(ne),ex(ne),sy(ne),ey(ne)
+enddo
+
+if(lgaschemsmp) then
+ call read_monthly_oxidants( myid,nest,sx,ex,sy,ey,nx,ny,nzz )
+endif
+
+ first_time=.false.    
+
+else
+!---------------------------------------------------------------------------    
+!  geat or read the initial data, phase = 2
+!---------------------------------------------------------------------------
+
+    !----------------------------------------------------
+    ! added by juanxiong he
+    !----------------------------------------------------
+    open(1000,file='wrfd01.atm.dat',form='unformatted',&
+         access='direct',recl=nx(1)*ny(1),status='old')
+    irechgt=1
+    ! to read SOIL TYPE
+    i0=ip2mem(1)
+    call read2d(myid,FSOIL(i0),sx(1),ex(1),sy(1),ey(1), &
+              nx(1),ny(1),irechgt,1000)
+
+    ! to read VEGETATION FRACTION (%)
+    i0=ip2mem(1)
+    call read2d(myid,FVEG(i0),sx(1),ex(1),sy(1),ey(1), &
+              nx(1),ny(1),irechgt,1000)
+
+    ! read terrain
+    i0=ip2mem(1)
+    call read2d(myid,HGT1(i0),sx(1),ex(1),sy(1),ey(1), &
+              nx(1),ny(1),irechgt,1000)
+       do j= sy(1),ey(1)
+       do i= sx(1),ex(1)
+           km=i0+(ex(1)-sx(1)+3)*(j-sy(1)+1)+i-sx(1)+1
+           HGT1(km)=TERRAIN(km)  ! juanxiong he, use wrfd01.geatm.dat not wrfd01.atm.dat
+           wrfgrid%ht(i,j)=HGT1(km)*1.0_8   
+        end do
+       end do
+    ! the cubic spline interpolation needs the value varys from the large to the small
+    ! Firstly the program reverses the wrfgrid from surface-to-upper to upper-to-surface
+    ! for the sake of cubic spline interpolation.
+    ! At subroutine wrfgrid_to_geatm, the program will reverse the export of wrfgrid to geatm from
+    ! upper-to-surfaceto surface-to-upper.
+    do j=sy(1),ey(1)
+    do k=1,wrfgrid%num_wrfgrid_levels
+    do i=sx(1),ex(1)
+       wrfgrid%z3d(i,k,j) = wrfgrid%sigma(wrfgrid%num_wrfgrid_levels-k+1)*(20000.0-wrfgrid%ht(i,j))+wrfgrid%ht(i,j)
+    enddo
+    enddo
+    enddo
+
+    iminuate1=0
+    call geatm_import_mct(x2c_c1, camgrid, wrfgrid, iyear1, imonth1, iday1, ihour1, iminuate1)
+    !----------------------------------------------------
+    ! added by juanxiong he
+    !----------------------------------------------------
+
+ end if      ! first time
+
+    call shr_file_setLogUnit (shrlogunit)
+    call shr_file_setLogLevel(shrloglev)   
+end subroutine geatm_init_mct
+
+subroutine geatm_run_mct(EClock_aa, EClock, cdata_a, x2c_c1, x2c_c2, c2x_c, geatm_feedback)
+    use geatm_vartype
+    use shr_sys_mod, only: shr_sys_flush
+    
+    include 'mpif.h'
+    ! 
+    ! Arguments
+    !
+    type(ESMF_Clock)            ,intent(in)    :: EClock_aa ! cam
+    type(ESMF_Clock)            ,intent(in)    :: EClock  ! geatm
+    type(seq_cdata)             ,intent(inout) :: cdata_a ! geatm
+    type(mct_aVect)             ,intent(inout) :: x2c_c1   ! cam -> cpl -> geatm  
+    type(mct_aVect)             ,intent(inout) :: x2c_c2   ! cam -> cpl -> geatm
+    type(mct_aVect)             ,intent(inout) :: c2x_c   ! geatm -> cpl -> cam
+    logical :: geatm_feedback
+
+    integer status(mpi_status_size)
+    integer :: ymd, tod, curr_ymd, curr_tod, dtime
+    integer,save ::it1 =1
+    logical :: dosend
+
+    character*40, dimension(102) :: GC_Unit,GC_NAME
+    integer :: ifunit95,ifunit96,ifunit97,ifunit98,ifunit99
+    integer, dimension(8,200) :: ISNDMRK    
+    integer :: ntt,iprocess
+    integer :: numTGRV
+    integer :: itt,iPrintTermGas,IPSMARK
+    integer :: i,j,k,iisize,iiaer,idm,ig,iemittype
+    integer :: ixy,i0,i02,i03,i04,i05,i00,ia,is,ism,ib5,jb5,igg,itsp,iduc,i05c
+    integer :: iwb,ieb,jsb,jeb,ne1
+    integer :: iaersp,iaerbin,i04aer
+    integer :: i059,i0510,i0511,i0512,i0513,i0514,i0515,i0516
+    integer :: i03_1,i03p1,i0_1,i04_so2,i04_hno3,i05_1,i05_2
+    real :: dt,dt_naqpms,dt_cbmz,dcost
+    integer :: iia,ii,iii,ikl,ikk,IR,icpu
+    integer :: ictg,iz
+    integer :: ipoint,ipoint1B,ipoint1E,ipoint1
+    integer :: jpoint,jpoint1B,jpoint1E,jpoint1
+    integer :: np,ib,IPS,ibeibei,ips1,ip,jp
+    integer :: ifunit,imonthEmit,ilay_ems,iapm,igo,kk
+    integer :: ifindit,ifindnum
+    integer :: NSNDMRK,NPSR
+    integer :: ifadsm
+    integer :: nspe_sm
+    integer :: lx0,ly0,lx1,ly1
+    integer :: iminuate3 
+    real*8 :: currdate        ! CAM current time (YYYYMMDDsec)
+    real*8 :: startdate       ! GETAM start time (YYYYMMDDsec)
+    real*8 :: enddate        ! GEATM end time (YYYYMMDDsec)
+ 
+    include 'params1'
+    include 'tuv.inc'
+    include 'apm_parm.inc'
+
+    ! get the next coupling time of CAM 
+    call seq_timemgr_EClockGetData(EClock_aa, curr_ymd=curr_ymd, curr_tod=curr_tod)
+    ! get the next coupling time of GEATM
+    call seq_timemgr_EClockGetData(EClock, curr_ymd=ymd, curr_tod=tod, dtime=dtime)
+!    print *,'GEATM=',ymd,tod,'CAM=',curr_ymd,curr_tod
+    ! get current time of GEATM
+    call seq_timemgr_EClockGetData(EClock, prev_ymd=ymd, prev_tod=tod)
+
+    startdate=start_ymd*1.0_8+start_tod*1.0_8/100000
+    enddate=end_ymd*1.0_8+end_tod*1.0_8/100000
+    currdate=curr_ymd*1.0_8+curr_tod*1.0_8/100000
+    if(myid.eq.0) then
+    print *,'startdate=',startdate,'currdate=',currdate,'enddate=',enddate
+    end if
+
+    if ( startdate.le.currdate.and.currdate.le.enddate) then ! begin the geatm simulation 
+
+    ! Map input from mct to geatm data structure
+    iyear3=ymd/10000
+    imonth3=(ymd-ymd/10000*10000)/100
+    iday3=ymd-ymd/100*100
+    ihour3=tod/3600
+    iminuate3=(tod-tod/3600)/60
+    if(.not.read_met)then
+    call start_gtiming('geatm_import_mct')
+    call geatm_import_mct( x2c_c1, camgrid, wrfgrid, iyear3, imonth3, iday3, ihour3, iminuate3 )
+    call end_gtiming('geatm_import_mct',1, myid)
+    end if
+
+    if(mod(ihour3,6).eq.0) then
+    call output_atm(iyear3,imonth3,iday3,ihour3,1) ! atm
+    end if
+
+    ! to integration for each time step         
+    dosend = .false.
+    do while (.not. dosend)
+!-----------------------------!
+! start time integration loop !
+!-----------------------------!
+
+ lupdt_met = .true.
+
+ iitime = (it1-1)*3600    ! in seconds
+ call getnewdate(iyear1,imonth1,idate1,ihour1,iitime, & 
+                iyear2,imonth2,iday2, ihour2,iminute2)
+                
+    ymd = iyear2*10000 + imonth2*100 + iday2
+    tod = ihour2*3600+iminute2*60
+    dosend = (seq_timemgr_EClockDateInSync( EClock, ymd, tod))                
+
+if(myid.eq.0) then
+write(*,'(a)') '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
+write(*,*) dosend
+write(*,56789) '% Outer Time Loop, Hour = ',it1 &
+    & ,' Time : ',iyear2,'-',imonth2,'-',iday2,'_', ihour2,':',iminute2,' %'
+write(*,'(a)') '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
+endif
+56789 format(a,i3.3,1x,a,i4.4,a,i2.2,a,i2.2,a,i2.2,a,i2.2,a)
+
+! to read data
+loop_nest_rddata : do ne=1,nest ! loop_nest_rddata
+
+  if(it1.ge.ntbeg(ne) .and. it1.le.ntend(ne))then ! time_range_no1
+
+    !> lijie modify to global condition
+    if(iglobal==1.and.mod(ihour2,1)==0) then
+        ! to read global concentration of no2, o3, co
+        call start_gtiming('read global no2 o3 co')
+        call rd_global_conc( myid,iyear2,imonth2,iday2,ihour2,iminute2 &
+                            ,nest,nzz,nx,ny,nz,sx,ex,sy,ey,ne )
+        call end_gtiming('read global no2 o3 co',ne, myid)
+
+    endif  !global
+
+!++++++++++++++++++to  read the meteorological field+++++++++++++++
+if(mod(it1-1+nhfq_updtmet(ne),nhfq_updtmet(ne)).eq.0) then
+   call start_gtiming('read met fields')   
+   if(read_met) then
+   call rd_met( myid,iyear2,imonth2,iday2,ihour2,iminute2 &
+               ,nest,nzz,nx,ny,nz,sx,ex,sy,ey,ne )
+   end if
+   !call write_met(myid,iyear2,imonth2,iday2,ihour2,iminute2 &
+   !            ,nest,nzz,nx,ny,nz,sx,ex,sy,ey,ne )
+   !call cal_dms_emis( myid,iyear2,imonth2,iday2,ihour2,iminute2 &
+   !                  ,nest,nzz,nx,ny,nz,sx,ex,sy,ey,ne,mem2d )
+   call end_gtiming('read met fields',ne, myid)
+endif
+
+!--------------------------------------------------------------
+
+  if(ikosaline==2 .and. ne .lt. 2)then   ! to read kosaemit data (40+x)
+                                         ! ikosaline == 1 online ; 2 offline
+    do k=1,isize
+      i0=ip5mem(1,k,2,ne)   !ip5mem(nzz,isize,iaer,nest)
+      call read2d(myid,aer_src(i0),sx(ne),ex(ne),sy(ne),ey(ne), &
+              nx(ne),ny(ne),irec_as(ne),40+ne)
+    enddo
+
+  endif 
+!----------------------------------------------------------------
+
+  !zifa 2006/07/13/B
+  if(it1.ge.ntbeg(ne).and.it1.le.ntend(ne)) then  !lijie add ! time_range_no2
+    
+  !!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! For Source Mark
+  if(it1==ntbeg(ne) .and. ifsm(ne)==1)then  ! to get source/map
+    call openfileSrcMap(myid,nx(ne),ny(ne),ne)
+    i0=ip2mem(ne)
+    call read2dmap(myid,MapSource(i0),sx(ne),ex(ne),sy(ne),ey(ne), &
+              nx(ne),ny(ne),110+ne)
+  endif 
+  !!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  imonthEmit = imonth2
+
+call start_gtiming('read emission')
+call  naqpms_rd_emfl &
+ & ( myid &
+ &  ,naqpms_dir &
+ &  ,iyear2,imonth2,iday2,ihour2 &
+ &  ,lnaqpms_ems,lfrac_so2_emit &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,NEMIT,NLAY_EM,IPIG,emsfrc &
+ &  ,igas,iaer,isize,nseacom,ndustcom )
+call end_gtiming('read emission',ne, myid)
+  endif ! time_range_no2 if block
+
+
+ ! in outer nest do loop ( read data )
+
+!-----------to find the layer of top conditons from global model and of pbl height----
+
+call start_gtiming('trop_pbltop')
+call cal_trop_pbltop ( myid,ne,nx,ny,nzz,nest,sy,ey,sx,ex,mem2d,ktop,tropp )
+call end_gtiming('trop_pbltop',ne, myid)
+
+!-----------------------------    
+if(numprocs .gt. 1 )then
+
+ call start_gtiming('exchng2')
+
+ call MPI_BARRIER( LOCAL_COM, ierr )
+
+ do k=1,nzz
+   i03=ip3mem(k,ne)
+   call exchng2( myid, u(i03), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+   call exchng2( myid, v(i03), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+
+   call exchng2( myid, dx(i03), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+   call exchng2( myid, dy(i03), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+   call exchng2( myid, dz(i03), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+   call exchng2( myid, roair3d(i03), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+   call exchng2( myid, pzps(i03), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+   call exchng2( myid, t(i03), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+   call exchng2( myid, Plev(i03), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+   i02=ip2mem(ne)
+   call exchng2( myid, mpfac(i02), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+
+   if(imasskeep==1)then
+     call exchng2( myid, kpmass_m1(i03), sx(ne), ex(ne), sy(ne), ey(ne),  &
+              comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+              nbrtop(ne), nbrbottom(ne) )
+   endif
+ enddo
+
+ i02=ip2mem(ne)
+ call exchng2( myid, TERRAIN(i02), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+
+ call exchng2( myid, LAND_USE(i02), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+
+call end_gtiming('exchng2',ne, myid)
+
+endif
+
+  !!! set boundary winds : no gradient boundary condition
+
+   i02=ip2mem(ne)
+   call setwindbound(myid,mpfac(i02),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne))
+   call setwindbound(myid,TERRAIN(i02),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne))
+   call setwindbound(myid,LAND_USE(i02),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne))
+
+
+   do k=1,nzz   ! get boundary
+
+    i03=ip3mem(k,ne)
+    call setwindbound(myid,u(i03),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne))
+    call setwindbound(myid,v(i03),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne))
+
+    call setwindbound(myid,dx(i03),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne))
+    call setwindbound(myid,dy(i03),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne))
+    call setwindbound(myid,dz(i03),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne))
+    call setwindbound(myid,roair3d(i03),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne))
+    call setwindbound(myid,pzps(i03),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne))
+    call setwindbound(myid,t(i03),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne))
+    call setwindbound(myid,Plev(i03),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne))
+
+   enddo
+
+!=================================================================
+if(lglbrun) then
+  if(ne.eq.1) then
+
+    DO IPS=1,IPOLARNUM
+
+      IF(IPOLARMRK(2,IPS)==MYID) THEN  !!! need to send
+        DO K=1,NZZ
+          ITSP=0
+          I0=IP3MEM(K,NE)
+          ITSP=ITSP+1
+          CALL GETVALUE(MYID,U(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(4,IPS),IPOLARMRK(5,IPS),ATESTS4W(K,ITSP))
+          ITSP=ITSP+1
+          CALL GETVALUE(MYID,V(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(4,IPS),IPOLARMRK(5,IPS),ATESTS4W(K,ITSP))
+          ITSP=ITSP+1
+          CALL GETVALUE(MYID,dx(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(4,IPS),IPOLARMRK(5,IPS),ATESTS4W(K,ITSP))
+          ITSP=ITSP+1
+          CALL GETVALUE(MYID,dy(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(4,IPS),IPOLARMRK(5,IPS),ATESTS4W(K,ITSP))
+          ITSP=ITSP+1
+          CALL GETVALUE(MYID,dz(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(4,IPS),IPOLARMRK(5,IPS),ATESTS4W(K,ITSP))
+          ITSP=ITSP+1
+          CALL GETVALUE(MYID,roair3d(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(4,IPS),IPOLARMRK(5,IPS),ATESTS4W(K,ITSP))
+          ITSP=ITSP+1
+          CALL GETVALUE(MYID,pzps(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(4,IPS),IPOLARMRK(5,IPS),ATESTS4W(K,ITSP))
+          ITSP=ITSP+1
+          CALL GETVALUE(MYID,t(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(4,IPS),IPOLARMRK(5,IPS),ATESTS4W(K,ITSP))
+          ITSP=ITSP+1
+          CALL GETVALUE(MYID,Plev(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(4,IPS),IPOLARMRK(5,IPS),ATESTS4W(K,ITSP))
+
+          I0=ip2mem(ne)
+          ITSP=ITSP+1
+          CALL GETVALUE(MYID,mpfac(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(4,IPS),IPOLARMRK(5,IPS),ATESTS4W(K,ITSP))
+          ITSP=ITSP+1
+          CALL GETVALUE(MYID,TERRAIN(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(4,IPS),IPOLARMRK(5,IPS),ATESTS4W(K,ITSP))
+          ITSP=ITSP+1
+          CALL GETVALUE(MYID,LAND_USE(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(4,IPS),IPOLARMRK(5,IPS),ATESTS4W(K,ITSP))
+          if(nv4poltr.ne.ITSP)then
+           print *,'nv4poltr.ne.ITSP',nv4poltr,itsp
+           stop
+          end if
+        ENDDO
+
+        DO K=1,NZZ
+          IPSMARK = IPS + 720 + (k-1)*IPOLARNUM
+          do ibeibei=1,nv4poltr
+            atestS4W0(ibeibei)=atestS4W(k,ibeibei)
+          enddo
+          if(IPOLARMRK(1,IPS).ne.MYID) THEN
+          call MPI_Send(atestS4W0,nv4poltr,MPI_REAL,IPOLARMRK(1,IPS),IPSMARK,comm2d(ne),ierr)
+          end if
+        ENDDO
+      ENDIF
+
+      IF(IPOLARMRK(1,IPS)==MYID) THEN  !!! need to receive
+        DO K=1,NZZ
+         if(IPOLARMRK(2,IPS).ne.MYID) THEN  !!! need to receive
+          IPSMARK = IPS + 720 + (k-1)*IPOLARNUM
+          call MPI_Recv(atestR4W0,nv4poltr,MPI_REAL,IPOLARMRK(2,IPS),IPSMARK,comm2d(ne),status,ierr)
+          do ibeibei=1,nv4poltr
+            atestR4W(k,ibeibei)=atestR4W0(ibeibei)
+          enddo
+         else
+          do ibeibei=1,nv4poltr
+            atestR4W(k,ibeibei)=atestS4W(k,ibeibei)
+          enddo
+         end if
+        ENDDO
+        IF(IPOLARMRK(5,IPS)==1.OR.IPOLARMRK(5,IPS)==NY(NE)) THEN
+          IF(IPOLARMRK(5,IPS)==1) THEN
+              IPP=IPOLARMRK(5,IPS)-1
+          ELSE
+              IPP=IPOLARMRK(5,IPS)+1
+          ENDIF
+          DO K=1,NZZ
+            I0=IP3MEM(K,NE)
+            ITSP=0
+            ITSP=ITSP+1
+            call PUTVALUE(MYID,U(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(3,IPS),IPP,atestR4W(k,ITSP))
+            ITSP=ITSP+1
+            call PUTVALUE(MYID,V(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(3,IPS),IPP,atestR4W(k,ITSP))
+            ITSP=ITSP+1
+            call PUTVALUE(MYID,dx(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(3,IPS),IPP,atestR4W(k,ITSP))
+            ITSP=ITSP+1
+            call PUTVALUE(MYID,dy(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(3,IPS),IPP,atestR4W(k,ITSP))
+            ITSP=ITSP+1
+            call PUTVALUE(MYID,dz(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(3,IPS),IPP,atestR4W(k,ITSP))
+            ITSP=ITSP+1
+            call PUTVALUE(MYID,roair3d(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(3,IPS),IPP,atestR4W(k,ITSP))
+            ITSP=ITSP+1
+            call PUTVALUE(MYID,pzps(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(3,IPS),IPP,atestR4W(k,ITSP))
+            ITSP=ITSP+1
+            call PUTVALUE(MYID,t(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(3,IPS),IPP,atestR4W(k,ITSP))
+            ITSP=ITSP+1
+            call PUTVALUE(MYID,Plev(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(3,IPS),IPP,atestR4W(k,ITSP))
+
+            I0=ip2mem(ne)
+            ITSP=ITSP+1
+            call PUTVALUE(MYID,mpfac(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(3,IPS),IPP,atestR4W(k,ITSP))
+            ITSP=ITSP+1
+            call PUTVALUE(MYID,TERRAIN(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(3,IPS),IPP,atestR4W(k,ITSP))
+            ITSP=ITSP+1
+            call PUTVALUE(MYID,LAND_USE(I0),SX(NE),EX(NE),SY(NE),EY(NE),IPOLARMRK(3,IPS),IPP,atestR4W(k,ITSP))
+          ENDDO
+        ENDIF
+      ENDIF
+
+   ENDDO ! IPS=1,IPOLARNUM
+
+  endif
+endif
+!=================================================================
+    
+! to calculate w
+  i02=ip2mem(ne)
+  do  k=1,nzz
+   i0=ip3mem(k,ne)
+   if(k.gt.1)then
+    i00=ip3mem(k-1,ne)
+   else
+    i00=ip3mem(1,ne)
+   endif
+   call get_w(myid,w(i0),w(i00),u(i0),v(i0),dx(i0),dy(i0),dz(i0), &
+            HGT1(i02),hh,sx(ne),ex(ne),sy(ne),ey(ne),k)
+  enddo
+
+  call calc_zrates( myid,iyear2,imonth2,iday2,ihour2,iminute2 &
+                       ,nest,nzz,nx,ny,nz,sx,ex,sy,ey,ne )
+
+  endif   !! time_range_no1
+
+enddo loop_nest_rddata
+
+! end of reading data block
+
+! in it1_loop
+
+!++++++++++++++++++++++++++++++process analysis++++++++++++++++++++
+  if(lprocess) then
+    GasTermBal = 0.
+    gasOLD = gas
+  endif
+!++++++++++++++++++++++++++++++process analysis++++++++++++++++++++++
+
+! FOR DUST  emissions , dry and wet deposition rate kg/hr/m2
+  DUSTEMISS = 0.0
+  DUSTDRY   = 0.0
+  DUSTWET   = 0.0
+  DUSTGRAV  = 0.0 
+  DUSTDRYSO4 = 0.0
+  DUSTDRYNO3 = 0.0
+  DUSTDRYFeII = 0.0
+  DUSTDRYFeIII = 0.0
+  DUSTWETSO4 = 0.0
+  DUSTWETNO3 = 0.0
+  DUSTWETFeII = 0.0
+  DUSTWETFeIII = 0.0
+  DUSTGRAVSO4 = 0.
+  DUSTGRAVNO3=0.0
+  DUSTGRAVFEII = 0.0
+  DUSTGRAVFEIII =0.0
+
+! FOR SEA SALT EMISSIONS g/m2/hr
+  SEAEMISS = 0.0 
+
+ dt=dtstep_syn(1) ! inseconds = 30 minutes
+! dt=300 ! inseconds = 30 minutes
+
+! start inner time integration loop
+cur_year=iyear2
+cur_month=imonth2
+cur_day=iday2
+cur_hour=ihour2
+cur_minute=iminute2
+cur_second=0
+
+idt_syn=0
+if(myid.eq.0) then
+ print*,'it1=',it1,idt_syn(1),int(3600/dt)
+endif
+
+loop_time_onehour : do itt=1,int(3600/dt)       ! 12*300=3600sec to read data every 1 hour
+
+ if(itt.ne.1) lupdt_met = .false.
+
+!> shun : current time
+ call plus8h( 0,0,int(dt/60.0),0,cur_year,cur_month,cur_day,cur_hour,cur_minute,cur_second )
+
+my_year=cur_year
+my_month=cur_month
+my_day=cur_day
+my_hour=cur_hour
+my_minute=cur_minute
+
+call int22char( 'int2char' &
+               ,cur_year,cur_month,cur_day,cur_hour,cur_minute,cur_second &
+               ,ccyear,ccmonth,ccday,cchour,ccminute,ccsecond,timestr )
+
+time(ne) = (it1-1)*3600 +(itt-1)*dt     ! caculated time
+iitime = time(ne)
+time1hr12dt=time(ne)
+call getnewdate(iyear1,imonth1,idate1,ihour1,iitime, &
+                iyear2,imonth2,iday2,ihour2,iminute2 )
+
+! to calculate data
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+loop_nest_calulation : do ne=1,nest    ! for nest
+
+ndt_syn(ne)=3600.0/dtstep_syn(ne)
+
+if(it1.ge.ntbeg(ne) .and. it1.le.ntend(ne))then ! if cal_ne
+
+if(mod(int(time1hr12dt+dtstep_syn(ne)),int(dtstep_syn(ne))).eq.0) then ! synchronous time step
+      
+idt_syn(ne)=idt_syn(ne)+1
+time(ne) = (it1-1)*3600 + idt_syn(ne)*dtstep_syn(ne)     ! chenxsh@20170210
+iitime = time(ne)
+call getnewdate(iyear1,imonth1,idate1,ihour1,iitime, &
+                iyear2,imonth2,iday2,ihour2,iminute2 )
+
+if(myid.eq.0) then
+ print*,' idt_syn=',idt_syn(ne)
+endif
+
+! unit transfer for putemit
+!------------for gas--------ppb-->ug/m3-------------------------------
+
+call start_gtiming('add emission')
+
+!-----------------------emission--------------------
+!!! 1 anthropogenic 2 Power plant 3 biomass burning 4:biogenic
+!> : emission vertical distribution factor
+
+! shun
+IF(lapm) THEN
+if(lapm_0emt) then
+ call apm_zero_emit ( myid,lapm,ne,nx,ny,nzz,nest,ip3mem,sx,ex,sy,ey )
+endif
+
+call apm_shun_check( myid,lapm &
+ &  ,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,ip3mem,mem3d,'apm_zero_emit' )
+ENDIF ! lapm
+
+  !> shun : apm bcoc and sulf emit
+   IF(lapm) THEN
+    if(lapm_sulf_emit) then
+     call apm_bcoc_sulf_emit &
+       & ( myid &
+       &  ,lapm &
+       &  ,ne,nx,ny,nzz,nest,sx,ex,sy,ey &
+       &  ,igas &
+       &  ,ip3mem &
+       &  ,ip4mem &
+       &  ,ip2memGas,mem2dgas &
+       &  ,NLAY_EM,emt2d_zfrc,cfmode,ip_emit2d,mem_emt2d,emit2d ) 
+     call apm_shun_check &
+       & ( myid &
+       &  ,lapm &
+       &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+       &  ,ip3mem,mem3d &
+       &  ,'apm_bcoc_sulf_emit' )
+    endif
+   ENDIF
+!< end of apm bcoc and sulf emit
+
+call check_naqpms_tracer( myid,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom,'before_putemit' )
+
+call naqpms_put_emit_v2( myid &
+ &  ,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,mem2d,mem3d,GC_MOLWT,igas,iaer,isize,nseacom,ndustcom &
+ &  ,igasCBM,NLAY_EM,ifsm,idmSet,ismMax,igMark )
+
+call check_naqpms_tracer( myid,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom,'after_putemit' )
+
+!stop  'after emttyp'
+
+ !> in if(it1.ge.ntbeg(ne) .and. it1.le.ntend(ne))  block
+
+! ****   PUT DUST AND SEA SALT EMISSIONS 
+! ** SEA SALT EMISSIONS ***
+
+call naqpms_putsalt( myid,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,mem2d,mem3d,igas,iaer,isize,nseacom,ndustcom,MSIZDIS )
+
+! ----- TO CALCULATE THE HEIGHT FACTOR FOR DUST EMNISSIONS
+! TO CALCULATE THE TOTAL EMISSIONS FACTORS(TOTALDUST) BY SCICHINA D, 2011(4):234-242  
+call naqpms_putdust( myid,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,mem2d,mem3d,igas,iaer,isize,nseacom,ndustcom,KDUSTTOP,IMONTH2,SFT,ITT)
+
+ !> shun : apm salt emit
+ IF(lapm) then
+  if(lapm_salt_emit) then
+   i02  = ip2mem(ne)
+   call apm_salt_emit &
+     & ( myid &
+     &  ,lapm &
+     &  ,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex &
+     &  ,iwb,ieb,jsb,jeb &
+     &  ,land_use,u10,v10 &
+     &  ,ip2mem,mem2d &
+     &  ,ip3mem,mem3d )
+   call apm_shun_check &
+     & ( myid &
+     &  ,lapm &
+     &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+     &  ,ip3mem,mem3d &
+     &  ,'apm_salt_emit' )
+  endif
+ ENDIF
+ !< end of apm salt emit
+
+!> shun : apm dust emit
+! dust_emit : ug/(m2 s)
+ IF(lapm) THEN
+  if(lapm_dust_emit) then
+  call apm_dust_emit &
+     & ( myid &
+     &  ,lapm &
+     &  ,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex &
+     &  ,ip2mem,mem2d &
+     &  ,ip3mem,mem3d &
+     &  ,FICE,FSNOW,LAND_USE,FSOIL,FVEG,UST &
+     &  ,SOILT,SOILRH &
+     &  ,T2,RHSFC,U10,V10 &
+     &  ,KDUSTTOP &
+     &  ,DUSTHGTF &
+     &  ,Z0,UST0 )
+
+   call apm_shun_check &
+     & ( myid &
+     &  ,lapm &
+     &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+     &  ,ip3mem,mem3d &
+     &  ,'apm_dust_emit' )
+  endif
+ ENDIF
+!< end of apm dust emit
+
+
+!> shun : put apm emit
+ IF(lapm) THEN
+  if(lapm_emit) then
+    call put_apm_emit &
+     & ( myid &
+     &  ,lapm &
+     &  ,dtstep_syn(ne),ne &
+     &  ,nx,ny,nzz,nest,sx,ex,sy,ey &
+     &  ,dz &
+     &  ,ip3mem,mem3d )
+
+if(lapm_dust00)  then
+ call keep_dust_zero ( myid,lapm,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex )
+endif
+
+call apm_shun_check( myid,lapm,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,ip3mem,mem3d,'apm_put_emit' )
+endif
+ENDIF
+!< end of put apm emit
+!==========================
+
+!------------------------------test for nuclear -----------
+if(ne==8)then
+! ------------------- put emission -----------
+ do k=1,2
+    i03=ip3mem(k,ne)
+    do ia=1,1  ! for nuclear aerosols
+    do is=1,isize
+    i05   = ip5mem(k,is,ia,ne)
+
+       do j=sy(ne),ey(ne)
+       do i=sx(ne),ex(ne)
+       ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+         if(i==20 .and. j == 20 )aer(i05+ixy)=aer(i05+ixy) + 1. 
+       enddo
+       enddo
+    enddo
+    enddo
+  enddo
+!--------------------- life time ------------------
+ dcost = -log(0.001)/(72*3600.)   ! assume 72 hours life time
+ do j = sy(ne),ey(ne)
+ do i = sx(ne),ex(ne)
+      ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+  do k=1,nzz
+    do ia=1,1  ! for nuclear aerosols
+    do is=1,isize
+        i05   = ip5mem(k,is,ia,ne)
+        aer(i05+ixy)=aer(i05+ixy)*exp(-1.*dt*dcost)
+    enddo
+    enddo
+  enddo
+ enddo
+ enddo
+endif
+
+call end_gtiming('add emission',ne, myid)
+
+!--------------------------to get boundary conditions--------------------
+! shun : gas_unit_ppb
+
+if(.not.lglbrun) then
+
+  if(ne == 1 ) then    ! Zifa tested in AS,Dec 27,2003
+!-----------------for global ---------------------------------------
+   do k=1,nzz   ! get boundary
+
+    i03=ip3mem(k,ne)
+    call setwindbound(myid,globalo3(i03),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne))
+    call setwindbound(myid,globalco(i03),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne))
+    call setwindbound(myid,globalno2(i03),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne))
+
+   enddo
+
+   IF(iglobal==1) THEN  !from global model
+    do k=1,nzz   ! get boundary
+      do ig=11,11 ! ozone
+       i04=ip4mem(k,ig,ne)
+       i0=ip3mem(k,ne)
+       call getboundnorth1(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne),ig,globalo3(i0))
+       call getboundsouth(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne),ig,globalo3(i0))
+       call getboundeast(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                        nx(ne),ny(ne), ig,globalo3(i0))
+       call getboundwest(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne),ig,globalo3(i0))
+      enddo    !ig
+      do ig=17,17 ! CO
+       i04=ip4mem(k,ig,ne)
+       i0=ip3mem(k,ne)
+       call getboundnorth1(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne),ig,globalco(i0))
+       call getboundsouth(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne),ig,globalco(i0))
+       call getboundeast(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                        nx(ne),ny(ne), ig,globalco(i0))
+       call getboundwest(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne),ig,globalco(i0))
+      enddo    !ig
+
+      do ig=6,6 ! NO2
+       i04=ip4mem(k,ig,ne)
+       i0=ip3mem(k,ne)
+       call getboundnorth1(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne),ig,globalno2(i0))
+       call getboundsouth(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne),ig,globalno2(i0))
+       call getboundeast(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                        nx(ne),ny(ne), ig,globalno2(i0))
+       call getboundwest(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne),ig,globalno2(i0))
+      enddo    !ig
+   enddo!k
+
+  ELSE  IF(iglobal==2) then  !fix
+!-------------------------------------------------------------------
+
+   do k=1,nzz   ! get boundary 
+     do ig=11,11 ! ozone
+       i04=ip4mem(k,ig,ne)
+       call setboundnorth(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne),ig,45.+float(k)*1.5)
+       call setboundsouth(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne),ig,20.+float(k)*0.8)
+       call setboundeast(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                        nx(ne),ny(ne),ig,25.+float(k)*0.8)
+       call setboundwest(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne),ig,40.+float(k)*1.5,k)
+      enddo    !ig
+      do ig=17,17 ! co
+       i04=ip4mem(k,ig,ne)
+       call setboundnorth(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne),ig,150.-float(k)*5.)
+       call setboundsouth(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne),ig,100.-float(k)*5.)
+       call setboundeast(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                        nx(ne),ny(ne),ig,200.-float(k)*10.)
+       call setboundwest(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                         nx(ne),ny(ne),ig,100.-float(k)*5.,k)
+      enddo !ig co
+
+  enddo   !k
+
+ endif ! iglobal
+
+call check_naqpms_tracer( myid &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom,'after_4bdy' )
+
+ !> shun : apm boundary condition
+ IF(lapm) THEN
+  if(lapm_4bdy) then
+!   if(myid.eq.0) write(*,'(a,i2.2)') 'call apm_4bdy in domain ',ne
+   call apm_4bdy(myid,lapm,ne,nx,ny,nzz,nest,sy,ey,sx,ex,ip3mem) 
+
+   if(lapm_dust00)  then
+    call keep_dust_zero( myid,lapm,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex )
+   endif
+  endif
+ ENDIF
+ !< end of apm boundary condition
+
+ENDIF ! if ne=1
+
+endif ! not lglbrun
+
+if(lapm) then
+call apm_shun_check( myid,lapm,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,ip3mem,mem3d,'apm_4bdy' )
+endif
+
+ !> shun : apm top boundary condition
+ if(ne==1.or.ne==2.or.ne==3.or.ne==4) then
+  IF(lapm) then
+   if(lapm_tbdy) then
+!     if(myid.eq.0) write(*,'(a,i2.2)') 'call apm_tbdy in domain ',ne
+     call apm_tbdy(myid,lapm,ne,nx,ny,nzz,nest,sy,ey,sx,ex,ip3mem)
+   endif
+
+   if(lapm_dust00)  then
+    call keep_dust_zero( myid,lapm,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex )
+   endif
+
+   call apm_shun_check &
+     & ( myid &
+     &  ,lapm &
+     &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+     &  ,ip3mem,mem3d &
+     &  ,'apm_tbdy' )
+ 
+  ENDIF
+ endif
+ !< end of apm top boundary condition
+
+!============================set top boundary by li 05-04-21 ==================
+!--------------------------------global ------------------------------------
+  IF(iglobal==1) THEN
+   if(ne==1.or.ne==2.or.ne==3.or.ne==4) then
+      do k=nzz,nzz
+       do ig=11,11 !Ozone
+        i04=ip4mem(k,ig,ne)
+        if(k==nzz) then  ! for define the top layer
+         i03=ip3mem(k,ne)
+         i0=ip3mem(k,ne)
+         i02=ip2mem(ne) 
+          call setboundtop(myid,ig,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                           nx(ne),ny(ne),globalo3(i0),ne,k,ktop(i02))
+        endif   ! to define the top layer
+       enddo      
+      enddo
+
+
+      do k=nzz,nzz
+       do ig=17,17 !CO
+        i04=ip4mem(k,ig,ne)
+        if(k==nzz) then
+         i03=ip3mem(k,ne)
+         i0=ip3mem(k,ne)
+         i02=ip2mem(ne)
+         call setboundtop(myid,ig,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                           nx(ne),ny(ne),globalco(i0),ne,k,ktop(i02))
+        endif
+       enddo
+      enddo
+
+      do k=nzz,nzz
+       do ig=6,6 !no2
+        i04=ip4mem(k,ig,ne)
+        if(k==nzz) then
+         i03=ip3mem(k,ne)
+         i0=ip3mem(k,ne)
+         i02=ip2mem(ne)
+          call setboundtop(myid,ig,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                           nx(ne),ny(ne),globalno2(i0),ne,k,ktop(i02))
+        endif
+       enddo
+      enddo
+      
+    endif
+  ELSE
+!-------------------------------finish--------------------------------------
+    if(ne==1.or.ne==2.or.ne==3.or.ne==4) then
+      do k=nzz,nzz
+       do ig=11,11
+        i04=ip4mem(k,ig,ne)
+         i03=ip3mem(k,ne)
+         i0=ip2mem(ne)
+         i02=ip2mem(ne)
+         ! topo3=0.0 shun@naqpms_varlist
+          call setboundtop1(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+                           nx(ne),ny(ne),topo3(i0),ne,k,ktop(i02))
+       enddo
+      enddo
+    endif
+ENDIF
+!==============================================================================
+ if(imasskeep==1)then
+   do k=1,nzz   ! get boundary 
+    i03=ip3mem(k,ne)
+    call setboundnorthkpm(myid,kpmass_m1(i03),sx(ne),ex(ne), &
+                         sy(ne),ey(ne), nx(ne),ny(ne),1000.)
+    call setboundsouthkpm(myid,kpmass_m1(i03),sx(ne),ex(ne), &
+                         sy(ne),ey(ne), nx(ne),ny(ne),1000.)
+    call setboundeastkpm(myid,kpmass_m1(i03),sx(ne),ex(ne), &
+                         sy(ne),ey(ne), nx(ne),ny(ne),1000.)
+    call setboundwestkpm(myid,kpmass_m1(i03),sx(ne),ex(ne), &
+                         sy(ne),ey(ne), nx(ne),ny(ne),1000.)
+    enddo
+  endif
+
+call check_naqpms_tracer &
+ & ( myid,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom,'after_tbdy' )
+
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+if(lprocess) then
+   do k=1,nzz
+       do ig=1,iPrintTermGas    ! for gas phase
+           igg=IGGPOS(ig)
+           i04=ip4mem(k,igg,ne)
+           i05=ipGasTermBal(k,1,ig,ne) ! 1, emit
+           call termbal(myid,gasOLD(i04),gas(i04),GasTermBal(i05), &
+            k,sx(ne), ex(ne), sy(ne), ey(ne),nx(ne),ny(ne),dt)
+       enddo
+   enddo
+endif
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+
+!=====================================================================
+!====    to write boundary conditions into next Domain           =====
+!=====================================================================
+
+
+! shun : gas_unit_ppb
+time(ne) = (it1-1)*3600 + idt_syn(ne)*dtstep_syn(ne)     ! chenxsh@20170210
+iitime = time(ne)
+
+!> in inner time integration and nest loop
+
+IF(NE.LE.NEST-1 .and. mod(iitime,int(dtstep_syn(ne))) == 0)THEN ! chenxsh@20170210
+
+!!!!!!-----------------------!!!!!
+  
+  !> shun : mpi_related
+
+  ! following points need to be sent to other CPU
+  !                  need to be got from other CPU
+  DO IPS=1,NPSR
+
+  if(IISCPU(IPS)==myid .and. ne==IsNest(IPS))then   ! need to send
+        i=IsLocX(IPS)
+        j=IsLocY(IPS)
+     do k=1,nzz
+        itsp=0
+        ! for gas speceis
+        do ig=1,iedgas
+          itsp=itsp+1
+          i04 = ip4mem(k,ig,ne)
+     call getvalue(myid,gas(i04),sx(ne),ex(ne),sy(ne),ey(ne), &
+              i,j,atestS(k,itsp))
+        enddo
+
+        ! for aerosols
+        do ia=1,iaer
+        do is=1,isize
+           i05= ip5mem(k,is,ia,ne)
+           itsp=itsp+1
+     call getvalue(myid,aer(i05),sx(ne),ex(ne),sy(ne),ey(ne), &
+              i,j,atestS(k,itsp))
+         enddo
+         enddo
+
+         !!!!!!!!!!!!!!!!!!!!
+         ! for Source Mark
+        if(ifsmt>0)then    ! checking 
+         do idm=1,idmSet
+         do ism=1,ismMax
+            i0=ipSMmem(k,ism,idm,ne)
+            itsp=itsp+1
+      call getvalue(myid,SourceMark(i0),sx(ne),ex(ne),sy(ne),ey(ne), &
+              i,j,atestS(k,itsp))
+         enddo
+         enddo
+        endif
+         !!!!!!!!!!!!!!!!!!!!
+
+        ! for dust and sea salt composition
+        do iduc = 1, nseacom
+        do is =1 , isize
+          i05c=ip5memcs(k,is,iduc,ne)
+          itsp = itsp + 1
+     call getvalue(myid, seacomp(i05c),sx(ne),ex(ne),sy(ne),ey(ne), &
+             i,j,atestS(k,itsp))
+        enddo
+        enddo
+
+        do iduc = 1, ndustcom
+        do is =1 , isize
+          i05c=ip5memc(k,is,iduc,ne)
+          itsp = itsp + 1
+     call getvalue(myid, dustcomp(i05c) ,sx(ne),ex(ne),sy(ne),ey(ne), &
+             i,j,atestS(k,itsp))
+        enddo
+        enddo
+
+        if(laerv2) then
+          include 'aerv2_send_bdy.inc'
+        endif
+
+        !> shun : for apm tracers
+        IF(lapm) THEN
+          include 'apm_send_bdy.inc'
+        ENDIF
+        !<
+
+!===================================================
+        ! for u,v,by chenhs
+if(lglbrun) then
+        i03= ip3mem(k,ne)
+        itsp=itsp+1
+     call getvalue(myid,u(i03),sx(ne),ex(ne),sy(ne),ey(ne), &
+              i,j,atestS(k,itsp))
+        itsp=itsp+1
+     call getvalue(myid,v(i03),sx(ne),ex(ne),sy(ne),ey(ne), &
+              i,j,atestS(k,itsp))
+endif
+!====================================================
+
+     enddo !k,1,nzz
+
+     do k=1,nzz
+       IPSMARK = IPS + 4000 + (k-1) * NPSR
+       do ibeibei=1,isrnum
+        atestS0(ibeibei)=atestS(k,ibeibei)
+       enddo
+       if(myid .ne. IIRCPU(IPS)) then ! pgi
+        call MPI_Send(atestS0,isrnum,MPI_REAL,IIRCPU(IPS),IPSMARK,comm2d(ne),ierr)
+       endif ! pgi
+     enddo 
+
+  endif ! need to send
+
+  if(IIRCPU(IPS)==myid .and. ne == IsNest(IPS) )then   ! need to receive
+
+    do k=1,nzz
+      IPSMARK = IPS + 4000 + (k-1) * NPSR
+      if(myid .ne. IISCPU(IPS)) then ! pgi
+        call MPI_Recv(atestR0,isrnum,MPI_REAL,IISCPU(IPS),IPSMARK,  &
+                  comm2d(ne),status,ierr)
+        do ibeibei=1,isrnum
+           atestR(k,ibeibei)=atestR0(ibeibei)
+        enddo
+      else
+        do ibeibei=1,isrnum
+           atestR(k,ibeibei)=atestS(k,ibeibei)
+        enddo
+      endif ! pgi
+    enddo
+
+    i=IrLocX(IPS)
+    j=IrLocY(IPS)
+
+    do k=1,nzz
+
+       ips1 = 0
+       if(j==0 .or. j==(ny(ne+1)+1))then
+         do ip=i,i
+           do ig=1,iedgas
+              ips1 = ips1 + 1
+              i04 = ip4mem(k,ig,ne+1)
+     call putvalue(myid,gas(i04),sx(ne+1),ex(ne+1),sy(ne+1),ey(ne+1), &
+              ip,j,atestR(k,ips1))
+           enddo
+
+           do ia=1,iaer
+           do is=1,isize
+              ips1 = ips1 + 1 
+              i05= ip5mem(k,is,ia,ne+1)
+     call putvalue(myid,aer(i05),sx(ne+1),ex(ne+1),sy(ne+1),ey(ne+1), &
+              ip,j,atestR(k,ips1))
+           enddo
+           enddo
+
+           !!!!!!!!!!!!!!!!!
+           ! for Source Mark
+           if(ifsmt>0 )then   !checking
+             do idm=1,idmSet
+             do ism=1,ismMax
+               ips1 = ips1 + 1 
+               i0=ipSMmem(k,ism,idm,ne+1)
+     call putvalue(myid,SourceMark(i0),sx(ne+1),ex(ne+1),sy(ne+1),ey(ne+1), &
+               ip,j,atestR(k,ips1))
+             enddo
+             enddo
+           endif
+           !!!!!!!!!!!!!!!!!!!!
+
+           ! for sea salt and dust compositions
+           do iduc = 1, nseacom
+           do is = 1, isize
+             ips1 = ips1 + 1 
+             i05c  = ip5memcs(k,is,iduc,ne+1)
+     call putvalue(myid,seacomp(i05c),sx(ne+1),ex(ne+1),sy(ne+1),ey(ne+1), &
+               ip,j,atestR(k,ips1))        
+           enddo
+           enddo
+
+           do iduc = 1, ndustcom
+           do is = 1, isize
+             ips1 = ips1 + 1
+             i05c  = ip5memc(k,is,iduc,ne+1)
+     call putvalue(myid,dustcomp(i05c),sx(ne+1),ex(ne+1),sy(ne+1),ey(ne+1), &
+               ip,j,atestR(k,ips1))
+           enddo
+           enddo
+
+           if(laerv2) then
+             include 'aerv2_receive_ip.inc'
+           endif
+
+           !> shun : apm receive ip
+           IF(lapm) THEN
+            include 'apm_receive_ip.inc'
+           ENDIF
+           !< end of apm receive ip
+
+!===================================================================================
+if(lglbrun) then
+           !!! for u,v,by chenhs
+           ips1 = ips1 + 1
+           i03 = ip3mem(k,ne)
+     call putvalue(myid,u(i03),sx(ne+1),ex(ne+1),sy(ne+1),ey(ne+1), &
+              ip,j,atestR(k,ips1))
+           ips1 = ips1 + 1
+     call putvalue(myid,v(i03),sx(ne+1),ex(ne+1),sy(ne+1),ey(ne+1), &
+              ip,j,atestR(k,ips1))
+endif
+!===================================================================================
+
+         enddo ! ip
+       endif
+
+       ! in k loop
+       ips1 = 0 
+       if(i==0 .or. i==(nx(ne+1)+1))then
+        do jp=j,j
+           do ig=1,iedgas
+              ips1 = ips1 + 1
+              i04 = ip4mem(k,ig,ne+1)
+     call putvalue(myid,gas(i04),sx(ne+1),ex(ne+1),sy(ne+1),ey(ne+1), &
+              i,jp,atestR(k,ips1))
+           enddo
+           
+           do ia=1,iaer
+           do is=1,isize
+              ips1 = ips1 + 1
+              i05= ip5mem(k,is,ia,ne+1)
+     call putvalue(myid,aer(i05),sx(ne+1),ex(ne+1),sy(ne+1),ey(ne+1), &
+              i,jp,atestR(k,ips1))
+           enddo
+           enddo
+           !!!!!!!!!!!!!!!!!
+           ! for Source Mark
+           if(ifsm(ne)==1)then
+             do idm=1,idmSet
+             do ism=1,ismMax
+               ips1 = ips1 + 1
+               i0=ipSMmem(k,ism,idm,ne+1)
+     call putvalue(myid,SourceMark(i0),sx(ne+1),ex(ne+1),sy(ne+1),ey(ne+1), &
+               i,jp,atestR(k,ips1))
+             enddo
+             enddo
+           endif
+           !!!!!!!!!!!!!!!!!
+
+           ! for sea salt and dust compositions
+           do iduc = 1, nseacom
+           do is = 1, isize
+             ips1 =  ips1 + 1
+             i05c= ip5memcs(k,is,iduc,ne+1) 
+     call putvalue(myid,seacomp(i05c),sx(ne+1),ex(ne+1),sy(ne+1),ey(ne+1), &
+              i,jp,atestR(k,ips1))
+           enddo
+           enddo
+
+           do iduc = 1, ndustcom
+           do is = 1, isize
+             ips1 =  ips1 + 1
+             i05c= ip5memc(k,is,iduc,ne+1)
+     call putvalue(myid,dustcomp(i05c),sx(ne+1),ex(ne+1),sy(ne+1),ey(ne+1), &
+              i,jp,atestR(k,ips1))
+           enddo
+           enddo
+
+           if(laerv2) then
+             include 'aerv2_receive_jp.inc'
+           endif
+
+           !> shun : apm receive jp
+           IF(lapm) THEN
+            include 'apm_receive_jp.inc'
+           ENDIF
+           !<
+!======================================================================
+           !!! for u,v,by chenhs
+if(lglbrun) then
+        ips1 = ips1 + 1
+        i03 = ip3mem(k,ne)
+     call putvalue(myid,u(i03),sx(ne+1),ex(ne+1),sy(ne+1),ey(ne+1), &
+              i,jp,atestR(k,ips1))
+        ips1 = ips1 + 1
+     call putvalue(myid,v(i03),sx(ne+1),ex(ne+1),sy(ne+1),ey(ne+1), &
+              i,jp,atestR(k,ips1))
+endif
+!======================================================================
+
+        enddo ! jp
+      endif ! i
+
+    enddo ! k
+
+  endif ! need to receive
+
+  ENDDO ! IPS
+
+ENDIF ! IF(NE
+!==== mpi_related
+
+! in inner time integration and nest loop
+time(ne) = (it1-1)*3600 + idt_syn(ne)*dtstep_syn(ne)     ! chenxsh@20170210
+
+!--------------------------advection & Diffution-------------
+    
+!=========================================================================
+
+  if(imasskeep==1)then
+    kpmass_m1= 1000.  ! Zifa 2004/09/02
+    i02=ip2mem(ne)
+    do k=1,nzz-1   ! advection
+      i03=ip3mem(k,ne)
+      ! for mass keeping Zifa 2004/09/02
+      call  adv_hori(myid,kpmass_m1(i03),u(i03),v(i03),dx(i03),dy(i03),&
+             sx(ne), ex(ne), sy(ne), ey(ne),nx(ne),ny(ne),dtstep_syn(ne))
+      ! to get mass conservation ratio/error
+      call  GetMassRatio(myid,kpmass_m1(i03),RatioMass(i03), &
+                  sx(ne), ex(ne), sy(ne), ey(ne),nx(ne),ny(ne))
+    enddo 
+  endif
+
+call check_naqpms_tracer( myid,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom,'before_3d_adv' )
+
+call start_gtiming('naqpms_3d_adv')
+call naqpms_3d_adv( myid,imasskeep &
+ &  ,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,GC_MOLWT,mem3d,RatioMass,mem2d,ktop &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,ifsm,idmSet,ismMax,igMark,hh )
+call end_gtiming('naqpms_3d_adv',ne, myid)
+
+call check_naqpms_tracer &
+ & ( myid &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,'after_3d_adv' )
+
+call check_naqpms_tracer &
+ & ( myid &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,'before_hadv' )
+
+
+!--------------------------------------
+!> shun : apm horizontal advection
+!--------------------------------------
+IF(lapm) THEN ! apm flag
+
+call start_gtiming('apm_3d_adv')
+call  apm_3d_adv &
+ & ( myid &
+ &  ,imasskeep &
+ &  ,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,GC_MOLWT &
+ &  ,mem3d,RatioMass &
+ &  ,mem2d,ktop &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,ifsm,idmSet,ismMax,igMark &
+ &  ,hh )
+ call apm_shun_check &
+  & ( myid &
+  &  ,lapm &
+  &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,ip3mem,mem3d &
+  &  ,'apm_3d_adv' )
+call end_gtiming('apm_3d_adv',ne, myid)
+
+ENDIF
+!--------------------------------------
+!< shun end of apm horizontal advection
+!--------------------------------------
+
+!> end of horizontal advection
+
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+if(lprocess) then
+     do k=1,nzz
+         do ig=1,iPrintTermGas    ! for gas phase
+    igg=IGGPOS(ig)
+    i03=ip3mem(k,ne)
+    i04=ip4mem(k,igg,ne)
+    i05=ipGasTermBal(k,2,ig,ne)    !2--> adv hor
+    i059= ipGasTermBal(k,9,ig,ne)  !10-->north input
+    i0510=ipGasTermBal(k,10,ig,ne) !11-->south input
+    i0511=ipGasTermBal(k,11,ig,ne) !12-->west input
+    i0512=ipGasTermBal(k,12,ig,ne) !13-->east input
+    i0513=ipGasTermBal(k,13,ig,ne) !14-->west output
+    i0514=ipGasTermBal(k,14,ig,ne) !15-->east output
+    i0515=ipGasTermBal(k,15,ig,ne) !16-->south output
+    i0516=ipGasTermBal(k,16,ig,ne) !17-->north output
+   call termballi(myid,gasOLD(i04),gas(i04),GasTermBal(i059),GasTermBal(i0510),&
+                  GasTermBal(i0511),GasTermBal(i0512),GasTermBal(i0513),&
+                  GasTermBal(i0514),GasTermBal(i0515),&
+                  GasTermBal(i0516),u(i03),v(i03),k,dx(i03),sx(ne),ex(ne),sy(ne),ey(ne),&
+                  nx(ne),ny(ne),dt)
+   call termbal(myid,gasOLD(i04),gas(i04),GasTermBal(i05),&
+                  k,sx(ne),ex(ne),sy(ne), ey(ne),nx(ne),ny(ne),dt)
+           enddo
+     enddo
+endif
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+                                                     
+
+!!!!!!!!!!!!!!!!
+ iwb=sx(ne)-1;ieb=ex(ne)+1
+ jsb=sy(ne)-1;jeb=ey(ne)+1
+ allocate(ww(iwb:ieb,jsb:jeb,nzz),conc(iwb:ieb,jsb:jeb,nzz),&
+          uu(iwb:ieb,jsb:jeb,nzz),vv(iwb:ieb,jsb:jeb,nzz),&
+          ddx(iwb:ieb,jsb:jeb,nzz),ddz(iwb:ieb,jsb:jeb,nzz),&
+          kktop(iwb:ieb,jsb:jeb),concmark(iwb:ieb,jsb:jeb,nzz))
+
+!!!!!!!!!!!!!!!!
+
+  if(imasskeep==1)then
+   kpmass_m1= 1000.  ! Zifa 2004/09/02
+   i02=ip2mem(ne)
+   do k=1,nzz-1
+    i03=ip3mem(k,ne)
+    ! to get mass conservation ratio/error
+    call  GetMassRatio(myid,kpmass_m1(i03),RatioMass(i03), &
+                 sx(ne), ex(ne), sy(ne), ey(ne),nx(ne),ny(ne))
+   enddo
+  endif
+
+deallocate(uu,vv,ww,ddz,ddx,conc,concmark,kktop)
+
+
+!> vertical advection
+
+!  vertical advection code is coded for each species 
+! shun : gas_unit_ppb
+
+ nstep=1
+
+ do j = sy(ne),ey(ne)
+ do i = sx(ne),ex(ne)
+    ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+    do k=1,nzz
+      i02=ip3mem(k,ne)
+      nstep0(i,j)=1.+dtstep_syn(ne)/min(1000., dz(i02+ixy)/(1.E-09+w(i02+ixy)))
+      if(nstep<=nstep0(i,j)) nstep=nstep0(i,j)
+    enddo
+ enddo
+ enddo
+
+call check_naqpms_tracer &
+ & ( myid &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,'before_vadv' )
+
+!=================================
+!> shun : apm vertical advection
+IF(lapm) THEN
+
+if(1==2) then
+call start_gtiming('apm_v_adv')
+if(lapm_vadv) then
+ call apm_v_adv &
+ & ( myid &
+ &  ,lapm,imasskeep &
+ &  ,ne,dtstep_syn(ne),nstep &
+ &  ,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,dx,dy,dz &
+ &  ,u,v,w &
+ &  ,ktop &
+ &  ,ip2mem,mem2d &
+ &  ,ip3mem,mem3d ) 
+
+ if(lapm_dust00)  then
+  call keep_dust_zero &
+    & ( myid &
+    &  ,lapm &
+    &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex )
+ endif
+
+ call apm_shun_check &
+  & ( myid &
+  &  ,lapm &
+  &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,ip3mem,mem3d &
+  &  ,'apm_v_adv' )
+endif
+call end_gtiming('apm_v_adv',ne, myid)
+
+endif
+
+ENDIF
+!< end of apm vertical advection
+!================================
+
+! end of vertical advection
+
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+if(lprocess) then
+    do k=1,nzz
+        do ig=1,iPrintTermGas    ! for gas phase
+           igg=IGGPOS(ig)
+           i04=ip4mem(k,igg,ne)
+           i05=ipGasTermBal(k,3,ig,ne) ! 3--> vert adv
+    call termbal(myid,gasOLD(i04),gas(i04),GasTermBal(i05), &
+           k,sx(ne), ex(ne), sy(ne), ey(ne),nx(ne),ny(ne),dt)
+        enddo
+    enddo
+endif
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+
+!----------------------cloud and convection-------------------------
+! convective cloud lifetimie is 1 hour
+! 1200 seconds,unalterable,sensitivity to results
+! conduct calculation every two inner time steps , i.e. 10 minutes(600 seconds) 
+
+IF((itt ==1 .or.itt ==3.or. itt == 5 .or.itt ==7.or.itt==9.or.itt==11).and..false.) THEN
+
+!FTRA1 is net, FTRA1D is downdraft, FTRA1U is updraft, 
+!FTRA1O is the export form the cell, FTRA1E is enchange of environment 
+
+call start_gtiming('naqpms_cld_convect')
+call naqpms_cld_convect &
+ & ( myid &
+ &  ,ne &
+ &  ,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,mem2d,ktop &
+ &  ,mem3d &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,ifsm,ifsmt,idmSet,ismMax,igMark )
+call end_gtiming('naqpms_cld_convect',ne, myid)
+
+!=========================================
+!> shun : apm cloud convection
+IF(lapm) THEN
+call start_gtiming('apm_cld_convect')
+if(lapm_ccld) then
+ call apm_cld_convect &
+  & ( myid & 
+  &  ,lapm &
+  &  ,ne &
+  &  ,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,u,v,t,QVAPOR,rh1,Plev,PSFC &
+  &  ,ip2mem,mem2d &
+  &  ,ip3mem,mem3d )
+
+
+ if(lapm_dust00)  then
+  call keep_dust_zero &
+    & ( myid &
+    &  ,lapm &
+    &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex )
+ endif
+ call apm_shun_check &
+  & ( myid &
+  &  ,lapm &
+  &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,ip3mem,mem3d &
+  &  ,'apm_cld_convect' )
+endif
+call end_gtiming('apm_cld_convect',ne, myid)
+ENDIF
+!< end of apm cloud convection
+!=========================================
+
+ENDIF 
+
+!> end of convective cloud transport
+
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+if(lprocess) then
+  do k=1,nzz
+   do ig=1,iPrintTermGas    ! for gas phase
+    i04=ip4mem(k,igg,ne)
+    i05=ipGasTermBal(k,21,ig,ne) ! 21--> moist convect
+    call termbal(myid,gasOLD(i04),gas(i04),GasTermBal(i05), &
+      k,sx(ne), ex(ne), sy(ne), ey(ne),nx(ne),ny(ne),dt)
+   enddo
+  enddo
+endif
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++  
+
+!>  horizontal  diffusion
+
+!=========================================
+!> shun apm horizontal  diffusion
+IF(lapm) THEN
+call start_gtiming('apm_h_dif')
+if(lapm_hdif) then
+  call apm_h_dif &
+   & ( myid &
+   &  ,lapm &
+   &  ,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex &
+   &  ,dx,dy &
+   &  ,kh &
+   &  ,ip2mem,mem2d &
+   &  ,ktop &
+   &  ,ip3mem,mem3d )
+
+ if(lapm_dust00)  then
+  call keep_dust_zero &
+    & ( myid &
+    &  ,lapm &
+    &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex )
+ endif
+ call apm_shun_check &
+  & ( myid &
+  &  ,lapm &
+  &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,ip3mem,mem3d &
+  &  ,'apm_h_dif' )
+endif
+call end_gtiming('apm_h_dif',ne, myid)
+ENDIF
+!< end of apm horizontal  diffusion
+!==========================================
+
+call start_gtiming('naqpms_h_dif')
+call naqpms_h_dif &
+ & ( myid &
+ &  ,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,mem2d &
+ &  ,ktop &
+ &  ,mem3d &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,ifsm,idmSet,ismMax,igMark)
+call end_gtiming('naqpms_h_dif',ne, myid)
+! end of horizontal diffusion
+
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+if(lprocess) then
+  do k=1,nzz
+      do ig=1,iPrintTermGas    ! for gas phase
+          igg=IGGPOS(ig)
+          i04=ip4mem(k,igg,ne)
+          i05=ipGasTermBal(k,4,ig,ne) ! 4--> hor diff
+         call termbal(myid,gasOLD(i04),gas(i04),GasTermBal(i05), &
+              k,sx(ne), ex(ne), sy(ne), ey(ne),nx(ne),ny(ne),dt)
+      enddo
+ enddo
+endif
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++  
+
+call check_naqpms_tracer &
+ & ( myid &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,'before_vdif' )
+
+!---------------------vertical diffusion---------
+
+IF(idifvert.eq.1.or.idifvert.eq.2) THEN
+time(ne) = (it1-1)*3600 + idt_syn(ne)*dtstep_syn(ne)     ! chenxsh@20170210
+  iitime = time(ne)
+  iwb=sx(ne)-1;ieb=ex(ne)+1
+  jsb=sy(ne)-1;jeb=ey(ne)+1
+  allocate( ppp(iwb:ieb,jsb:jeb,nzz) &
+           ,ttn(iwb:ieb,jsb:jeb,nzz) &
+           ,ffn(iwb:ieb,jsb:jeb,nzz) &
+           ,conc(iwb:ieb,jsb:jeb,nzz) &
+           ,concmark(iwb:ieb,jsb:jeb,nzz) &
+           ,rkv(iwb:ieb,jsb:jeb,nzz) &
+           ,dzz(iwb:ieb,jsb:jeb,nzz) &
+           ,atm(iwb:ieb,jsb:jeb,nzz) )
+  allocate( kktop(iwb:ieb,jsb:jeb))
+
+  do j=sy(ne)-1,ey(ne)+1
+  do i=sx(ne)-1,ex(ne)+1
+    ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+    do k=1,nzz
+      i03=ip3mem(k,ne)
+      i0_1=ip2mem2dconv(ne)
+      i0=ip2mem(ne)
+      IF(i>(sx(ne)-1).and.i<(ex(ne)+1).and.j>(sy(ne)-1).and.j<(ey(ne)+1))   THEN
+         ppp(i,j,k)=Plev(i03+ixy)
+         ttn(i,j,k)=t(i03+ixy)
+         dzz(i,j,k)=dz(i03+ixy)
+         rkv(i,j,k)=kv(i03+ixy)
+         ffn(i,j,k)=rh1(i03+ixy)
+         atm(i,j,k)=PA2ATM*Plev(i03+ixy)*100.
+      ENDIF
+    enddo !k
+    kktop(i,j) = ktop(i0+ixy)
+  enddo !i
+  enddo !j        
+
+call start_gtiming('naqpms_v_dif')
+call naqpms_v_dif &
+ & ( myid &
+ &  ,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igasCBM &
+ &  ,iwb,ieb,jsb,jeb &
+ &  ,dzz &
+ &  ,rkv,ttn,ppp,atm,kktop &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,ifsm,idmSet,ismMax,igMark )
+call end_gtiming('naqpms_v_dif',ne, myid)
+
+!=========================================
+!> shun : apm vertical diffusion
+IF(lapm) THEN
+call start_gtiming('apm_v_dif')
+if(lapm_vdif) then
+! if(myid.eq.0) write(*,'(a,i2.2)') 'call apm_v_dif in domain ',ne
+ call apm_v_dif &
+   & ( myid &
+   &  ,lapm &
+   &  ,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex &
+   &  ,iwb,ieb,jsb,jeb &
+   &  ,dzz &
+   &  ,ip3mem &
+   &  ,rkv,ttn,ppp,atm,kktop )
+
+ if(lapm_dust00)  then
+  call keep_dust_zero &
+    & ( myid &
+    &  ,lapm &
+    &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex )
+ endif
+ call apm_shun_check &
+  & ( myid &
+  &  ,lapm &
+  &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,ip3mem,mem3d &
+  &  ,'apm_v_dif' )
+endif
+call end_gtiming('apm_v_dif',ne, myid)
+ENDIF
+!< end of apm vertical diffusion
+!=========================================
+! -----
+  deallocate(ppp,ttn,ffn,rkv,dzz,atm,conc,concmark,kktop)
+  
+ENDIF !idifvert  
+!---------------------------------
+
+! end of vertical diffusion
+
+call check_naqpms_tracer &
+ & ( myid &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,'after_vdif' )
+
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+if(lprocess) then
+ do k=1,nzz
+   do ig=1,iPrintTermGas    ! for gas phase
+     igg=IGGPOS(ig)
+     i04=ip4mem(k,igg,ne)
+     i05=ipGasTermBal(k,5,ig,ne) ! 5--> ver diff
+     call termbal(myid,gasOLD(i04),gas(i04),GasTermBal(i05), &
+                   k,sx(ne), ex(ne), sy(ne), ey(ne),nx(ne),ny(ne),dt)
+   enddo
+ enddo
+endif
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+
+!> for dust and seasalt gravity settlement <!
+
+  ! DT( = 300 sec ) is split into 5 timesteps , 
+  ! i.e. , timestep in gravity settlement is 1 min ( 60 sec )
+
+  numTGRV=dtstep_syn(ne)/60.0
+
+ !===========================================
+ !> shun : apm gravity settling
+  IF(lapm) THEN
+  call start_gtiming('apm_gra_dep')
+  if(lapm_gdep) then
+
+! shun: 20140524@albany.edu
+    if(.true.) then
+    call apm_gra_dep_v3 &
+          & ( lapm &
+          &  ,myid &
+          &  ,dtstep_syn(ne),numTGRV &
+          &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+          &  ,dz &
+          &  ,ip2mem &
+          &  ,ip3mem,mem3d )
+    endif
+
+    if(lapm_dust00)  then
+     call keep_dust_zero &
+      & ( myid &
+      &  ,lapm &
+      &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex )
+    endif
+    call apm_shun_check &
+     & ( myid &
+     &  ,lapm &
+     &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+     &  ,ip3mem,mem3d &
+     &  ,'apm_gra_dep' )
+  endif
+  call end_gtiming('apm_gra_dep',ne, myid)
+  ENDIF
+ !< end of apm gravity settling
+ !===========================================
+
+call naqpms_gra_dep &
+ &  (myid &
+ &  ,dtstep_syn(ne),numTGRV &
+ &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,mem2d &
+ &  ,mem3d &
+ &  ,igas,iaer,isize,nseacom,ndustcom  &
+ &  ,gravel ) 
+
+!> end of aerosol gravity settling
+
+!dddddddddddddddddddddddddddddddddddd
+!ddd    Dry    Deposition         ddd
+!dddddddddddddddddddddddddddddddddddd
+
+time(ne) = (it1-1)*3600 + idt_syn(ne)*dtstep_syn(ne)     ! chenxsh@20170210
+iitime = time(ne)
+
+call getnewdate(iyear1,imonth1,idate1,ihour1,iitime, &
+                iyear2,imonth2,iday2,ihour2,iminute2 )
+
+call check_naqpms_tracer &
+ & ( myid &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,'before_ddep' )
+
+call naqpms_dry_dep &
+ & ( myid &
+ &  ,dtstep_syn(ne) &
+ &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igasCBM,igas,iaer,isize,nseacom,ndustcom &
+ &  ,MSIZDIS,MSIZDID &
+ &  ,iyear2,imonth2,iday2,ihour2,iminute2 )
+
+call check_naqpms_tracer &
+ & ( myid &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,'after_ddep' )
+
+  !====================================================
+  !> shun : apm dry deposition
+ IF(lapm) THEN
+ call start_gtiming('apm_dry_dep')
+ if(lapm_ddep) then 
+
+  ! shun: 20140524@albany.edu
+   if(.true.) then
+   call apm_dry_dep_v3 &
+    & ( myid &
+    &  ,lapm &
+    &  ,dtstep_syn(ne) &
+    &  ,ddep_flag &
+    &  ,lrd_lai &
+    &  ,imonth2 &
+    &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+    &  ,dz &
+    &  ,Plev,t,u,v,QVAPOR,clw,rnw,heiz,cldfrc3d,HGT1 &
+    &  ,LAND_USE,tskwrf,wrflai,LATITCRS,LONGICRS,SWDOWN,PBL_HGT &
+    &  ,ip2mem,mem2d &
+    &  ,ip3mem,mem3d &
+    &  ,itzon,iyear2,imonth2,iday2,ihour2,iminute2)
+   endif
+
+  if(lapm_dust00)  then
+   call keep_dust_zero &
+     & ( myid &
+     &  ,lapm &
+     &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex )
+  endif
+  call apm_shun_check &
+   & ( myid &
+   &  ,lapm &
+   &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+   &  ,ip3mem,mem3d &
+   &  ,'apm_dry_dep' )
+
+endif
+call end_gtiming('apm_dry_dep',ne, myid)
+ENDIF
+  !< end of apm dry deposition
+  !====================================================
+
+!> end of dry deposition 
+
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+if(lprocess) then
+     do k=1,nzz
+         do ig=1,iPrintTermGas    ! for gas phase
+             igg=IGGPOS(ig)
+             i04=ip4mem(k,igg,ne)
+             i05=ipGasTermBal(k,7,ig,ne) ! 7--> dry dep
+     call termbal(myid,gasOLD(i04),gas(i04),GasTermBal(i05), &
+              k,sx(ne), ex(ne), sy(ne), ey(ne),nx(ne),ny(ne),dt)
+         enddo
+     enddo
+endif
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+735  continue
+
+!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccc     Gas  Chemistry with CBM-Z
+!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+!================================================
+!> shun : apm cacid before CBMZ
+! gas : 
+! cacid : #/cm3
+! cair_mlc = avogad*pr_atm/(82.056*te)
+time(ne) = (it1-1)*3600 + idt_syn(ne)*dtstep_syn(ne)     ! chenxsh@20170210
+runned_mn=time(ne)/60
+if(runned_mn.ge.spinup_time) then
+! if(myid.eq.0) write(*,'(a,i10.10)') 'runned time in minutes ',runned_mn
+! if(myid.eq.0) write(*,'(a,i2.2)') 'start test box in domain ',ne
+ ltest_box=.true.
+endif
+!< end of apm cacid before CBMZ
+!===================================================
+
+
+time(ne) = (it1-1)*3600 + idt_syn(ne)*dtstep_syn(ne)     ! chenxsh@20170210
+iitime = time(ne)
+call getnewdate(iyear1,imonth1,idate1,ihour1,iitime, &
+                iyear2,imonth2,iday2,ihour2,iminute2 )
+
+if(ndt_syn(ne).le.2) then
+   dt_cbmz=3600.0 ! one hour
+elseif(ndt_syn(ne).eq.3) then
+   dt_cbmz=dtstep_syn(ne) ! 20min
+elseif(ndt_syn(ne).eq.4) then
+   dt_cbmz=dtstep_syn(ne)*2.0 ! 30 min
+elseif(ndt_syn(ne).eq.6) then
+   dt_cbmz=dtstep_syn(ne)*2.0 ! 20min
+elseif(ndt_syn(ne).eq.12) then
+   dt_cbmz=dtstep_syn(ne)*4.0 ! 20min
+else
+   stop 'please reset dtstep_syn(ne)'
+endif
+
+
+if(ichemgas == 1)then ! 
+if(mod(iitime,int(dt_cbmz)) == 0 )then ! every 20 minutes
+
+call start_gtiming('cbmz gaschem')
+!--------------------------------------------------------------------
+!> shun : get sulferic acid vapor ( H2SO4 ) concentration before CBMZ
+
+if(lapm) then
+ call apm_h2so4_cbmz &
+    & ( myid &
+    &  ,lapm &
+    &  ,dtstep_syn(ne),dt_cbmz &
+    &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+    &  ,ip3mem,mem3d &
+    &  ,ip4mem,mem4d &
+    &  ,PA2ATM,Plev,t &
+    &  ,igas,gas,GC_MOLWT &
+    &  ,'11' )
+endif
+!< end of get sulferic acid vapor ( H2SO4 ) concentration before CBMZ
+!--------------------------------------------------------------------
+
+call check_naqpms_tracer &
+ & ( myid &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,'before_cbmz' )
+
+call naqpms_drv_gaschem &
+ & ( myid &
+ &  ,dt_cbmz &
+ &  ,lprocess,iPrintTermGas &
+ &  ,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,iyear2,imonth2,iday2,ihour2,iminute2 &
+ &  ,mem2d &
+ &  ,mem3d &
+ &  ,mem4d &
+ &  ,GC_MOLWT,GC_NAME &
+ &  ,igas,igasCBM,iaer,isize,nseacom,ndustcom &
+ &  ,NLAY_EM &
+ &  ,ifsm,ifsmt,idmSet,ismMax,igMark )
+
+!--------------------------------------------------
+!> shun : get  ( 1) sulferic acid vapor ( H2SO4 ) concentration 
+!              ( 2) H2SO4 chemical production rate 
+if(lapm.and..true.) then
+ if(myid.eq.0) write(*,'(a,i2.2,a)') ' call apm_h2so4_cbmz in domain ',ne &
+                                  ,' : preserve apm-H2SO4 before CBMZ'
+ call apm_h2so4_cbmz &
+    & ( myid &
+    &  ,lapm &
+    &  ,dtstep_syn(ne),dt_cbmz &
+    &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+    &  ,ip3mem,mem3d &
+    &  ,ip4mem,mem4d &
+    &  ,PA2ATM,Plev,t &
+    &  ,igas,gas,GC_MOLWT &
+    &  ,'ch' )
+endif
+!< end of get sulferic acid vapor ( H2SO4 ) concentration after CBMZ
+!--------------------------------------------------------------------
+
+call end_gtiming('cbmz gaschem',ne, myid)
+
+endif !  every 20 minutes
+endif !  chem calculation flag yes/not
+
+!> end of gas phase chemistry
+
+!====================================================================
+!> shun : update suferic acid vapor ( H2SO4(g) )  concentration
+!  note : H2SO4 is updated in apm_phusics, so following code should
+!         be commented out !
+!< end of update suferic acid vapor ( H2SO4(g) )  concentration
+!====================================================================
+
+
+!===========================================
+! transform hydrophobic BC to hydrophilic BC
+
+if(lapm) then
+call start_gtiming('apm_org_trsf')
+if(lapm_trhl) then
+! if(myid.eq.0) write(*,'(a,i2.2,a)') 'call apm_org_trsf in domain ',ne
+ call apm_org_trsf &
+   & ( myid &
+   &  ,lapm &
+   &  ,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex )
+endif
+call end_gtiming('apm_org_trsf',ne, myid)
+endif
+
+call naqpms_bcoc_agt(myid,lapm,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex)
+!===========================================
+
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+if(lprocess) then
+    do k=1,nzz
+        do ig=1,iPrintTermGas    ! for gas phase
+            igg=IGGPOS(ig)
+            i04=ip4mem(k,igg,ne)
+            i05=ipGasTermBal(k,6,ig,ne)  ! 6 for chemistry
+    call termbal(myid,gasOLD(i04),gas(i04),GasTermBal(i05), &
+            k,sx(ne), ex(ne), sy(ne), ey(ne),nx(ne),ny(ne),dt)
+        enddo
+    enddo
+endif
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+
+200 continue
+
+!cccccc   Fe evolution in atmosphere by lijie  ccccc
+   do k = 1, nzz-1
+     i03=ip3mem(k,ne)
+     i04_so2=ip4mem(k,18,ne) ! so2
+     i04_hno3=ip4mem(k,2,ne) ! hno3
+     i02=ip2mem(ne)
+     do is = 1, isize
+       i05   = ip5memc (k,is,9, ne) ! FeII
+       i05_1 = ip5memc (k,is,10,ne) ! Total FeIII
+       i05_2 = ip5memc (k,is,11,ne) ! coated FeIII
+         
+      call  FEEVOLUTION( MYID,DUSTCOMP(I05_2),DUSTCOMP(I05_1), DUSTCOMP(I05) &
+                        ,gas(i04_so2),gas(i04_hno3) &
+                        ,RK_HETSO2_DUST(i03),RK_HETHNO3_DUST(i03) &
+                        ,clflo(i02),clfmi(i02),clfhi(i02) &
+                        ,SWDOWN(i02),RH1(i03) &
+                        ,DT,sx(ne),ex(ne),sy(ne),ey(ne),k,is)
+     enddo
+  enddo
+!ccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+!======================== 2013-03-01 ======================!
+!                cloud water aqueous chemistry 
+
+!print*,'shun for aqchem'
+call cal_inorganic_aer &
+  & ( myid &
+  &  ,dt_naqpms &
+  &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,ip3mem,mem3d &
+  &  ,ip4mem,mem4d &
+  &  ,igas,gas,GC_MOLWT &
+  &  ,ANA,ASO4,ANH4,ANO3,ACL )
+
+if(laqchem) then
+if(mod(iitime,int(dt_cbmz)) == 0 )then ! every 20 minutes
+if(numprocs .gt. 1) call MPI_BARRIER( LOCAL_COM, ierr )
+call start_gtiming('aqueous chemistry')
+call aqchem_driver &
+  & ( myid &
+  &  ,lapm &
+  &  ,lnaqpms_pso4 &
+  &  ,dt_cbmz &
+  &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,ip3mem,mem3d &
+  &  ,ip4mem,mem4d &
+  &  ,ip5mem,mem5d &
+  &  ,igas,gas,GC_MOLWT &
+  &  ,iaer,isize,aer &
+  &  ,plev,t,qvapor,clw &
+  &  ,ANA,ASO4,ANH4,ANO3,ACL )
+call end_gtiming('aqueous chemistry',ne, myid)
+endif
+endif
+!==========================================================!
+
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+if(lprocess) then
+   do k=1,nzz
+     do ig=1,iPrintTermGas    ! for AQUEOUS  process
+       igg=IGGPOS(ig)
+       i04=ip4mem(k,igg,ne)
+       i05=ipGasTermBal(k,24,ig,ne)  ! 24 for AQUEOUS CHEMISTRY
+    call termbal(myid,gasOLD(i04),gas(i04),GasTermBal(i05), &
+            k,sx(ne), ex(ne), sy(ne), ey(ne),nx(ne),ny(ne),dt)
+     enddo
+   enddo
+endif
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+
+!========================================================================
+!*****     ISORROPIA inorganic AEROSOL THERMODUNAMICS MODEL        ******
+!========================================================================
+
+if(lgaschemsmp) then
+
+ call cal_inorganic_aer &
+  & ( myid &
+  &  ,dt_naqpms &
+  &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,ip3mem,mem3d &
+  &  ,ip4mem,mem4d &
+  &  ,igas,gas,GC_MOLWT &
+  &  ,ANA,ASO4,ANH4,ANO3,ACL )
+ call cal_inorganic_hgfac &
+  & ( myid &
+  &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,igas,GC_MOLWT )
+else
+
+if(mod(iitime,int(dt_cbmz)) == 0 )then ! every 20 minutes
+call start_gtiming('ISORROPIA gas-aerosol partition')
+call naqpms_drv_isorropia &
+ & ( myid &
+ &  ,lapm &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,mem2d &
+ &  ,mem3d &
+ &  ,dt_cbmz &
+ &  ,GC_MOLWT &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,ifsm,idmSet,ismMax,igMark ) 
+
+call cal_inorganic_aer &
+  & ( myid &
+  &  ,dt_naqpms &
+  &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,ip3mem,mem3d &
+  &  ,ip4mem,mem4d &
+  &  ,igas,gas,GC_MOLWT &
+  &  ,ANA,ASO4,ANH4,ANO3,ACL )
+
+call cal_inorganic_hgfac &
+  & ( myid &
+  &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,igas,GC_MOLWT )
+
+call end_gtiming('ISORROPIA gas-aerosol partition',ne, myid)
+endif ! dt_cbmz
+
+endif
+
+!> end of inorganic gas-particle partition
+
+!==========================================================
+if(lapm) then
+  call start_gtiming('apm_yspgf')
+  call cal_inorganic_yspgf &
+    & ( myid &
+    &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+    &  ,ip3mem,mem3d &
+    &  ,ip4mem,mem4d &
+    &  ,igas,gas,GC_MOLWT )
+ call end_gtiming('apm_yspgf',ne, myid)
+endif
+!============================================================
+
+if(lapm) then
+ call apm_shun_check &
+  & ( myid &
+  &  ,lapm &
+  &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,ip3mem,mem3d &
+  &  ,'00000-apm_boxphy_driver' )
+endif
+
+!==========================================================
+!> shun : apm physics
+IF(lapm) THEN
+if(mod(iitime,int(dt_cbmz)) == 0 )then ! every 20 minutes
+call start_gtiming('apm aerosol microphysics')
+if(lapm_phys) then
+! if(myid.eq.0) write(*,'(a,i2.2)') 'call apm box physics in domain ',ne
+call apm_clean_sp &
+ & ( myid &
+ &  ,lapm &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,ip3mem,mem3d &
+ &  ,'before_box_cleansp' )
+
+if(numprocs .gt. 1) call MPI_BARRIER( LOCAL_COM, ierr )
+
+  call apm_boxphy_driver &
+    & ( myid &
+    &  ,lapm &
+    &  ,dt_cbmz &
+    &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+    &  ,ip2mem,mem2d &
+    &  ,ip3mem,mem3d &
+    &  ,ip4mem,mem4d &
+    &  ,igas,gas,GC_MOLWT &
+    &  ,longicrs,latitcrs,land_use &
+    &  ,PSFC,Plev,t,rh1)
+   !print*,'apm_ph runned times',ikk
+
+if(numprocs .gt. 1) call MPI_BARRIER( LOCAL_COM, ierr )
+
+  if(idt_syn(ne).eq.ndt_syn(ne)) then
+  call apm_cal_opt &
+    & ( myid &
+    &  ,lapm &
+    &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+    &  ,ip2mem,mem2d &
+    &  ,ip3mem,mem3d &
+    &  ,dz,rh1,clw )
+ endif
+ if(lapm_dust00)  then
+  call keep_dust_zero &
+    & ( myid &
+    &  ,lapm &
+    &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex )
+ endif
+ call apm_shun_check &
+  & ( myid &
+  &  ,lapm &
+  &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,ip3mem,mem3d &
+  &  ,'apm_boxphy_driver' )
+endif
+
+call end_gtiming('apm aerosol microphysics',ne, myid)
+endif ! 20 min
+ENDIF
+
+!< end of apm physics
+!=========================================
+    
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+if(lprocess) then
+   do k=1,nzz
+     do ig=1,iPrintTermGas    ! for ISORROPIA 
+       igg=IGGPOS(ig)
+       i04=ip4mem(k,igg,ne)
+       i05=ipGasTermBal(k,22,ig,ne)  ! 22 for inorganic aerosol partioning
+    call termbal(myid,gasOLD(i04),gas(i04),GasTermBal(i05), &
+            k,sx(ne), ex(ne), sy(ne), ey(ne),nx(ne),ny(ne),dt)
+     enddo
+   enddo
+endif
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+
+call check_naqpms_tracer &
+ & ( myid &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,'before_wdep' )
+
+! CCCCCCCCCCCCCCCCCCCCCCCCCCC   TO WET DEPOSITION  CCCCCCCCCCCCCCCCCC
+
+call start_gtiming('naqpms_wet_dep')
+call naqpms_wet_dep &
+ & ( myid &
+ &  ,itt &
+ &  ,dtstep_syn(ne) &
+ &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,CLW,RNW,t,Plev &
+ &  ,RAINCON,RAINNON &
+ &  ,mem2d &
+ &  ,mem3d &
+ &  ,igasCBM,igas,iaer,isize,nseacom,ndustcom &
+ &  ,mem2dgas ) 
+call end_gtiming('naqpms_wet_dep',ne, myid)
+
+call check_naqpms_tracer &
+ & ( myid &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,'after_wdep' )
+
+!==============================
+!> shun : apm wet deposition
+IF(lapm) then
+call start_gtiming('apm_wet_dep')
+if(lapm_wdep) then
+ call apm_wet_dep_v3 &
+  & ( myid &
+  &  ,lapm &
+  &  ,itt &
+  &  ,dtstep_syn(ne) &
+  &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,dx,dy,dz &
+  &  ,CLW,RNW,t,Plev,CPH &
+  &  ,RAINCON,RAINNON &
+  &  ,ip2mem,mem2d &
+  &  ,ip3mem,mem3d )
+
+ if(lapm_dust00)  then
+  call keep_dust_zero &
+   & ( myid &
+   &  ,lapm &
+   &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex )
+ endif
+
+ call apm_shun_check &
+  & ( myid &
+  &  ,lapm &
+  &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+  &  ,ip3mem,mem3d &
+  &  ,'apm_wet_dep' )
+endif
+call end_gtiming('apm_wet_dep',ne, myid)
+ENDIF
+!< end of apm wet deposition
+!==============================
+
+!> end of wet deposition of gas and aerosol
+
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+if(lprocess) then
+   do k=1,nzz
+     do ig=1,iPrintTermGas    ! for WETDEP process
+       igg=IGGPOS(ig)
+       i04=ip4mem(k,igg,ne)
+       i05=ipGasTermBal(k,8,ig,ne)  ! 8 for WETDEP
+    call termbal(myid,gasOLD(i04),gas(i04),GasTermBal(i05), &
+            k,sx(ne), ex(ne), sy(ne), ey(ne),nx(ne),ny(ne),dt)
+     enddo
+   enddo
+endif
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+
+!!************** SOAP SECSONDARY ORGANIC EROSOL  MODEL ***************
+!***  TO PARTITION THE SEMIVOLATILE ORGANIC AEROSOL COMPONENTS *****
+!***    6 PRECIES INCLUDING ANTHROPOGENIC TOL AND XYL          *****
+!***            AND BIOGENIC ISOP AND TERP                     *****
+
+if(lgaschemsmp) then
+
+else
+
+call start_gtiming('secondary organic aerosol')
+call naqpms_drv_soap ( myid &
+ &  ,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,mem2d,mem3d,igas,iaer,isize,nseacom,ndustcom &
+ &  ,NSOA,ifsm,idmSet,ismMax,igMark )
+call end_gtiming('secondary organic aerosol',ne, myid)
+!> end of SOA gas-particle partition
+endif
+
+call check_naqpms_tracer ( myid &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,'after_soap' )
+
+!=====================================================
+
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+if(lprocess) then
+   do k=1,nzz
+     do ig=1,iPrintTermGas    ! for SOA process
+       igg=IGGPOS(ig)
+       i04=ip4mem(k,igg,ne)
+       i05=ipGasTermBal(k,23,ig,ne)  ! 23 for organic aerosol partioning
+    call termbal(myid,gasOLD(i04),gas(i04),GasTermBal(i05), &
+            k,sx(ne), ex(ne), sy(ne), ey(ne),nx(ne),ny(ne),dt)
+     enddo
+   enddo
+endif
+!++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+
+
+!!*********    Exitinction and AOD  MODEL     **************
+!!***       TO USE THE RRECONSTRUCTED METHOD       *********
+
+if(lgaschemsmp) then
+
+else
+
+call start_gtiming('naqpms diagnostics calculation')
+call naqpms_cal_diag ( myid &
+ &  ,ne,dtstep_syn(ne),nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,mem2d,mem3d,igas,iaer,isize,nseacom,ndustcom &
+ &  ,GC_MOLWT,ktop,kk )
+call end_gtiming('naqpms diagnostics calculation',ne, myid)
+
+call check_naqpms_tracer ( myid &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,'after_cal-diag' )
+
+endif
+
+!=====================================================================
+!====    to change boundary conditions                           =====
+!=====================================================================
+
+if(numprocs .gt. 1 .and. mod(it1,iprecise)==0 )then
+
+ call MPI_BARRIER( LOCAL_COM, ierr )
+
+ do k=1,nzz
+   i03=ip3mem(k,ne)
+   call exchng2( myid, u(i03), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+   call exchng2( myid, v(i03), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+   do ia=1,iaer
+   do is=1,isize
+     i05=ip5mem(k,is,ia,ne)
+     call exchng2( myid, aer(i05), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+   enddo
+   enddo
+
+   do ig=1,iedgas
+    i04=ip4mem(k,ig,ne)
+    call exchng2( myid, gas(i04), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+   enddo
+
+  !!!!!!!!!!!!!!!!!!!!!
+  ! For Source Mark
+   if(ifsm(ne)==1)then 
+    do idm=1,idmSet
+    do ism=1,ismMax 
+     i04=ipSMmem(k,ism,idm,ne)
+     call exchng2( myid, SourceMark(i04), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne) )
+    enddo 
+    enddo 
+   endif 
+  !!!!!!!!!!!!!!!!!!!!!
+
+! for sea salt and dust
+   do iduc = 1, nseacom
+   do is = 1, isize
+     i05c = ip5memcs (k, is, iduc, ne) 
+     call exchng2 ( myid, seacomp(i05c), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne))
+   enddo
+   enddo
+
+   do iduc = 1, ndustcom
+   do is = 1, isize
+     i05c = ip5memc (k, is, iduc, ne)
+     call exchng2 ( myid, dustcomp(i05c), sx(ne), ex(ne), sy(ne), ey(ne),  &
+                comm2d(ne), stride(ne),  nbrleft(ne), nbrright(ne), &
+                nbrtop(ne), nbrbottom(ne))
+   enddo
+   enddo
+
+   if(laerv2) then
+     include 'aerv2_ch_bdy.inc'
+   endif
+
+   !======================================
+   !> shun : change apm boundary condition
+   if(lapm) then
+     include 'apm_ch_bdy.inc'
+   endif
+   !< end of change apm boundary condition
+   !======================================
+  
+ enddo ! k
+
+!================================================
+if(lglbrun) then
+  if(ne.eq.1) then
+    DO IPS=1,IPOLARNUM
+
+!send
+      IF(IPOLARMRK(2,IPS)==MYID) THEN  !!! need to send
+
+        DO K=1,NZZ
+          ITSP=0
+          include 'naq_polar_trspt_send.inc'
+          if(lapm) then
+          include 'apm_polar_trspt_send.inc'
+          endif
+        ENDDO
+        
+        DO K=1,NZZ
+          IPSMARK = IPS + 720 + (k-1)*IPOLARNUM
+          do ibeibei=1,ISRNUM
+            atestS0(ibeibei)=atestS(k,ibeibei)
+          enddo
+          if (IPOLARMRK(1,IPS).ne.MYID) then
+          call MPI_Send(atestS0,ISRNUM,MPI_REAL,IPOLARMRK(1,IPS),IPSMARK,comm2d(ne),ierr)
+          end if
+        ENDDO
+
+      ENDIF
+!send
+
+!receive
+      IF(IPOLARMRK(1,IPS)==MYID) THEN  !!! need to receive     
+
+         DO K=1,NZZ
+           if (IPOLARMRK(2,IPS).ne.MYID) then
+           IPSMARK = IPS + 720 + (k-1)*IPOLARNUM
+           call MPI_Recv(atestR0,ISRNUM,MPI_REAL,IPOLARMRK(2,IPS),IPSMARK,  &
+                comm2d(ne),status,ierr)
+           do ibeibei=1,ISRNUM
+             atestR(k,ibeibei)=atestR0(ibeibei)
+           enddo
+           else
+           do ibeibei=1,ISRNUM
+             atestR(k,ibeibei)=atestS(k,ibeibei)
+           enddo
+           end if
+         ENDDO
+
+         DO K=1,NZZ
+           IF(IPOLARMRK(5,IPS)==1.OR.IPOLARMRK(5,IPS)==NY(NE)) THEN
+             IF(IPOLARMRK(5,IPS)==1) THEN
+               IPP=IPOLARMRK(5,IPS)-1
+             ELSE
+               IPP=IPOLARMRK(5,IPS)+1
+             ENDIF
+
+             ips1=0
+
+             include 'naq_polar_trspt_receive.inc'
+
+             if(lapm) then
+             include 'apm_polar_trspt_receive.inc'
+             endif
+
+           ENDIF
+         ENDDO
+
+      ENDIF
+!receive
+
+    ENDDO !IPS=1,IPOLARNUM
+  endif   ! ne.eq.1
+endif     ! lglbrun
+!================================================
+
+endif  ! numprocs
+!=====================================================================
+
+call check_naqpms_tracer ( myid &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,'after_chbdy' )
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+endif ! synchronous time step
+endif   !!! ! if cal_ne
+
+enddo loop_nest_calulation  !nest end calculation
+
+enddo loop_time_onehour  ! end 1 hour itt<=12
+
+!> end of inner time integration loop
+
+! output
+
+!wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+! to write data
+!wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+
+34567 continue ! shun
+
+if(numprocs .gt. 1) call MPI_BARRIER( LOCAL_COM, ierr )
+
+!--------------------------------------------------------------------
+! to write data
+!--------------------------------------------------------------------   
+        if(io_form.eq.1) then ! io_form
+        do ne=1,nest
+        call start_gtiming('naqpms output')
+        
+        if(it1.ge.ntbeg(ne) .and. it1.le.ntend(ne))then
+        if(mod(ihour2,nhfq_output(ne))==0) then  !! added by chenhs,to adjust output frequency
+        call output_aerosol(iyear2,imonth2,iday2,ihour2,it1,ne) ! aerosol
+        call output_gas(iyear2,imonth2,iday2,ihour2,it1,ne) ! gas
+        call output_dry(iyear2,imonth2,iday2,ihour2,ne) ! dry
+        call output_wet(iyear2,imonth2,iday2,ihour2,ne) ! wet 
+        call output_sea(iyear2,imonth2,iday2,ihour2,ne) ! sea
+        call output_dust(iyear2,imonth2,iday2,ihour2,ne) ! dust
+        
+        !++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+        if(lprocess.eq.1) then
+        call output_term(iyear2,imonth2,iday2,ihour2,ne)
+        endif
+        !++++++++++++++++++++++++for process by lijie+++++++++++++++++++++++
+       
+        ! for Source Mark
+        if(ifsm(ne)==1)then
+        call output_mark(iyear2,imonth2,iday2,ihour2,ne,.false.)
+        IF(ihour2==0)THEN  ! to write down reinit source file
+        call output_mark(iyear2,imonth2,iday2,ihour2,ne,.true.) 
+        endif
+        endif
+
+       endif
+       endif
+       call end_gtiming('naqpms output',ne, myid)
+       enddo
+
+       else
+!> shun : output apm vars
+IF(lapm) THEN
+call start_gtiming('wr_apm_var')
+do ne=1,nest
+ if(myid.eq.0) print*,'output apm vars'
+ if(lapm_wrfl) THEN
+
+  call wr_apm_var( myid,lapm &
+                  ,iyear2,imonth2,iday2,ihour2,iminute2 &
+                  ,nest,nzz,sx,ex,sy,ey,ne &
+                  ,ip2mem,ip3mem,mem2d,mem3d &
+                  ,u,v,rh1,clw,rnw,RAINCON,RAINNON )
+ endif
+enddo
+call end_gtiming('wr_apm_var',ne, myid)
+ENDIF
+!< end of output apm vars
+
+do ne=1,nest
+
+if(it1.ge.ntbeg(ne) .and. it1.le.ntend(ne) )then
+
+if(mod(it1+nhfq_output(ne),nhfq_output(ne)).eq.0) then
+
+iitime = it1*3600
+call getnewdate(iyear1,imonth1,idate1,ihour1,iitime, &
+                iyear2,imonth2,iday2,ihour2,iminute2 )
+
+call start_gtiming('naqpms output')
+
+call naqpms_tracer_output( myid &
+ &  ,iyear2,imonth2,iday2,ihour2,iminute2 &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,mem2d,tropp &
+ &  ,mem3d &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,PrintGas )
+
+call naqpms_tracer_output_v2( myid &
+ &  ,iyear2,imonth2,iday2,ihour2,iminute2 &
+ &  ,ne,dt,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,mem2d,tropp &
+ &  ,mem3d &
+ &  ,igas,iaer,isize,nseacom,ndustcom &
+ &  ,PrintGas )
+
+call end_gtiming('naqpms output',ne, myid)
+
+endif ! nhfq_output
+endif ! ntbeg,ntend
+
+enddo   ! write for different domain
+
+endif !io_form
+!wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+
+1188 continue
+
+        it1=it1+1 ! advance time
+
+  end do   ! end of the while integration it1
+    call geatm_export_mct( c2x_c, camgrid, wrfgrid )
+
+45678 continue
+
+ end if  !end the geatm simulation 
+
+ end subroutine geatm_run_mct
+
+ subroutine geatm_final_mct()
+   use geatm_vartype
+   if(allocated(procs)) deallocate (procs)
+
+   if(myid == 0 )then
+   call system("rm -f out/nest.*")
+   call system("rm -f out/grid.dat*")
+   call system("rm -f out/locate.*")
+   endif
+
+   call final_camgrid(camgrid)
+   call final_wrfgrid(wrfgrid)
+   call final_geatm_var
+
+include 'module_main/deallocate_inc.f90'
+   
+   do ne=1,nest
+    call MPI_TYPE_FREE( stride(ne), ierr )
+    call MPI_COMM_FREE( comm2d(ne), ierr )
+   enddo
+
+end subroutine geatm_final_mct
+
+!===============================================================================
+		
+  subroutine geatm_SetgsMap_mct( wrfgrid, local_com, GEAID, GSMap_gg )
+!-------------------------------------------------------------------
+!
+! Arguments
+!
+      use geatm_vartype, only:sx,ex,sy,ey
+      TYPE(wrfgrid_c) :: wrfgrid
+      integer        , intent(in)  :: local_com
+      integer        , intent(in)  :: GEAID
+      type(mct_gsMap), intent(out) :: GSMap_gg
+!
+! Local variables
+!
+      integer, allocatable :: gindex(:)
+      integer :: i, j, k, n,lsize,gsize
+      integer :: ids,ide,jds,jde,kds,kde,ims,ime,jms,jme,kms,kme,ips,ipe,jps,jpe,kps,kpe
+      integer :: ier            ! error status
+!-------------------------------------------------------------------
+! Build the atmosphere grid numbering for MCT
+! NOTE:  Numbering scheme is: West to East, bottom to level, and South to North
+! starting at south pole.  Should be the same as what's used in SCRIP
+! Determine global seg map
+	
+      ! prepare the decomposition	
+      ips=sx(1)
+      ipe=ex(1)
+      jps=sy(1)
+      jpe=ey(1)
+      ids=1
+      ide=wrfgrid%num_wrfgrid_lon
+      jds=1
+      jde=wrfgrid%num_wrfgrid_lat
+      
+      lsize=0
+      do j=jps, jpe 
+       do i=ips, ipe
+             lsize = lsize+1  !local index
+       end do
+      end do
+   
+      gsize=(ide-ids+1)*(jde-jds+1)
+      allocate(gindex(lsize))
+      n=0
+      do j=jps, jpe  
+       do i=ips, ipe
+          n=n+1
+          gindex(n) =(j-1)*(ide-ids+1)+i  ! global index
+       end do
+      end do
+
+      call mct_gsMap_init( gsMap_gg, gindex, local_com, GEAID, lsize, gsize)
+
+      deallocate(gindex)
+
+  end subroutine geatm_SetgsMap_mct
+  
+!===============================================================================
+
+  subroutine geatm_domain_mct( wrfgrid, lsize, gsMap_gg, dom_g )
+
+      use geatm_vartype, only:sy,ey,sx,ex,csy,cey,csx,cex,myid
+!-------------------------------------------------------------------
+! Arguments
+!
+      TYPE(wrfgrid_c) :: wrfgrid
+      integer     , intent(in)   :: lsize
+      TYpe(mct_gsMap), intent(in)   :: gsMap_gg
+      type(mct_ggrid), intent(inout):: dom_g 
+!
+! Local Variables
+!
+      integer  :: i,j,k,mm,nn,n           ! indices	
+      integer :: ids,ide,jds,jde,kds,kde,ims,ime,jms,jme,kms,kme,ips,ipe,jps,jpe,kps,kpe
+      real(r8), pointer  :: data(:)     ! temporary
+      integer , pointer  :: idata(:)    ! temporary
+                
+! Initialize mct atm domain
+         call mct_gGrid_init( GGrid=dom_g, CoordChars=trim(seq_flds_dom_coord), OtherChars=trim(seq_flds_dom_other), lsize=lsize )
+
+! Allocate memory
+         allocate(data(lsize))
+ 
+! Initialize attribute vector with special value
+         call mct_gsMap_orderedPoints(gsMap_gg, myid, idata)
+         call mct_gGrid_importIAttr(dom_g,'GlobGridNum',idata,lsize)
+
+! Determine domain (numbering scheme is: West to East and South to North to South pole)
+! Initialize attribute vector with special value
+
+        data(:) = -9999.0_R8 
+        call mct_gGrid_importRAttr(dom_g,"lat"  ,data,lsize) 
+        call mct_gGrid_importRAttr(dom_g,"lon"  ,data,lsize) 
+        call mct_gGrid_importRAttr(dom_g,"area" ,data,lsize) 
+        call mct_gGrid_importRAttr(dom_g,"aream",data,lsize) 
+        data(:) = 0.0_R8     
+        call mct_gGrid_importRAttr(dom_g,"mask" ,data,lsize) 
+        data(:) = 1.0_R8
+        call mct_gGrid_importRAttr(dom_g,"frac" ,data,lsize)
+    
+      ips=sx(1)
+      ipe=ex(1)
+      jps=sy(1)
+      jpe=ey(1)
+    !
+    ! Fill in correct values for domain components
+    !
+    n=0
+    do j = jps,jpe
+       do i=ips,ipe
+          n = n+1
+          data(n) = ((j-1)-89.5)*3.1415926/180.0_8
+       end do
+    end do
+    call mct_gGrid_importRAttr(dom_g,"lat",data,lsize)
+
+    n=0
+    do j = jps,jpe
+       do i=ips,ipe
+          n = n+1
+          data(n) = ((i-1)+0.5)*3.1415926/180.0_8
+       end do
+    end do
+    call mct_gGrid_importRAttr(dom_g,"lon",data,lsize)
+
+    n=0
+    do j = jps,jpe
+       do i=ips,ipe
+          n = n+1
+          data(n) =2._8*3.1415926*(sin(((j-1)-89)*3.1415926/180.0)-sin(((j-1)-90)*3.1415926/180.0))/360.0
+       end do
+    end do
+    call mct_gGrid_importRAttr(dom_g,"area",data,lsize)
+
+    n=0
+    do j = jps,jpe
+       do i=ips,ipe
+          n = n+1
+          data(n) = 1._8
+       end do
+    end do
+    call mct_gGrid_importRAttr(dom_g,"mask",data,lsize)
+
+        if(associated(idata)) deallocate(idata)    
+        if(associated(data)) deallocate(data)
+
+	end subroutine geatm_domain_mct
+!===============================================================================
+  subroutine initial_camgrid( camgrid)
+     use geatm_vartype, only:csx,cex,csy,cey,sx,ex,sy,ey,myid
+     TYPE(camgrid_c) :: camgrid
+     
+     ! Local variables	
+     integer  :: i,j,k  ! indices    
+     integer :: mids,mide,mjds,mjde,mkds,mkde,&
+                 mims,mime,mjms,mjme,mkms,mkme,&
+                 mips,mipe,mjps,mjpe,mkps,mkpe        
+   
+      mids=sx(1)
+      mide=ex(1)
+      mjds=sy(1)
+      mjde=ey(1)
+      mkps=1
+      mkpe=camgrid%num_camgrid_levels
+      if(.not.allocated(camgrid%z3d)) allocate(camgrid%z3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%u3d)) allocate(camgrid%u3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%v3d)) allocate(camgrid%v3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%t3d)) allocate(camgrid%t3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%p3d)) allocate(camgrid%p3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%qv3d)) allocate(camgrid%qv3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%qc3d)) allocate(camgrid%qc3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%qi3d)) allocate(camgrid%qi3d(mids:mide,mkps:mkpe,mjds:mjde))      
+      if(.not.allocated(camgrid%rh3d)) allocate(camgrid%rh3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%taucldv3d)) allocate(camgrid%taucldv3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%taucldi3d)) allocate(camgrid%taucldi3d(mids:mide,mkps:mkpe,mjds:mjde))      
+      if(.not.allocated(camgrid%xlat)) allocate(camgrid%xlat(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%xlon)) allocate(camgrid%xlon(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%ps)) allocate(camgrid%ps(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%ht)) allocate(camgrid%ht(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%pblh)) allocate(camgrid%pblh(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%u10)) allocate(camgrid%u10(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%v10)) allocate(camgrid%v10(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%t2)) allocate(camgrid%t2(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%rh2)) allocate(camgrid%rh2(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%xland)) allocate(camgrid%xland(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%sst)) allocate(camgrid%sst(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%xice)) allocate(camgrid%xice(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%tsk)) allocate(camgrid%tsk(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%snowh)) allocate(camgrid%snowh(mids:mide,mjds:mjde))      
+      if(.not.allocated(camgrid%ust)) allocate(camgrid%ust(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%rmol)) allocate(camgrid%rmol(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%raincv)) allocate(camgrid%raincv(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%rainncv)) allocate(camgrid%rainncv(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%swdown)) allocate(camgrid%swdown(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%clflo)) allocate(camgrid%clflo(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%clfmi)) allocate(camgrid%clfmi(mids:mide,mjds:mjde))
+      if(.not.allocated(camgrid%clfhi)) allocate(camgrid%clfhi(mids:mide,mjds:mjde))
+
+      if(.not.allocated(camgrid%dust01)) allocate(camgrid%dust01(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%dust02)) allocate(camgrid%dust02(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%dust03)) allocate(camgrid%dust03(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%dust04)) allocate(camgrid%dust04(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%sea01)) allocate(camgrid%sea01(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%sea02)) allocate(camgrid%sea02(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%sea03)) allocate(camgrid%sea03(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%sea04)) allocate(camgrid%sea04(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%bc)) allocate(camgrid%bc(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%oc)) allocate(camgrid%oc(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%ppm)) allocate(camgrid%ppm(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%so4)) allocate(camgrid%so4(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%nh4)) allocate(camgrid%nh4(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%no3)) allocate(camgrid%no3(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%h2o2)) allocate(camgrid%h2o2(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%so2)) allocate(camgrid%so2(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%dms)) allocate(camgrid%dms(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(camgrid%nh3)) allocate(camgrid%nh3(mids:mide,mkps:mkpe,mjds:mjde))
+      
+      if(.not.allocated(camgrid%soildepth)) allocate(camgrid%soildepth(mids:mide,1:camgrid%num_camgrid_soil_levels,mjds:mjde))
+      if(.not.allocated(camgrid%soilthick)) allocate(camgrid%soilthick(mids:mide,1:camgrid%num_camgrid_soil_levels,mjds:mjde))
+      if(.not.allocated(camgrid%soilt)) allocate(camgrid%soilt(mids:mide,1:camgrid%num_camgrid_soil_levels,mjds:mjde))
+      if(.not.allocated(camgrid%soilm)) allocate(camgrid%soilm(mids:mide,1:camgrid%num_camgrid_soil_levels,mjds:mjde))
+
+  end subroutine initial_camgrid
+!-----------------------------------------------------------------------
+  subroutine final_camgrid(camgrid)
+    type(camgrid_c) :: camgrid
+    if(allocated(camgrid%z3d))     deallocate(camgrid%z3d)
+    if(allocated(camgrid%u3d))     deallocate(camgrid%u3d)
+    if(allocated(camgrid%v3d))     deallocate(camgrid%v3d)
+    if(allocated(camgrid%qv3d))   deallocate(camgrid%qv3d)
+    if(allocated(camgrid%qc3d))   deallocate(camgrid%qc3d)
+    if(allocated(camgrid%qi3d))   deallocate(camgrid%qi3d)       
+    if(allocated(camgrid%t3d))   deallocate(camgrid%t3d)
+    if(allocated(camgrid%rh3d))   deallocate(camgrid%rh3d)
+    if(allocated(camgrid%p3d))   deallocate(camgrid%p3d)
+    if(allocated(camgrid%taucldv3d))   deallocate(camgrid%taucldv3d)
+    if(allocated(camgrid%taucldi3d))   deallocate(camgrid%taucldi3d)       
+    if(allocated(camgrid%xlat))   deallocate(camgrid%xlat)
+    if(allocated(camgrid%xlon))   deallocate(camgrid%xlon)
+    if(allocated(camgrid%ps))   deallocate(camgrid%ps)
+    if(allocated(camgrid%t2))   deallocate(camgrid%t2)
+    if(allocated(camgrid%rh2))   deallocate(camgrid%rh2)
+    if(allocated(camgrid%v10))   deallocate(camgrid%v10)
+    if(allocated(camgrid%u10))   deallocate(camgrid%u10)
+    if(allocated(camgrid%ht))   deallocate(camgrid%ht)
+    if(allocated(camgrid%rmol))   deallocate(camgrid%rmol)
+    if(allocated(camgrid%pblh))   deallocate(camgrid%pblh)
+    if(allocated(camgrid%raincv))   deallocate(camgrid%raincv)
+    if(allocated(camgrid%rainncv))   deallocate(camgrid%rainncv)
+    if(allocated(camgrid%snowh))   deallocate(camgrid%snowh)       
+    if(allocated(camgrid%sst))   deallocate(camgrid%sst)
+    if(allocated(camgrid%xice))   deallocate(camgrid%xice)
+    if(allocated(camgrid%tsk))   deallocate(camgrid%tsk)       
+    if(allocated(camgrid%xland))   deallocate(camgrid%xland)
+    if(allocated(camgrid%swdown))   deallocate(camgrid%swdown)
+    if(allocated(camgrid%clflo))   deallocate(camgrid%clflo)
+    if(allocated(camgrid%clfmi))   deallocate(camgrid%clfmi)
+    if(allocated(camgrid%clfhi))   deallocate(camgrid%clfhi)
+
+      if(allocated(camgrid%dust01)) deallocate(camgrid%dust01)
+      if(allocated(camgrid%dust02)) deallocate(camgrid%dust02)
+      if(allocated(camgrid%dust03)) deallocate(camgrid%dust03)
+      if(allocated(camgrid%dust04)) deallocate(camgrid%dust04)
+      if(allocated(camgrid%sea01)) deallocate(camgrid%sea01)
+      if(allocated(camgrid%sea02)) deallocate(camgrid%sea02)
+      if(allocated(camgrid%sea03)) deallocate(camgrid%sea03)
+      if(allocated(camgrid%sea04)) deallocate(camgrid%sea04)
+      if(allocated(camgrid%bc)) deallocate(camgrid%bc)
+      if(allocated(camgrid%oc)) deallocate(camgrid%oc)
+      if(allocated(camgrid%ppm)) deallocate(camgrid%ppm)
+      if(allocated(camgrid%so4)) deallocate(camgrid%so4)
+      if(allocated(camgrid%nh4)) deallocate(camgrid%nh4)
+      if(allocated(camgrid%no3)) deallocate(camgrid%no3)
+      if(allocated(camgrid%h2o2)) deallocate(camgrid%h2o2)
+      if(allocated(camgrid%so2)) deallocate(camgrid%so2)
+      if(allocated(camgrid%dms)) deallocate(camgrid%dms)
+      if(allocated(camgrid%nh3)) deallocate(camgrid%nh3)
+      
+    if(allocated(camgrid%soildepth)) deallocate(camgrid%soildepth)
+    if(allocated(camgrid%soilthick)) deallocate(camgrid%soilthick)
+    if(allocated(camgrid%soilt)) deallocate(camgrid%soilt)
+    if(allocated(camgrid%soilm)) deallocate(camgrid%soilm)
+
+  end subroutine final_camgrid
+!-----------------------------------------------------------------------
+  subroutine initial_wrfgrid( wrfgrid)
+     use geatm_vartype, only:csx,cex,csy,cey,sx,ex,sy,ey,myid
+     TYPE(wrfgrid_c) :: wrfgrid
+     
+     ! Local variables	
+     integer  :: i,j,k  ! indices    
+     integer :: mids,mide,mjds,mjde,mkds,mkde,&
+                 mims,mime,mjms,mjme,mkms,mkme,&
+                 mips,mipe,mjps,mjpe,mkps,mkpe        
+
+      wrfgrid%num_wrfgrid_lon = 360
+      wrfgrid%num_wrfgrid_lat = 180
+      wrfgrid%num_wrfgrid_levels = 20
+      wrfgrid%num_wrfgrid_soil_levels =4
+     
+      mids=sx(1)
+      mide=ex(1)
+      mjds=sy(1)
+      mjde=ey(1)
+      mkps=1
+      mkpe=wrfgrid%num_wrfgrid_levels    
+      if(.not.allocated(wrfgrid%sigma)) allocate(wrfgrid%sigma(mkps:mkpe))
+      wrfgrid%sigma(1) =   0.00250_8
+      wrfgrid%sigma(2) =   0.00800_8
+      wrfgrid%sigma(3) =   0.01500_8
+      wrfgrid%sigma(4) =   0.02350_8
+      wrfgrid%sigma(5) =   0.03400_8
+      wrfgrid%sigma(6) =   0.04650_8
+      wrfgrid%sigma(7) =   0.06100_8
+      wrfgrid%sigma(8) =   0.07850_8
+      wrfgrid%sigma(9) =   0.09950_8
+      wrfgrid%sigma(10) =   0.12500_8
+      wrfgrid%sigma(11) =   0.15550_8
+      wrfgrid%sigma(12) =   0.19200_8
+      wrfgrid%sigma(13) =   0.23550_8
+      wrfgrid%sigma(14) =   0.28800_8
+      wrfgrid%sigma(15) =   0.35150_8
+      wrfgrid%sigma(16) =   0.42700_8
+      wrfgrid%sigma(17) =   0.51750_8
+      wrfgrid%sigma(18) =   0.62650_8
+      wrfgrid%sigma(19) =   0.75750_8
+      wrfgrid%sigma(20) =   0.91450_8
+ 
+      if(.not.allocated(wrfgrid%z3d)) allocate(wrfgrid%z3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%u3d)) allocate(wrfgrid%u3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%v3d)) allocate(wrfgrid%v3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%t3d)) allocate(wrfgrid%t3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%p3d)) allocate(wrfgrid%p3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%qv3d)) allocate(wrfgrid%qv3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%qc3d)) allocate(wrfgrid%qc3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%qi3d)) allocate(wrfgrid%qi3d(mids:mide,mkps:mkpe,mjds:mjde))      
+      if(.not.allocated(wrfgrid%rh3d)) allocate(wrfgrid%rh3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%taucldv3d)) allocate(wrfgrid%taucldv3d(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%taucldi3d)) allocate(wrfgrid%taucldi3d(mids:mide,mkps:mkpe,mjds:mjde))      
+      ! for geatm variables output
+      if(.not.allocated(wrfgrid%ps)) allocate(wrfgrid%ps(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%ht)) allocate(wrfgrid%ht(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%pblh)) allocate(wrfgrid%pblh(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%u10)) allocate(wrfgrid%u10(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%v10)) allocate(wrfgrid%v10(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%t2)) allocate(wrfgrid%t2(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%rh2)) allocate(wrfgrid%rh2(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%xland)) allocate(wrfgrid%xland(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%sst)) allocate(wrfgrid%sst(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%xice)) allocate(wrfgrid%xice(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%tsk)) allocate(wrfgrid%tsk(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%snowh)) allocate(wrfgrid%snowh(mids:mide,mjds:mjde))      
+      if(.not.allocated(wrfgrid%ust)) allocate(wrfgrid%ust(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%rmol)) allocate(wrfgrid%rmol(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%raincv)) allocate(wrfgrid%raincv(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%rainncv)) allocate(wrfgrid%rainncv(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%swdown)) allocate(wrfgrid%swdown(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%clflo)) allocate(wrfgrid%clflo(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%clfmi)) allocate(wrfgrid%clfmi(mids:mide,mjds:mjde))
+      if(.not.allocated(wrfgrid%clfhi)) allocate(wrfgrid%clfhi(mids:mide,mjds:mjde))
+      
+      if(.not.allocated(wrfgrid%dust01)) allocate(wrfgrid%dust01(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%dust02)) allocate(wrfgrid%dust02(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%dust03)) allocate(wrfgrid%dust03(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%dust04)) allocate(wrfgrid%dust04(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%sea01)) allocate(wrfgrid%sea01(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%sea02)) allocate(wrfgrid%sea02(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%sea03)) allocate(wrfgrid%sea03(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%sea04)) allocate(wrfgrid%sea04(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%bc)) allocate(wrfgrid%bc(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%oc)) allocate(wrfgrid%oc(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%ppm)) allocate(wrfgrid%ppm(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%so4)) allocate(wrfgrid%so4(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%nh4)) allocate(wrfgrid%nh4(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%no3)) allocate(wrfgrid%no3(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%h2o2)) allocate(wrfgrid%h2o2(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%so2)) allocate(wrfgrid%so2(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%dms)) allocate(wrfgrid%dms(mids:mide,mkps:mkpe,mjds:mjde))
+      if(.not.allocated(wrfgrid%nh3)) allocate(wrfgrid%nh3(mids:mide,mkps:mkpe,mjds:mjde))
+
+      if(.not.allocated(wrfgrid%soildepth)) allocate(wrfgrid%soildepth(mids:mide,1:wrfgrid%num_wrfgrid_soil_levels,mjds:mjde))
+      if(.not.allocated(wrfgrid%soilthick)) allocate(wrfgrid%soilthick(mids:mide,1:wrfgrid%num_wrfgrid_soil_levels,mjds:mjde))
+      if(.not.allocated(wrfgrid%soilt)) allocate(wrfgrid%soilt(mids:mide,1:wrfgrid%num_wrfgrid_soil_levels,mjds:mjde))
+      if(.not.allocated(wrfgrid%soilm)) allocate(wrfgrid%soilm(mids:mide,1:wrfgrid%num_wrfgrid_soil_levels,mjds:mjde))
+
+      wrfgrid%soildepth(:,1,:)=0.05  
+      wrfgrid%soildepth(:,2,:)=0.25
+      wrfgrid%soildepth(:,3,:)=0.7
+      wrfgrid%soildepth(:,4,:)=1.5 
+      wrfgrid%soilthick(:,1,:)=0.1
+      wrfgrid%soilthick(:,2,:)=0.3
+      wrfgrid%soilthick(:,3,:)=0.6
+      wrfgrid%soilthick(:,4,:)=1.0 
+
+  end subroutine initial_wrfgrid
+!-----------------------------------------------------------------------
+	
+  subroutine final_wrfgrid(wrfgrid)
+    type(wrfgrid_c) :: wrfgrid
+
+    if(allocated(wrfgrid%z3d))     deallocate(wrfgrid%z3d)
+    if(allocated(wrfgrid%u3d))     deallocate(wrfgrid%u3d)
+    if(allocated(wrfgrid%v3d))     deallocate(wrfgrid%v3d)
+    if(allocated(wrfgrid%qv3d))   deallocate(wrfgrid%qv3d)
+    if(allocated(wrfgrid%qc3d))   deallocate(wrfgrid%qc3d)
+    if(allocated(wrfgrid%qi3d))   deallocate(wrfgrid%qi3d)       
+    if(allocated(wrfgrid%t3d))   deallocate(wrfgrid%t3d)
+    if(allocated(wrfgrid%rh3d))   deallocate(wrfgrid%rh3d)
+    if(allocated(wrfgrid%p3d))   deallocate(wrfgrid%p3d)
+    if(allocated(wrfgrid%taucldv3d))   deallocate(wrfgrid%taucldv3d)
+    if(allocated(wrfgrid%taucldi3d))   deallocate(wrfgrid%taucldi3d)       
+    if(allocated(wrfgrid%ps))   deallocate(wrfgrid%ps)
+    if(allocated(wrfgrid%rh2))   deallocate(wrfgrid%rh2)
+    if(allocated(wrfgrid%t2))   deallocate(wrfgrid%t2)
+    if(allocated(wrfgrid%v10))   deallocate(wrfgrid%v10)
+    if(allocated(wrfgrid%u10))   deallocate(wrfgrid%u10)
+    if(allocated(wrfgrid%ht))   deallocate(wrfgrid%ht)
+    if(allocated(wrfgrid%rmol))   deallocate(wrfgrid%rmol)
+    if(allocated(wrfgrid%pblh))   deallocate(wrfgrid%pblh)
+    if(allocated(wrfgrid%raincv))   deallocate(wrfgrid%raincv)
+    if(allocated(wrfgrid%rainncv))   deallocate(wrfgrid%rainncv)
+    if(allocated(wrfgrid%snowh))   deallocate(wrfgrid%snowh)       
+    if(allocated(wrfgrid%sst))   deallocate(wrfgrid%sst)
+    if(allocated(wrfgrid%xice))   deallocate(wrfgrid%xice)
+    if(allocated(wrfgrid%tsk))   deallocate(wrfgrid%tsk)       
+    if(allocated(wrfgrid%xland))   deallocate(wrfgrid%xland)
+    if(allocated(wrfgrid%swdown))   deallocate(wrfgrid%swdown)
+    if(allocated(wrfgrid%clflo))   deallocate(wrfgrid%clflo)
+    if(allocated(wrfgrid%clfmi))   deallocate(wrfgrid%clfmi)
+    if(allocated(wrfgrid%clfhi))   deallocate(wrfgrid%clfhi)
+
+      if(allocated(wrfgrid%dust01)) deallocate(wrfgrid%dust01)
+      if(allocated(wrfgrid%dust02)) deallocate(wrfgrid%dust02)
+      if(allocated(wrfgrid%dust03)) deallocate(wrfgrid%dust03)
+      if(allocated(wrfgrid%dust04)) deallocate(wrfgrid%dust04)
+      if(allocated(wrfgrid%sea01)) deallocate(wrfgrid%sea01)
+      if(allocated(wrfgrid%sea02)) deallocate(wrfgrid%sea02)
+      if(allocated(wrfgrid%sea03)) deallocate(wrfgrid%sea03)
+      if(allocated(wrfgrid%sea04)) deallocate(wrfgrid%sea04)
+      if(allocated(wrfgrid%bc)) deallocate(wrfgrid%bc)
+      if(allocated(wrfgrid%oc)) deallocate(wrfgrid%oc)
+      if(allocated(wrfgrid%ppm)) deallocate(wrfgrid%ppm)
+      if(allocated(wrfgrid%so4)) deallocate(wrfgrid%so4)
+      if(allocated(wrfgrid%nh4)) deallocate(wrfgrid%nh4)
+      if(allocated(wrfgrid%no3)) deallocate(wrfgrid%no3)
+      if(allocated(wrfgrid%h2o2)) deallocate(wrfgrid%h2o2)
+      if(allocated(wrfgrid%so2)) deallocate(wrfgrid%so2)
+      if(allocated(wrfgrid%dms)) deallocate(wrfgrid%dms)
+      if(allocated(wrfgrid%nh3)) deallocate(wrfgrid%nh3)
+
+    if(allocated(wrfgrid%soildepth)) deallocate(wrfgrid%soildepth)
+    if(allocated(wrfgrid%soilthick)) deallocate(wrfgrid%soilthick)
+    if(allocated(wrfgrid%soilt)) deallocate(wrfgrid%soilt)
+    if(allocated(wrfgrid%soilm)) deallocate(wrfgrid%soilm)
+
+  end subroutine final_wrfgrid
+!-----------------------------------------------------------------------
+	
+  subroutine geatm_import_mct(x2c_c, camgrid, wrfgrid,  iyear, imonth, iday, ihour, iminuate)     
+!-----------------------------------------------------------------------
+! Arguments
+!
+     use geatm_vartype, only:csx,cex,csy,cey,sx,ex,sy,ey,myid
+     TYPE(camgrid_c) :: camgrid
+     TYPE(wrfgrid_c) :: wrfgrid
+     type(mct_aVect)   , intent(inout) :: x2c_c
+     integer, intent(inout) :: iyear, imonth, iday, ihour, iminuate
+
+     ! Local variables	
+     integer  :: i,j,k,ig  ! indices    
+     integer :: ids,ide,jds,jde,kds,kde,ims,ime,jms,jme,kms,kme,ips,ipe,jps,jpe,kps,kpe   
+ 
+       ips=sx(1)
+       ipe=ex(1)
+       jps=sy(1)
+       jpe=ey(1)
+      
+      ig=1
+      do j=jps,jpe                                                        
+       do i =ips, ipe
+         
+          camgrid%xlat(i,j)       = x2c_c%rAttr(index_x2ge_Sx_lat     ,ig)*180.0/3.1415926
+          camgrid%xlon(i,j)       = x2c_c%rAttr(index_x2ge_Sx_lon     ,ig)*180.0/3.1415926 
+	  if(camgrid%xlon(i,j).lt.0) camgrid%xlon(i,j) = camgrid%xlon(i,j)+360  
+          camgrid%ps(i,j) = x2c_c%rAttr(index_x2ge_Sx_ps      ,ig)
+          camgrid%ht(i,j) =  x2c_c%rAttr(index_x2ge_Sx_phis    ,ig)/9.81
+          camgrid%t2(i,j) =  x2c_c%rAttr(index_x2ge_Sx_t2    ,ig) 
+          camgrid%pblh(i,j) =  x2c_c%rAttr(index_x2ge_Sx_pblh    ,ig)
+          camgrid%u10(i,j) =  x2c_c%rAttr(index_x2ge_Sx_u10    ,ig)
+          camgrid%v10(i,j) =  x2c_c%rAttr(index_x2ge_Sx_v10    ,ig)
+          camgrid%ust(i,j) =  x2c_c%rAttr(index_x2ge_Sx_ust    ,ig)
+          camgrid%rmol(i,j) =  x2c_c%rAttr(index_x2ge_Sx_rmol    ,ig)
+          camgrid%raincv(i,j) =  x2c_c%rAttr(index_x2ge_Sx_raincv    ,ig)
+          camgrid%rainncv(i,j) =  x2c_c%rAttr(index_x2ge_Sx_rainncv    ,ig)
+          camgrid%swdown(i,j) =  x2c_c%rAttr(index_x2ge_Sx_swdown    ,ig)
+          camgrid%clflo(i,j) =  x2c_c%rAttr(index_x2ge_Sx_clflo    ,ig)
+          camgrid%clfmi(i,j) =  x2c_c%rAttr(index_x2ge_Sx_clfmi    ,ig)
+          camgrid%clfhi(i,j) =  x2c_c%rAttr(index_x2ge_Sx_clfhi    ,ig)
+          camgrid%rh2(i,j) =  x2c_c%rAttr(index_x2ge_Sx_rh2    ,ig)
+          camgrid%sst(i,j) = x2c_c%rAttr(index_x2ge_Sx_sst  ,ig)    
+          camgrid%xice(i,j) = x2c_c%rAttr(index_x2ge_Sx_seaice  ,ig)
+          camgrid%tsk(i,j) = x2c_c%rAttr(index_x2ge_Sx_ts  ,ig)      
+          camgrid%xland(i,j)= 1.0-x2c_c%rAttr(index_x2ge_Sx_ocnfrac  ,ig) ! used as land
+          camgrid%snowh(i,j) = (camgrid%xland(i,j) *x2c_c%rAttr(index_x2ge_Sx_snowhland  ,ig)  +camgrid%xice(i,j) * x2c_c%rAttr(index_x2ge_Sx_snowhice   ,ig))
+           if(camgrid%xland(i,j).lt.0.5) then
+            camgrid%xland(i,j)=0
+           else
+            camgrid%xland(i,j)=1
+           endif
+         
+          ! from surface to underground 
+          do k=1, camgrid%num_camgrid_soil_levels
+            camgrid%soildepth(i,camgrid%num_camgrid_soil_levels-k+1,j)       =  x2c_c%rAttr(index_x2ge_Sx_soildepth(k),ig)  ! The unit is supposed as cm
+            camgrid%soilthick(i,camgrid%num_camgrid_soil_levels-k+1,j)       = x2c_c%rAttr(index_x2ge_Sx_soilthick(k),ig)   !The unit is supposed as cm
+            camgrid%soilt(i,camgrid%num_camgrid_soil_levels-k+1,j)   = x2c_c%rAttr(index_x2ge_Sx_soilt(k),ig)
+            camgrid%soilm(i,camgrid%num_camgrid_soil_levels-k+1,j)   = x2c_c%rAttr(index_x2ge_Sx_soilm(k),ig) 
+          enddo
+           
+	  do k = 1, camgrid%num_camgrid_levels
+            camgrid%u3d(i,k,j) = x2c_c%rAttr(index_x2ge_Sx_u3d(k)     ,ig)
+            camgrid%v3d(i,k,j) = x2c_c%rAttr(index_x2ge_Sx_v3d(k)     ,ig)
+            camgrid%t3d(i,k,j) = x2c_c%rAttr(index_x2ge_Sx_t3d(k)     ,ig)
+            camgrid%z3d(i,k,j) = x2c_c%rAttr(index_x2ge_Sx_z3d(k)     ,ig)            
+            camgrid%p3d(i,k,j) = x2c_c%rAttr(index_x2ge_Sx_p3d(k)     ,ig)
+	    camgrid%rh3d(i,k,j) = x2c_c%rAttr(index_x2ge_Sx_rh3d(k)     ,ig)  
+            camgrid%qv3d(i,k,j)= x2c_c%rAttr(index_x2ge_Sx_qv3d(k),ig) 
+            camgrid%qc3d(i,k,j)= x2c_c%rAttr(index_x2ge_Sx_qc3d(k),ig)
+            camgrid%qi3d(i,k,j)= x2c_c%rAttr(index_x2ge_Sx_qi3d(k),ig)
+            camgrid%taucldv3d(i,k,j) = x2c_c%rAttr(index_x2ge_Sx_taucldv3d(k)     ,ig)
+            camgrid%taucldi3d(i,k,j) = x2c_c%rAttr(index_x2ge_Sx_taucldi3d(k)     ,ig)            
+          end do  
+
+           if( camgrid%ht(i,j) .lt.0)   camgrid%ht(i,j) = 0 ! it may be less than zero in the ocean for the terrain
+          ig=ig+1
+         end do
+       end do                                   
+           
+           ! the original height is the height above the surface not the sea level
+           do  k = 1, camgrid%num_camgrid_levels
+              camgrid%z3d(:,k,:)  = camgrid%z3d(:,k,:)+camgrid%ht(:,:) 
+           enddo
+
+          wrfgrid%ps = camgrid%ps
+          wrfgrid%ht = camgrid%ht
+          wrfgrid%t2 = camgrid%t2
+          wrfgrid%pblh = camgrid%pblh
+          wrfgrid%u10 = camgrid%u10
+          wrfgrid%v10 = camgrid%v10
+          wrfgrid%ust = camgrid%ust
+          wrfgrid%rmol = camgrid%rmol
+          wrfgrid%raincv = camgrid%raincv
+          wrfgrid%rainncv = camgrid%rainncv
+          wrfgrid%swdown = camgrid%swdown
+          wrfgrid%clflo = camgrid%clflo
+          wrfgrid%clfmi = camgrid%clfmi
+          wrfgrid%clfhi = camgrid%clfhi
+          wrfgrid%rh2 = camgrid%rh2
+          wrfgrid%sst = camgrid%sst
+          wrfgrid%xice = camgrid%xice
+          wrfgrid%tsk = camgrid%tsk
+          wrfgrid%xland = camgrid%xland
+          wrfgrid%snowh = camgrid%snowh
+
+       call cam_to_geatm(camgrid, wrfgrid)
+       call wrfgrid_to_geatm(wrfgrid,iyear,imonth,iday,ihour,iminuate)
+
+  end subroutine geatm_import_mct
+!=============================================================================================================
+
+  subroutine geatm_export_mct( c2x_c, camgrid, wrfgrid )
+!-----------------------------------------------------------------------
+! Arguments
+!
+     use geatm_vartype, only:csx,cex,csy,cey,sx,ex,sy,ey
+     TYPE(camgrid_c) :: camgrid
+     TYPE(wrfgrid_c) :: wrfgrid
+     type(mct_aVect)   , intent(inout) :: c2x_c
+     integer :: i,j,k,kl,ig
+     integer :: ips,ipe,jps,jpe
+     
+      call geatm_to_wrfgrid(wrfgrid)
+      call geatm_to_cam(camgrid, wrfgrid )
+       ips=sx(1)
+       ipe=ex(1)
+       jps=sy(1)
+       jpe=ey(1)
+         ! from top to surface       
+         ig=1
+         do j=jps,jpe                                                        
+         do i=ips, ipe
+    	   do k = 1, camgrid%num_camgrid_levels
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,1)     ,ig) = camgrid%dust01(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,2)     ,ig) = camgrid%dust02(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,3)     ,ig) = camgrid%dust03(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,4)     ,ig) = camgrid%dust04(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,5)     ,ig) = camgrid%sea01(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,6)     ,ig) = camgrid%sea02(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,7)     ,ig) = camgrid%sea03(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,8)     ,ig) = camgrid%sea04(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,9)     ,ig) = camgrid%ppm(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,10)    ,ig) = camgrid%bc(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,11)    ,ig) = camgrid%oc(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,12)    ,ig) = camgrid%nh4(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,13)    ,ig) = camgrid%no3(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,14)    ,ig) = camgrid%so4(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,15)    ,ig) = camgrid%h2o2(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,16)    ,ig) = camgrid%so2(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,17)    ,ig) = camgrid%dms(i,k,j)
+            c2x_c%rAttr(index_ge2x_Fgexge_tracer(k,18)    ,ig) = camgrid%nh3(i,k,j)
+           end do  
+         ig=ig+1
+         end do 
+         end do                                   
+
+ end subroutine geatm_export_mct
+!=============================================================================================================
+
+  subroutine cam_to_geatm(camgrid, wrfgrid )
+
+     TYPE(camgrid_c) :: camgrid
+     TYPE(wrfgrid_c) :: wrfgrid
+
+     ! Local variables  
+     integer  :: i,j,k,ix,jy,km
+     integer :: mids, mide, mjds, mjde, mkds, mkde, &
+                mims, mime, mjms, mjme, mkms, mkme, &
+                mips, mipe, mjps, mjpe, mkps, mkpe
+     integer ::   ids, ide, jds, jde, kds, kde, &
+                  ims, ime, jms, jme, kms, kme, &
+                  ips, ipe, jps, jpe, kps, kpe 
+
+       call cam_interpolate_to_geatm(camgrid, wrfgrid, 'p3d' )
+       call cam_interpolate_to_geatm(camgrid, wrfgrid, 'u3d' )
+       call cam_interpolate_to_geatm(camgrid, wrfgrid, 'v3d' )
+       call cam_interpolate_to_geatm(camgrid, wrfgrid, 'rh3d' )
+       call cam_interpolate_to_geatm(camgrid, wrfgrid, 'qv3d' )
+       call cam_interpolate_to_geatm(camgrid, wrfgrid, 'qc3d' )
+       call cam_interpolate_to_geatm(camgrid, wrfgrid, 'qi3d' )
+       call cam_interpolate_to_geatm(camgrid, wrfgrid, 't3d' )
+       call cam_interpolate_to_geatm(camgrid, wrfgrid, 'taucldv3d' ) 
+       call cam_interpolate_to_geatm(camgrid, wrfgrid, 'taucldi3d' )
+
+       call cam_interpolate_to_geatm_soil(camgrid, wrfgrid, 'soilt' )
+       call cam_interpolate_to_geatm_soil(camgrid, wrfgrid, 'soilm' )
+    end subroutine cam_to_geatm
+    
+!=============================================================================================================
+
+    subroutine cam_interpolate_to_geatm(camgrid, wrfgrid, symbol )
+     use geatm_vartype, only:csx,cex,csy,cey,sx,ex,sy,ey
+
+     TYPE(camgrid_c) :: camgrid
+     TYPE(wrfgrid_c) :: wrfgrid
+     character(len=*) :: symbol
+     
+     ! Local variables  
+     integer  :: i,j,k,ix,jy,kz,km
+     real(8),dimension(:,:,:),allocatable:: p3d, t3d, w3d, t3d_int 
+     integer ::   ids, ide, jds, jde, kds, kde, &
+                  ips, ipe, jps, jpe, kps, kpe 
+                   
+      ips=sx(1)
+      ipe=ex(1)
+      jps=sy(1)
+      jpe=ey(1)
+
+      allocate(p3d(ips:ipe,1:camgrid%num_camgrid_levels,jps:jpe))
+      allocate(t3d(ips:ipe,1:camgrid%num_camgrid_levels,jps:jpe))      
+      allocate(w3d(ips:ipe,1:wrfgrid%num_wrfgrid_levels,jps:jpe))
+      allocate(t3d_int(ips:ipe,1:wrfgrid%num_wrfgrid_levels,jps:jpe))
+
+         w3d = wrfgrid%z3d
+         p3d = camgrid%z3d
+ 
+          select case(trim(adjustl(symbol)))
+          ! p3d
+          case('p3d')
+             t3d = camgrid%p3d
+          ! u3d
+          case('u3d')
+             t3d = camgrid%u3d
+          ! v3d
+          case('v3d')
+             t3d = camgrid%v3d
+          ! t3d
+          case('t3d')
+             t3d = camgrid%t3d
+          ! qv3d
+          case('qv3d')
+             t3d = camgrid%qv3d
+          ! qc3d
+          case('qc3d')
+             t3d = camgrid%qc3d
+          ! qi3d
+          case('qi3d')
+             t3d = camgrid%qi3d
+          ! rh3d
+          case('rh3d')
+             t3d = camgrid%rh3d
+          ! taucldv3d
+          case('taucldv3d')
+             t3d=camgrid%taucldv3d
+          ! taucldi3d
+          case('taucldi') 
+             t3d=camgrid%taucldi3d
+         end select       
+
+         call interpolate_to_pressure_levels(1,camgrid%num_camgrid_levels &
+               ,ips,ipe,jps,jpe,wrfgrid%num_wrfgrid_levels &
+               ,p3d,w3d,t3d,t3d_int)
+                
+          select case(trim(adjustl(symbol)))
+          ! p3d
+          case('p3d')
+            wrfgrid%p3d = t3d_int
+          ! u3d
+          case('u3d')
+             wrfgrid%u3d = t3d_int
+          ! v3d
+          case('v3d')
+            wrfgrid%v3d = t3d_int
+          ! t3d
+          case('t3d')
+            wrfgrid%t3d = t3d_int
+          ! qv3d
+          case('qv3d')
+             wrfgrid%qv3d = t3d_int
+          ! qc3d
+          case('qc3d')
+            wrfgrid%qc3d = t3d_int
+          ! qi3d
+          case('qi3d')
+            wrfgrid%qi3d = t3d_int
+          ! rh3d
+          case('rh3d')
+            wrfgrid%rh3d = t3d_int
+          ! taucldv3d
+          case('taucldv3d')
+            wrfgrid%taucldv3d = t3d_int
+          ! taucldi3d
+          case('taucldi') 
+             wrfgrid%taucldi3d = t3d_int
+         end select              
+
+      deallocate(p3d)
+      deallocate(t3d)      
+      deallocate(w3d)
+      deallocate(t3d_int)
+
+      end subroutine cam_interpolate_to_geatm
+
+!=============================================================================================================
+    subroutine cam_interpolate_to_geatm_soil(camgrid, wrfgrid, symbol )
+     use geatm_vartype, only:csx,cex,csy,cey,sx,ex,sy,ey
+
+     TYPE(camgrid_c) :: camgrid
+     TYPE(wrfgrid_c) :: wrfgrid
+     character(len=*) :: symbol
+     
+     ! Local variables  
+     integer  :: i,j,k,ix,jy,km,local_index,global_index1,global_index2
+     real(8),dimension(:,:),allocatable:: s
+     real(8),dimension(:,:,:),allocatable:: p3d, t3d, w3d,t3d_int 
+     integer ::   ids, ide, jds, jde, kds, kde, &
+                  ips, ipe, jps, jpe, kps, kpe 
+
+      ips=sx(1)
+      ipe=ex(1)
+      jps=sy(1)
+      jpe=ey(1)
+
+      allocate(s(ips:ipe,jps:jpe))
+      allocate(p3d(ips:ipe,1:camgrid%num_camgrid_soil_levels,jps:jpe))
+      allocate(t3d(ips:ipe,1:camgrid%num_camgrid_soil_levels,jps:jpe))      
+      allocate(w3d(ips:ipe,1:wrfgrid%num_wrfgrid_soil_levels,jps:jpe))
+      allocate(t3d_int(ips:ipe,1:wrfgrid%num_wrfgrid_soil_levels,jps:jpe))
+
+         do k=1,wrfgrid%num_wrfgrid_soil_levels
+           w3d(:,k,:) = wrfgrid%soildepth(:,wrfgrid%num_wrfgrid_soil_levels-k+1,:)  ! use m
+         enddo
+           p3d = camgrid%soildepth
+
+         select case(trim(adjustl(symbol)))
+         ! soilt
+         case('soilt')
+             t3d = camgrid%soilt
+         ! soilm
+         case('soilm')
+             t3d = camgrid%soilm
+         end select
+
+         call interpolate_to_pressure_levels(1,camgrid%num_camgrid_soil_levels &
+               ,ips,ipe,jps,jpe,wrfgrid%num_wrfgrid_soil_levels &
+               ,p3d,w3d,t3d,t3d_int)
+    
+          ! sort to from the surfce to the underground
+          do k=1,wrfgrid%num_wrfgrid_soil_levels/2 
+           s(:,:) = t3d_int(:,k,:)
+           t3d_int(:,k,:) = t3d_int(:,wrfgrid%num_wrfgrid_soil_levels-k+1,:)
+           t3d_int(:,wrfgrid%num_wrfgrid_soil_levels-k+1,:) = s(:,:)
+          end do
+
+         select case(trim(adjustl(symbol)))
+         ! soilt
+         case('soilt')
+            wrfgrid%soilt = t3d_int
+         ! soilm
+         case('soilm')
+            wrfgrid%soilm = t3d_int
+         end select
+       
+      deallocate(p3d)
+      deallocate(t3d)      
+      deallocate(w3d)
+      deallocate(t3d_int)
+      deallocate(s)
+
+      end subroutine cam_interpolate_to_geatm_soil
+      
+!=============================================================================================================      
+     subroutine wrfgrid_to_geatm(wrfgrid,iyear,imonth,iday,ihour,iminuate)
+
+     TYPE(wrfgrid_c) :: wrfgrid
+     integer,intent(in) :: iyear,imonth,iday,ihour,iminuate
+
+     logical,parameter :: lrain_1h=.false.
+     real,parameter :: deg2rad=0.01745329
+     real,parameter :: gamma=0.286
+     real,parameter :: kvmin=0.5
+     real,parameter :: denh2o=1.0e6 ! g/m3
+     real,parameter :: fspfa=0.86 ! scattering phase function asymmetry factor
+
+     integer :: i,j,k,i0,i02,i03,ixy,ix,jy,km,kl
+
+     logical :: lconv
+     real,dimension(nzz) :: dz_1d,zm_1d,pr,tt,qv,qq,cfrac,cldtrns,qqwrf
+     real :: pbl,convfac,rainc,rainr
+
+     real :: zenang,zenith
+     real :: cldrat,coefcld,fcld
+     integer :: iabov
+
+     real :: cellat,cellon,tau
+
+     integer :: timec,datec
+     logical :: ldark
+
+     integer :: i03_z1
+     real :: ustar,eli,wstar,risfc
+     real :: tsfc,press0,wind,z0c,pblc
+     real :: th,qvc
+
+     real,dimension(nzz) :: tac,pac,zm,qac
+     real,dimension(nzz) :: zzc,thetav,uwind,vwind,ttt,qqq,rkc
+
+     real,dimension(nzz) :: tkep,elp
+
+     integer :: lu_idx
+
+     integer,parameter  :: lucats_usgs=24
+     real z0_USGS(lucats_usgs)
+     data z0_USGS /50.,15.,15.,15.,14.,20.,12.,10.,11.,15., &
+              50.,50.,50.,50.,50.,0.01,20.,40.,10.,10., &
+              30.,15.,10.,5./
+
+     ne=1
+     ! (1)  read meteorological fields
+       
+       do k=1,wrfgrid%num_wrfgrid_levels
+        i0=ip3mem(k,1)
+        kl=wrfgrid%num_wrfgrid_levels-k+1 ! from the surface to upper troposphere
+          do j= sy(1),ey(1)
+          do i= sx(1),ex(1)
+            km=i0+(ex(1)-sx(1)+3)*(j-sy(1)+1)+i-sx(1)+1
+            plev(km)=real(wrfgrid%p3d(i,kl,j)/100.0) ! from Pa to hPa
+            h(km)=real(wrfgrid%z3d(i,kl,j)/1000.0)  ! from m to km
+            t(km)=real(wrfgrid%t3d(i,kl,j))
+            u(km)=real(wrfgrid%u3d(i,kl,j))
+            v(km)=real(wrfgrid%v3d(i,kl,j)) 
+            qvapor(km)=real(wrfgrid%qv3d(i,kl,j)) 
+            clw(km)=real(wrfgrid%qc3d(i,kl,j)) 
+            rnw(km)=real(wrfgrid%qi3d(i,kl,j))
+            rh1(km)=real(wrfgrid%rh3d(i,kl,j))
+            if(rh1(km).gt.100.0) then
+            rh1(km)=100.0
+            elseif(rh1(km).lt.0.0) then
+            rh1(km)=0.0
+            endif
+            taucldc(km)=real(wrfgrid%taucldv3d(i,kl,j))
+            taucldi(km)=real(wrfgrid%taucldi3d(i,kl,j))
+          end do
+          end do
+       end do  
+
+       do k=1,wrfgrid%num_wrfgrid_soil_levels
+        i0=ip3mem(k,1)
+          do j= sy(1),ey(1)
+          do i= sx(1),ex(1)
+            km=i0+(ex(1)-sx(1)+3)*(j-sy(1)+1)+i-sx(1)+1
+            soilt(km)=real(wrfgrid%soilt(i,k,j))
+            soilrh(km)=real(wrfgrid%soilm(i,k,j))
+          end do
+          end do
+        i0=i0+(nx(1)+2)*(ny(1)+2)
+       end do
+       
+       i0=ip2mem(1)
+       do j= sy(1),ey(1)
+       do i= sx(1),ex(1)
+           km=i0+(ex(1)-sx(1)+3)*(j-sy(1)+1)+i-sx(1)+1
+           t2(km)=real(wrfgrid%t2(i,j))
+           u10(km)=real(wrfgrid%u10(i,j))
+           v10(km)=real(wrfgrid%v10(i,j))
+           pbl_hgt(km)=real(wrfgrid%pblh(i,j))
+           rmol(km)=real(wrfgrid%rmol(i,j))
+           ust(km)=real(wrfgrid%ust(i,j))
+           psfc(km)=real(wrfgrid%ps(i,j))
+           fsnow(km)=real(wrfgrid%snowh(i,j))
+           fice(km)=real(wrfgrid%xice(i,j))
+           rhsfc(km)=real(wrfgrid%rh2(i,j))
+           if(rhsfc(km).gt.100) then
+            rhsfc(km)=100.0
+           elseif(rhsfc(km).lt.0) then
+            rhsfc(km)=0.0
+           end if
+           rainnon(km)=real(wrfgrid%rainncv(i,j)*3600*100)  ! from m/s to cm/h
+           raincon(km)=real(wrfgrid%raincv(i,j)*3600*100)   ! from m/s to cm/h
+           swdown(km)=real(wrfgrid%swdown(i,j))
+           clflo(km)=real(wrfgrid%clflo(i,j))
+           clfmi(km)=real(wrfgrid%clfmi(i,j))
+           clfhi(km)=real(wrfgrid%clfhi(i,j))
+           tskwrf(km)=real(wrfgrid%t2(i,j))
+        end do
+       end do
+
+       kh=450. ! horizontal diffusion coefficient
+
+     ! (2) calculate cloud parameters
+
+     i02=ip2mem(ne)
+     do j=sy(ne),ey(ne)
+     do i=sx(ne),ex(ne)
+     ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+     rainc=raincon(i02+ixy)*10.0 ! cm/hr -> mm/hr
+     rainr=rainnon(i02+ixy)*10.0 ! cm/hr -> mm/hr
+
+     pbl=PBL_HGT(i02+ixy)
+
+     do k=1,nzz
+     i03=ip3mem(k,ne)
+     ! Layer heights (m)
+     dz_1d(k)=dz(i03+ixy)
+     zm_1d(k)=heiz(i03+ixy)-terrain(i02+ixy)
+     ! Layer pressure (Pa)
+     pr(k)=Plev(i03+ixy)*100.0
+     ! Layer temperature (K)
+     tt(k)=t(i03+ixy)
+     ! Layer humidity (kg/kg)
+     qv(k)=qvapor(i03+ixy)
+     ! Layer cloud water content (g/m3)
+     convfac=44.9*(273./tt(k))*(pr(k)/100/1013.)*29.0
+     qq(k)=clw(i03+ixy)*convfac ! kg/kg-> g/m3 
+     qqwrf(k)=clw(i03+ixy)*convfac
+     enddo
+
+     lconv = .false.
+     if (rainc.gt.0.2 .and. rainc.gt.rainr) lconv = .true.
+     call clddiag(nzz,lconv,pbl,rainc,dz_1d,zm_1d,pr,tt,qv,qq,cfrac)
+
+     do k=1,nzz
+     if (cfrac(k).le.0.5) then
+      cfrac(k) = 0.0
+     endif
+     if(qq(k).lt.0.01) then
+      cfrac(k) = 0.0
+     endif
+     enddo
+
+     do k=1,nzz
+     i03=ip3mem(k,ne)
+     cldfrc3d(i03+ixy)=cfrac(k)
+     if(.not.(cfrac(k).ge.0.0.and.cfrac(k).le.1.0)) then
+      print*,'cldfrc3d-erro:',i,j,k,cfrac(k)
+      stop
+     endif
+     enddo
+
+     cellat=LATITCRS(i02+ixy)
+     cellon=LONGICRS(i02+ixy)
+     
+     timec=ihour*100+iminuate
+     datec=iyear*10000+imonth*100+iday
+     call juldate(datec)
+     call getznth(cellat,cellon,timec,datec,itzon,zenith,ldark)
+
+     zenang = amin1(zenith,60.0)
+     zenang = deg2rad*zenang
+
+     do k=1,nzz
+     tau=3.0*qqwrf(k)*dz_1d(k)/(2.0*denh2o*1.0e-5) ! 1.0e-5 is the cloud dp( in m)
+     cldtrns(k)=(5.0-exp(-1.0*tau))/(4.0+3.0*tau*(1.0-fspfa))  
+     enddo
+     
+     do k=1,nzz
+     if(cldtrns(k).ne.1) then
+       iabov=0
+       fcld=cfrac(k)
+     else
+       iabov = 1
+       fcld=cfrac(1)
+     endif
+     if (iabov.eq.1) then
+        cldrat = 1. + (1. - cldtrns(k))*cos(zenang)
+     else
+        cldrat = 1.6*cldtrns(k)*cos(zenang)
+     endif
+     coefcld = 1. + fcld*(cldrat - 1.)
+ 
+     i03=ip3mem(k,ne)
+     coefcld3d(i03+ixy)=coefcld
+     enddo
+
+     enddo
+     enddo
+
+    ! (3) calculate Kv profiles : ysu scheme
+
+    if(idifvert.eq.1) then
+
+    do k=1,nzz
+      i03=ip3mem(k,ne)
+      i02=ip2mem(ne)
+      CALL eddyz(myid,UST(i02),PBL_HGT(i02),RMOL(i02),&
+                  heiz(i03),terrain(i02),kv(i03),sx(ne),ex(ne),sy(ne),ey(ne),k)
+    enddo
+
+    elseif(idifvert.ge.2) then
+    i02=ip2mem(ne)
+    do j=sy(ne),ey(ne)
+    do i=sx(ne),ex(ne)
+
+    ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+
+    tsfc=tskwrf(i02+ixy) ! surface skin temperature
+    press0=psfc(i02+ixy)/100.0 ! pa->mb
+
+    i03_z1=ip3mem(1,ne)
+    wind=sqrt(u(i03_z1+ixy)**2.0+v(i03_z1+ixy)**2.0)
+    pblc=pbl_hgt(i02+ixy)
+
+    lu_idx=int(land_USE(i02+ixy))
+    z0c=z0_USGS(lu_idx)/100.0 ! Surface roughness length (m)
+
+    do k=1,nzz
+
+    i03=ip3mem(k,ne)
+    tac(k)=t(i03+ixy)
+    pac(k)=Plev(i03+ixy) ! mb
+    zm(k)=heiz(i03+ixy)-terrain(i02+ixy)
+
+    if(k.eq.1) then
+      zzc(k)=2*zm(k)
+    elseif(k.gt.1.and.k.lt.nzz) then
+      zzc(k)=2*(zm(k)+zm(k+1))
+    elseif(k.eq.nzz) then
+      zzc(k)=zzc(k-1)+5.0e3 ! not used in subroutine kv_ysu
+    endif
+
+    uwind(k)=u(i03+ixy)
+    vwind(k)=v(i03+ixy)
+    ttt(k)=t(i03+ixy)
+    qqq(k)=qvapor(i03+ixy)
+
+    qac(k)=qqq(k)
+    th=tac(k)*(1000./pac(k))**gamma
+    qvc=qac(k)*18./28.8/1.e6
+    thetav(k)=th*(1. + 0.61*qvc)
+    enddo
+
+    call wrf_micromet( tac(1),tsfc,pac(1),press0,zm(1),wind,z0c,pblc, &
+               & ustar,eli,wstar,risfc )
+
+   if(idifvert.eq.2) then ! ysu
+    call kv_ysu(nzz,pblc,ustar,eli,wstar,zm,zzc &
+               ,thetav,uwind,vwind,ttt,qqq,kvmin,risfc,rkc)
+   elseif(idifvert.eq.3) then ! myj < NO choosing >
+    call kv_tkemyj(nzz,thetav,uwind,vwind,zm,zzc &
+                      ,tkep,elp,kvmin,pblc,rkc)
+   elseif(idifvert.eq.4) then ! cmaq
+    call kv_cmaq(nzz,pblc,ustar,eli,wstar,zm,zzc &
+                    ,thetav,uwind,vwind,kvmin,rkc)
+   elseif(idifvert.eq.5) then ! ob70
+    call kv_ob70(nzz,kvmin,pblc,zzc,thetav,uwind,vwind,rkc)
+   else
+    print*,'idifvert erro in rd_met.f90'
+   endif
+
+
+   do k=1,nzz
+    i03=ip3mem(k,ne)
+    kv(i03+ixy)=rkc(k)
+   enddo
+
+   enddo
+   enddo
+
+   endif ! idifvert.gt.2
+
+  !(4) calculate air density
+   do j=sy(ne),ey(ne)
+   do i=sx(ne),ex(ne)
+   ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+   do k=1,nzz
+    i03=ip3mem(k,ne)
+    ! kg/m3
+    roair3d(i03+ixy)=28.973*1.0E-3*Plev(i03+ixy)*100/(8.31*t(i03+ixy))
+   enddo
+   enddo
+   enddo
+
+end subroutine wrfgrid_to_geatm
+!=============================================================================================================
+
+  subroutine geatm_to_cam(camgrid, wrfgrid )
+
+     TYPE(camgrid_c) :: camgrid
+     TYPE(wrfgrid_c) :: wrfgrid
+
+     ! Local variables  
+     integer  :: i,j,k,ix,jy,km,local_index,global_index1,global_index2
+     integer :: mids, mide, mjds, mjde, mkds, mkde, &
+                mims, mime, mjms, mjme, mkms, mkme, &
+                mips, mipe, mjps, mjpe, mkps, mkpe
+     integer ::   ids, ide, jds, jde, kds, kde, &
+                  ims, ime, jms, jme, kms, kme, &
+                  ips, ipe, jps, jpe, kps, kpe 
+       
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'dust01' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'dust02' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'dust03' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'dust04' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'sea01' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'sea02' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'sea03' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'sea04' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'ppm' ) 
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'bc' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'oc' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'nh4' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'no3' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'so4' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'h2o2' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'so2' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'dms' )
+       call geatm_interpolate_to_cam(camgrid, wrfgrid, 'no3' )
+       
+    end subroutine geatm_to_cam
+    
+!=============================================================================================================
+
+    subroutine geatm_interpolate_to_cam(camgrid, wrfgrid, symbol )
+     use geatm_vartype, only:csx,cex,csy,cey,sx,ex,sy,ey
+
+     TYPE(camgrid_c) :: camgrid
+     TYPE(wrfgrid_c) :: wrfgrid
+     character(len=*) :: symbol
+     
+     ! Local variables  
+     integer  :: i,j,k,ix,jy,kz,km
+     real(8),dimension(:,:,:),allocatable:: p3d, t3d, w3d, t3d_int
+     integer ::   ids, ide, jds, jde, kds, kde, &
+                  ips, ipe, jps, jpe, kps, kpe 
+                   
+      ips=sx(1)
+      ipe=ex(1)
+      jps=sy(1)
+      jpe=ey(1)
+
+      allocate(p3d(ips:ipe,1:wrfgrid%num_wrfgrid_levels,jps:jpe))
+      allocate(t3d(ips:ipe,1:wrfgrid%num_wrfgrid_levels,jps:jpe))      
+      allocate(w3d(ips:ipe,1:camgrid%num_camgrid_levels,jps:jpe))
+      allocate(t3d_int(ips:ipe,1:camgrid%num_camgrid_levels,jps:jpe))
+
+       ! from top to surface
+       p3d = wrfgrid%z3d  
+       w3d = camgrid%z3d  
+          
+          select case(trim(adjustl(symbol)))
+          case('dust01')
+             t3d = wrfgrid%dust01
+          case('dust02')
+             t3d = wrfgrid%dust02
+          case('dust03')
+             t3d = wrfgrid%dust03
+          case('dust04')
+             t3d = wrfgrid%dust04
+          case('sea01')
+             t3d = wrfgrid%sea01
+          case('sea02')
+             t3d = wrfgrid%sea02
+          case('sea03')
+             t3d = wrfgrid%sea03
+          case('sea04')
+             t3d = wrfgrid%sea04
+          case('ppm')
+             t3d = wrfgrid%ppm
+          case('bc')
+             t3d = wrfgrid%bc
+          case('oc')
+             t3d = wrfgrid%oc
+          case('nh4')
+             t3d = wrfgrid%nh4
+          case('no3')
+             t3d = wrfgrid%no3
+          case('so4')
+             t3d = wrfgrid%so4
+          case('h2o2')
+             t3d = wrfgrid%h2o2
+          case('so2')
+             t3d = wrfgrid%so2
+          case('dms')
+             t3d = wrfgrid%dms
+          case('nh3')
+             t3d = wrfgrid%nh3
+         end select       
+
+         call interpolate_to_pressure_levels(1,wrfgrid%num_wrfgrid_levels &
+               ,ips,ipe,jps,jpe,camgrid%num_camgrid_levels &
+               ,p3d,w3d,t3d,t3d_int)
+           
+           do j=jps,jpe 
+           do i=ips,ipe
+             do k=1,camgrid%num_camgrid_levels
+              if(w3d(i,k,j).gt.20000) t3d_int(i,k,j)=0.0
+             end do
+!             if(w3d(i,camgrid%num_camgrid_levels,j).lt.p3d(i,wrfgrid%num_wrfgrid_levels,j)) then
+               t3d_int(i,camgrid%num_camgrid_levels,j)= t3d(i,wrfgrid%num_wrfgrid_levels,j)
+!             end if
+           end do
+           end do
+      
+          select case(trim(adjustl(symbol)))
+          case('dust01')
+             camgrid%dust01 = t3d_int
+          case('dust02')
+             camgrid%dust02 = t3d_int
+          case('dust03')
+             camgrid%dust03 = t3d_int
+          case('dust04')
+             camgrid%dust04 = t3d_int
+          case('sea01')
+             camgrid%sea01 = t3d_int
+          case('sea02')
+             camgrid%sea02 = t3d_int
+          case('sea03')
+             camgrid%sea03 = t3d_int
+          case('sea04')
+             camgrid%sea04 = t3d_int
+          case('ppm')
+             camgrid%ppm = t3d_int
+          case('bc')
+             camgrid%bc = t3d_int
+          case('oc')
+             camgrid%oc = t3d_int
+          case('nh4')
+             camgrid%nh4 = t3d_int
+          case('no3')
+             camgrid%no3 = t3d_int
+          case('so4')
+             camgrid%so4 = t3d_int
+          case('h2o2')
+             camgrid%h2o2 = t3d_int
+          case('so2')
+             camgrid%so2 = t3d_int
+          case('dms')
+             camgrid%dms = t3d_int
+          case('nh3')
+             camgrid%nh3 = t3d_int             
+         end select              
+
+      deallocate(p3d)
+      deallocate(t3d)      
+      deallocate(w3d)
+      deallocate(t3d_int)
+      end subroutine geatm_interpolate_to_cam      
+!===============================================================================
+     subroutine geatm_to_wrfgrid(wrfgrid)
+   use geatm_vartype, only: sx,ex,sy,ey,nx,ny,nz,iaer,igas,isize,nzz
+   use naqpms_varlist,only: ip2mem,ip3mem,ip4mem,ip5mem,aerom,iedgas,ip4mem_aer,gas,aer
+
+     TYPE(wrfgrid_c) :: wrfgrid
+
+     integer :: i,j,k,i0,i02,i03,km,kl,mem5d
+
+     !  from top to surface
+      ne=1
+      do k=1,nzz
+      kl=wrfgrid%num_wrfgrid_levels-k+1
+        ! dust
+        mem5d=ip5mem(k,1,2, ne)
+        do j= sy(ne),ey(ne)
+        do i= sx(ne),ex(ne)
+            km=mem5d+(ex(ne)-sx(ne)+3)*(j-sy(ne)+1)+i-sx(ne)+1
+            wrfgrid%dust01(i,kl,j)=aer(km)
+        end do
+        end do
+        mem5d=ip5mem(k,2,2, ne)
+        do j= sy(ne),ey(ne)
+        do i= sx(ne),ex(ne)
+            km=mem5d+(ex(ne)-sx(ne)+3)*(j-sy(ne)+1)+i-sx(ne)+1
+            wrfgrid%dust02(i,kl,j)=aer(km)
+        end do
+        end do
+        mem5d=ip5mem(k,3,2, ne)
+        do j= sy(ne),ey(ne)
+        do i= sx(ne),ex(ne)
+            km=mem5d+(ex(ne)-sx(ne)+3)*(j-sy(ne)+1)+i-sx(ne)+1
+            wrfgrid%dust03(i,kl,j)=aer(km)
+        end do
+        end do
+        mem5d=ip5mem(k,4,2, ne)
+        do j= sy(ne),ey(ne)
+        do i= sx(ne),ex(ne)
+            km=mem5d+(ex(ne)-sx(ne)+3)*(j-sy(ne)+1)+i-sx(ne)+1
+            wrfgrid%dust04(i,kl,j)=aer(km)
+        end do
+        end do        
+        ! seasalt
+        mem5d=ip5mem(k,1,1, ne)
+        do j= sy(ne),ey(ne)
+        do i= sx(ne),ex(ne)
+            km=mem5d+(ex(ne)-sx(ne)+3)*(j-sy(ne)+1)+i-sx(ne)+1
+            wrfgrid%sea01(i,kl,j)=aer(km)
+        end do
+        end do
+        mem5d=ip5mem(k,2,1, ne)
+        do j= sy(ne),ey(ne)
+        do i= sx(ne),ex(ne)
+            km=mem5d+(ex(ne)-sx(ne)+3)*(j-sy(ne)+1)+i-sx(ne)+1
+            wrfgrid%sea02(i,kl,j)=aer(km)
+        end do
+        end do
+        mem5d=ip5mem(k,3,1, ne)
+        do j= sy(ne),ey(ne)
+        do i= sx(ne),ex(ne)
+            km=mem5d+(ex(ne)-sx(ne)+3)*(j-sy(ne)+1)+i-sx(ne)+1
+            wrfgrid%sea03(i,kl,j)=aer(km)
+        end do
+        end do
+        mem5d=ip5mem(k,4,1, ne)
+        do j= sy(ne),ey(ne)
+        do i= sx(ne),ex(ne)
+            km=mem5d+(ex(ne)-sx(ne)+3)*(j-sy(ne)+1)+i-sx(ne)+1
+            wrfgrid%sea04(i,kl,j)=aer(km)
+        end do
+        end do      
+       ! aerosol
+        do ia=1,6 
+        i0=ip4mem_aer(k,1,ia,ne)
+        do j= sy(ne),ey(ne)
+        do i= sx(ne),ex(ne)
+           km=i0+(ex(ne)-sx(ne)+3)*(j-sy(ne)+1)+i-sx(ne)+1
+           if(ia.eq.1) wrfgrid%ppm(i,kl,j)=aerom(km)
+           if(ia.eq.2) wrfgrid%bc(i,kl,j)=aerom(km)
+           if(ia.eq.3) wrfgrid%oc(i,kl,j)=aerom(km)
+           if(ia.eq.4) wrfgrid%so4(i,kl,j)=aerom(km)
+           if(ia.eq.5) wrfgrid%nh4(i,kl,j)=aerom(km)
+           if(ia.eq.6) wrfgrid%no3(i,kl,j)=aerom(km)
+        end do
+        end do
+        end do
+       ! gas
+        do ig=2,iedgas        
+        i0=ip4mem(k,ig,ne)   
+        do j= sy(ne),ey(ne)
+        do i= sx(ne),ex(ne)
+           km=i0+(ex(ne)-sx(ne)+3)*(j-sy(ne)+1)+i-sx(ne)+1
+           if(ig.eq.2) wrfgrid%h2o2(i,kl,j)=gas(km)
+           if(ig.eq.3) wrfgrid%so2(i,kl,j)=gas(km)
+           if(ig.eq.4) wrfgrid%dms(i,kl,j)=gas(km)
+           if(ig.eq.5) wrfgrid%nh3(i,kl,j)=gas(km)
+        end do
+        end do        
+        end do
+      end do
+
+end subroutine geatm_to_wrfgrid
+!=============================================================================================================
+
+      Subroutine interpolate_to_pressure_levels(kps,kpe &
+                   ,ips,ipe,jps,jpe,nz &
+                   ,P,P_int,field_data,field_data_int)
+
+       implicit none
+       integer,intent(in) :: kps,kpe,ips,ipe,jps,jpe,nz
+       real*8, dimension(ips:ipe,kps:kpe,jps:jpe), intent(in) :: field_data
+       real*8, dimension(ips:ipe,kps:kpe,jps:jpe), intent(in) :: p
+       real*8, dimension(ips:ipe,nz,jps:jpe), intent(in) :: P_int
+       real*8, dimension(ips:ipe,nz,jps:jpe), intent(out) :: field_data_int          
+        
+       real*8 :: X(kpe-kps+1),Y(kpe-kps+1),Y2(kpe-kps+1),XINT,YINT,yp1,ypn
+       integer :: i,j,k
+
+       yp1=2e30
+       ypn=2e30
+       ! interpolate from sigma to pressure coordinates:
+       do j=jps,jpe
+       do i=ips,ipe 
+        do k=kps,kpe
+         X(k-kps+1)=P(i,k,j)*1.0_8
+         Y(k-kps+1)=field_data(i,k,j)*1.0_8
+        enddo
+        call spline(X,Y,yp1,ypn,kpe-kps+1,Y2)
+        do k=1,nz
+         XINT=P_int(i,k,j)*1.0_8
+         call splint(X,Y,Y2,kpe-kps+1,XINT,YINT)
+         field_data_int(i,k,j)=YINT
+        end do
+       end do
+       end do
+       return
+      end subroutine interpolate_to_pressure_levels
+
+!===============================================================================
+
+       SUBROUTINE spline(x,y,yp1,ypn,n,y2) 
+             implicit none
+             INTEGER :: n
+             INTEGER, parameter :: NMAX=500
+             REAL*8 :: x(n),y(n),y2(n) 
+             INTEGER :: i,k
+             REAL*8 :: p,qn,sig,un,u(NMAX),yp1,ypn
+  
+           if(yp1.gt..99e30) then
+             y2(1)=0
+             u(1)=0
+           else
+             y2(1)=-0.5
+             u(1)=(3./(x(2)-x(1)))*((y(2)-y(1))/(x(2)-x(1))-yp1)
+           endif
+  
+             do i=2,n-1
+             sig=(x(i)-x(i-1))/(x(i+1)-x(i-1))
+             p=sig*y2(i-1)+2.
+             y2(i)=(sig-1.)/p
+             u(i)=(6.*((y(i+1)-y(i))/(x(i+1)-x(i))-(y(i)-y(i-1)) &
+             /(x(i)-x(i-1)))/(x(i+1)-x(i-1))-sig*u(i-1))/p
+             end do
+
+           if(ypn.gt..99e30) then
+             qn=0
+             un=0
+           else              
+             qn=0.5
+             un=(3./(x(n)-x(n-1)))*(ypn-(y(n)-y(n-1))/(x(n)-x(n-1)))
+            endif
+  
+             y2(n)=(un-qn*u(n-1))/(qn*y2(n-1)+1.)
+             
+             do k=n-1,1,-1
+             y2(k)=y2(k)*y2(k+1)+u(k)
+             end do
+             
+             return
+             
+       end SUBROUTINE spline
+
+!===============================================================================
+        
+       SUBROUTINE splint(xa,ya,y2a,n,x,y)
+         implicit none
+         INTEGER :: n
+         REAL*8 :: x,y,xa(n),y2a(n),ya(n)
+         INTEGER :: k,khi,klo
+         REAL*8 :: a,b,h
+
+         ! Eli: avoid actual extrapolation by using the end values:
+         if (x<xa(n)) then
+                 y=ya(n)
+         elseif (x>xa(1)) then
+                 y=ya(1)
+         else
+         ! Eli: end of my addition here.
+                 klo=1
+                 khi=n
+   1    if (khi-klo.gt.1) then
+             k=(khi+klo)/2
+         if(xa(k).lt.x)then
+                 khi=k
+         else
+                 klo=k
+         end if
+         goto 1
+        end if
+        h=xa(khi)-xa(klo)
+        if (h.eq.0.) pause 'bad xa input in splint'
+        a=(xa(khi)-x)/h
+        b=(x-xa(klo))/h
+        y=a*ya(klo)+b*ya(khi)+ &
+          ((a**3-a)*y2a(klo)+(b**3-b)*y2a(khi))*(h**2)/6.
+        end if
+        return
+       end SUBROUTINE splint
+
+end module geatm_comp_mct

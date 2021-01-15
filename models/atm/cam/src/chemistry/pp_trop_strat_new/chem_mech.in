@@ -1,0 +1,237 @@
+      SPECIES
+
+      Solution
+ O3, O, O1D -> O, 
+ N2O, N, NO, NO2, NO3, HNO3, HO2NO2, N2O5
+ CH4, CH3O2, CH3OOH, CH3OH, CH2O, CO
+ H, OH, HO2, H2O2
+ CL -> Cl, CL2 -> Cl2, CLO -> ClO, OCLO -> OClO, CL2O2 -> Cl2O2
+ HCL -> HCl, HOCL -> HOCl, CLONO2 -> ClONO2
+ ISOP -> C5H8
+ CFC11 -> CFCl3
+ CFC12 -> CF2Cl2
+ CO2, SO2, DMS -> CH3SCH3
+ H2SO4, SOAG -> C, SOA -> C12
+ so4_a1 -> NH4HSO4
+ pom_a1 -> C, soa_a1 -> C, bc_a1 -> C
+ dst_a1 -> AlSiO5, ncl_a1 -> NaCl
+ num_a1 -> H
+ so4_a2 -> NH4HSO4
+ soa_a2 -> C, ncl_a2 -> NaCl
+ num_a2 -> H
+ dst_a3 -> AlSiO5, ncl_a3 -> NaCl
+ so4_a3 -> NH4HSO4
+ num_a3 -> H
+ ncl_a4 -> NaCl
+ num_a4 -> H
+      End Solution
+
+      Fixed
+ M, N2, O2, H2O
+      End Fixed
+
+      Col-int
+ O3 = 0.
+ O2 = 0.
+      End Col-int
+
+   END Species
+
+   Solution classes
+      Explicit
+       CH4, N2O, CFC11, CFC12
+       CO2
+      End explicit
+      Implicit
+       O3, O, O1D, CO
+       N, NO, NO2, OH, NO3, HNO3, HO2NO2, N2O5
+       CH3O2, CH3OOH, CH2O,  H, HO2, H2O2
+       CL, CL2, CLO, OCLO, CL2O2, HCL, HOCL, CLONO2
+       ISOP
+       CH3OH
+       SO2, DMS, SOA
+       H2SO4, SOAG
+       so4_a1, pom_a1
+       soa_a1, bc_a1, dst_a1, ncl_a1
+       num_a1
+       so4_a2, soa_a2, ncl_a2, num_a2
+       dst_a3, ncl_a3, so4_a3, num_a3
+       ncl_a4, num_a4
+      End implicit
+   End Solution classes
+
+ CHEMISTRY
+      Photolysis
+ [jo2_b=userdefined,]    O2 + hv -> 2*O
+ [jo3_a]                 O3 + hv -> O1D + O2
+ [jo3_b]                 O3 + hv -> O + O2
+ [jn2o]                  N2O + hv -> O1D + N2
+ [jno2]                  NO2 + hv -> NO + O
+ [jno3_a]                NO3 + hv -> NO2 + O
+ [jno3_b]                NO3 + hv -> NO + O2
+ [jho2no2_a]             HO2NO2 + hv -> OH + NO3
+ [jho2no2_b]             HO2NO2 + hv -> NO2 + HO2
+ [jch3ooh]               CH3OOH + hv -> CH2O + H + OH
+ [jch2o_a]               CH2O + hv -> CO + 2*H
+ [jch2o_b]               CH2O + hv -> CO + H2
+*
+* for stratospheric chemistry
+*
+ [jh2o2]                 H2O2 + hv -> 2*OH
+ [jhocl]                 HOCL + hv  -> OH + CL
+ [jclono2_a]             CLONO2 + hv -> CL + NO3
+ [jclono2_b]             CLONO2 + hv -> CLO + NO2
+ [jcfcl3]                CFC11 + hv -> 3*CL
+ [jcf2cl2]               CFC12 + hv -> 2*CL
+*
+* back to troposphere
+*
+  End Photolysis
+
+
+
+  Reactions
+* --------------------------------------------------------------
+* Odd-Oxygen Reactions
+* --------------------------------------------------------------
+ [usr_O_O2]          O + O2 + M -> O3 + M
+ [O_O3]              O + O3 -> 2*O2                                         ; 8.00e-12, -2060.
+ [usr_O_O]           O + O + M -> O2 + M
+
+* --------------------------------------------------------------
+* Odd-Oxygen Reactions (O1D only)
+* --------------------------------------------------------------
+ [O1D_N2]            O1D + N2 -> O + N2                                      ; 2.15e-11,   110.
+ [O1D_O2b]           O1D + O2 -> O + O2                                      ; 3.30e-11,    55.
+ [ox_l1]             O1D + H2O -> 2*OH                                       ; 1.63e-10,    60.
+ [O1D_N2Oa]          O1D + N2O -> 2*NO                                       ; 7.25e-11,    20.
+ [O1D_N2Ob]          O1D + N2O -> N2 + O2                                    ; 4.63e-11,    20.
+ [O1D_O3]            O1D + O3 -> O2 + O2                                     ; 1.20e-10
+ [O1D_CFC11]         O1D + CFC11 -> 3*CL                                     ; 2.02e-10
+ [O1D_CFC12]         O1D + CFC12 -> 2*CL                                     ; 1.204e-10
+ [O1D_CH4a]          O1D + CH4 -> CH3O2 + OH                                 ; 1.31e-10
+ [O1D_CH4b]          O1D + CH4 -> CH2O + H + HO2                             ; 3.50e-11
+ [O1D_CH4c]          O1D + CH4 -> CH2O + H2                                  ; 9.00e-12
+
+* --------------------------------------------------------------
+* Odd Hydrogen Reactions
+* --------------------------------------------------------------
+ [H_O2]              H + O2 + M -> HO2 + M                                     ; 4.40e-32, 1.3, 7.5e-11, -0.2, 0.6
+ [H_O3]              H + O3 -> OH + O2                                         ; 1.40e-10,   -470.
+ [H_HO2a]            H + HO2 -> 2*OH                                           ; 7.20e-11
+ [H_HO2b]            H + HO2 -> H2 + O2                                        ; 6.90e-12
+ [H_HO2c]            H + HO2 -> H2O + O                                        ; 1.60e-12
+ [OH_O]              OH + O -> H + O2                                          ; 1.80e-11,    180.
+ [ox_l2]             OH + O3 -> HO2 + O2                                       ; 1.70e-12,   -940.
+ [OH_HO2]            OH + HO2 -> H2O + O2                                      ; 4.80e-11,    250.
+ [OH_OH]             OH + OH -> H2O + O                                        ; 1.80e-12
+ [OH_OH_M]           OH + OH + M -> H2O2 + M                                   ; 6.90e-31, 1.0, 2.60e-11,  0.0,  0.6
+ [OH_H2O2]           OH + H2O2 -> H2O + HO2                                    ; 1.80e-12
+ [HO2_O]             HO2 + O -> OH + O2                                        ; 3.00e-11,    200.
+ [ox_l3]             HO2 + O3 -> OH + 2*O2                                     ; 1.00e-14,   -490.
+ [usr_HO2_HO2]       HO2 + HO2 -> H2O2 + O2
+ [H2O2_O]            H2O2 + O -> OH + HO2                                      ; 1.40e-12,  -2000.
+ * --------------------------------------------------------------
+* Odd Nitrogen Reactions
+* --------------------------------------------------------------
+ [NO_O_M]            NO + O + M -> NO2 + M                                     ; 9.00e-32, 1.5, 3.0e-11, 0.0, 0.6
+ [ox_p1]             NO + HO2 -> NO2 + OH                                      ; 3.30e-12,    270.
+ [NO_O3]             NO + O3 -> NO2 + O2                                       ; 3.00e-12,  -1500.
+ [NO2_O]             NO2 + O -> NO + O2                                        ; 5.10e-12,    210.
+ [NO2_O_M]           NO2 + O + M -> NO3 + M                                    ; 2.50e-31, 1.8, 2.2e-11, 0.7, 0.6
+ [NO2_O3]            NO2 + O3 -> NO3 + O2                                      ; 1.20e-13,  -2450.
+ [tag_NO2_NO3]       NO2 + NO3 + M -> N2O5 + M                                 ; 2.00e-30, 4.4, 1.4e-12, 0.7, 0.6
+ [usr_N2O5_M]        N2O5 + M -> NO2 + NO3 + M
+ [tag_NO2_OH]        NO2 + OH + M -> HNO3 + M                                  ; 1.80e-30, 3.0, 2.8e-11, 0.0, 0.6
+ [NO3_NO]            NO3 + NO -> 2*NO2                                         ; 1.50e-11,    170.
+ [NO3_O]             NO3 + O -> NO2 + O2                                       ; 1.00e-11
+ [NO3_OH]            NO3 + OH -> HO2 + NO2                                     ; 2.20e-11
+ [NO3_HO2]           NO3 + HO2 -> OH + NO2 + O2                                ; 3.50e-12
+ [tag_NO2_HO2]       NO2 + HO2 + M -> HO2NO2 + M                               ; 2.00e-31, 3.4, 2.9e-12, 1.1, 0.6
+ [HO2NO2_OH]         HO2NO2 + OH -> H2O + NO2 + O2                             ; 1.30e-12,    380.
+ [usr_HO2NO2_M]      HO2NO2 + M -> HO2 + NO2 + M
+
+* --------------------------------------------------------------
+* Odd Chlorine Reactions
+* --------------------------------------------------------------
+ [CL_O3]             CL + O3 -> CLO + O2                                         ; 2.30e-11,   -200.
+ [CL_HO2a]           CL + HO2 -> HCL + O2                                        ; 1.40e-11,    270.
+ [CL_HO2b]           CL + HO2 -> OH + CLO                                        ; 3.60e-11,   -375.
+ [CLO_O]             CLO + O -> CL + O2                                          ; 2.80e-11,     85.
+ [CLO_OHa]           CLO + OH -> CL + HO2                                        ; 7.40e-12,    270.
+ [CLO_OHb]           CLO + OH -> HCL + O2                                        ; 6.00e-13,    230.
+ [CLO_HO2]           CLO + HO2 -> O2 + HOCL                                      ; 2.60e-12,    290.
+ [CLO_NO]            CLO + NO -> NO2 + CL                                        ; 6.40e-12 ,   290.
+ [CLO_NO2_M]         CLO + NO2 + M -> CLONO2 + M                                 ; 1.80e-31, 3.4, 1.5e-11, 1.9, 0.6
+ [CLO_CLOa]          CLO + CLO -> 2*CL + O2                                      ; 3.00e-11,  -2450.
+ [CLO_CLOb]          CLO + CLO -> CL2 + O2                                       ; 1.00e-12,  -1590.
+ [CLO_CLOc]          CLO + CLO -> CL + OCLO                                      ; 3.50e-13,  -1370.
+ [tag_CLO_CLO_M]     CLO + CLO + M -> CL2O2 + M                                  ; 1.60e-32, 4.5, 3.0e-12, 2.0, 0.6
+ [usr_CL2O2_M]       CL2O2 + M -> CLO + CLO + M
+* --------------------------------------------------------------
+* Odd Bromine Reactions
+* --------------------------------------------------------------
+
+* --------------------------------------------------------------
+* C-1 Degradation (Methane, CO, CH2O and derivatives)
+* --------------------------------------------------------------
+ [CH4_OH]         CH4 + OH -> CH3O2 + H2O                                     ; 2.45e-12,  -1775.
+ [usr_CO_OH_b]    CO + OH -> CO2 + H
+ [CO_OH_M]        CO + OH + M -> CO2 + HO2 + M                                ; 5.90e-33, 1.4,  1.10e-12, -1.3, 0.6
+ [CH2O_NO3]       CH2O + NO3 -> CO + HO2 + HNO3                               ; 6.00e-13,  -2058.
+ [CH2O_OH]        CH2O + OH -> CO + H2O + H                                   ; 5.50e-12,    125.
+ [CH2O_O]         CH2O + O -> HO2 + OH + CO                                   ; 3.40e-11,  -1600.
+ [ox_p2]          CH3O2 + NO -> CH2O + NO2 + HO2                              ; 2.80e-12,    300.
+ [CH3O2_HO2]      CH3O2 + HO2 -> CH3OOH + O2                                  ; 4.10e-13,    750.
+ [CH3O2_CH3O2a]   CH3O2 + CH3O2 -> 2 * CH2O + 2 * HO2                         ; 5.00e-13,   -424.
+ [CH3O2_CH3O2b]   CH3O2 + CH3O2 -> CH2O + CH3OH                               ; 1.90e-14,    706.
+ [CH3OH_OH]       CH3OH + OH -> HO2 + CH2O                                    ; 2.90e-12,   -345.
+ [CH3OOH_OH]      CH3OOH + OH -> .7 * CH3O2 + .3 * OH + .3 * CH2O + H2O       ; 3.80e-12,    200.
+
+
+* --------------------------------------------------------------
+ISOP + OH -> 2*CH3O2 - 1.50*OH                                 ;   2.700E-11, 390
+ISOP + O3 -> 0.87*CH2O + 1.86*CH3O2 + 0.06*HO2 + 0.05*CO       ;   5.590E-15, -1814
+
+
+*     Tropospheric Heterogeneous Reactions
+* --------------------------------------------------------------
+ [usr_N2O5_aer]    N2O5 -> 2 * HNO3
+ [usr_NO3_aer]     NO3  -> HNO3
+ [usr_NO2_aer]     NO2  -> 0.5*OH + 0.5*NO + 0.5*HNO3
+ [usr_SO2_OH]      SO2 + OH -> H2SO4
+ [DMS_OHb]         DMS + OH -> SO2                                            ; 9.60e-12,    -234.
+ [usr_DMS_OH]      DMS + OH -> .5 * SO2 + .5 * HO2
+ [DMS_NO3]         DMS + NO3 -> SO2 + HNO3                                    ; 1.90e-13,     520.
+ [usr_HO2_aer]     HO2 -> 0.5*H2O2
+
+   End Reactions
+
+   Ext Forcing
+      NO  <-dataset
+      NO2 <-dataset
+      CO  <-dataset
+      SO2 <- dataset
+      so4_a1 <- dataset
+      so4_a2 <- dataset
+      pom_a1 <- dataset
+      bc_a1  <- dataset
+      num_a1 <- dataset
+      num_a2 <- dataset
+   End Ext Forcing
+
+   END CHEMISTRY
+
+   SIMULATION PARAMETERS
+
+     Version Options
+        machine = scalar
+        model   = cam
+        architecture = hybrid
+*       vec_ftns = on
+        namemod = on
+     End Version Options
+
+   End SIMULATION PARAMETERS
+
+ENDSIM

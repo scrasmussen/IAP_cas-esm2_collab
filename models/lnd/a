@@ -1,0 +1,17 @@
+Only in colm: a
+diff -r colm/bld/colm.cpl7.template /work1/jjr/wangty/CAS_ESM_v0.1/models/lnd/colm/bld/colm.cpl7.template
+177,184d176
+< setenv DATA_CoLM \$DIN_LOC_ROOT_CSMDATA/lnd/colm/
+< ln -s \$DATA_CoLM/old/CoLM-128x256-const-c-soic20-licom .
+< ln -s \$DATA_CoLM/old/CoLM-128x256-gridata-c-soic20-licom .
+< ln -s \$DATA_CoLM/old/CoLM-128x256-restart-c-soic20-licom .
+< ln -s \$DATA_CoLM/old/CoLM-128x256-sbcini-c-soic20-licom .
+< ln -s \$DATA_CoLM/old/MONTHLY_LAI_IAP.dat .
+< ln -s \$DATA_CoLM/rdirc.05 .
+< 
+224a217
+> #define BNUDGVM
+Only in colm/bld: colm.cpl7.template.bak
+Only in colm: src_140625
+Only in colm: src.bak.20160623
+Only in colm: src_CASESM_20150721

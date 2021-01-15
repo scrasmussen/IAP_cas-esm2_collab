@@ -1,0 +1,1375 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+1	canuto_ini.F90	/^ 1    b=b\/val-1.D0                                       $/;"	l	subroutine:rtwi	file:
+10	canuto_ini.F90	/^   10   CONTINUE$/;"	l	subroutine:turb_ini	file:
+100	core_daily.F90	/^  100 continue$/;"	l	subroutine:hsetup	file:
+1003	canuto_ini.F90	/^ 1003 format(12(I8))$/;"	l	subroutine:oursal2_2a	file:
+1003	canuto_new.F90	/^ 1003 format(12(I8))$/;"	l	subroutine:oursal2_zeroshear	file:
+1004	canuto_ini.F90	/^ 1004 format(12(1pe14.5))$/;"	l	subroutine:oursal2_2a	file:
+1004	canuto_ini.F90	/^ 1004 format(12(1pe14.5))$/;"	l	subroutine:smshsc_a3	file:
+1004	canuto_new.F90	/^ 1004 format(12(1pe14.5))$/;"	l	subroutine:oursal2_zeroshear	file:
+11	canuto_new.F90	/^ 11   continue$/;"	l	subroutine:formld	file:
+11	canuto_new.F90	/^ 11   continue$/;"	l	subroutine:formld_rh	file:
+11	canuto_new.F90	/^ 11   continue$/;"	l	subroutine:formld_te	file:
+111	core_daily.F90	/^111    continue$/;"	l	subroutine:CORE_DAILY	file:
+120	OBM.F90	/^120   CONTINUE$/;"	l	subroutine:FLUX_PT	file:
+15	canuto_ini.F90	/^   15      CONTINUE$/;"	l	subroutine:turb_ini	file:
+16	canuto_ini.F90	/^   16  continue$/;"	l	subroutine:turb_ini	file:
+17	canuto_ini.F90	/^   17   CONTINUE$/;"	l	subroutine:turb_ini	file:
+18	canuto_new.F90	/^   18    CONTINUE $/;"	l	subroutine:turb_2	file:
+19	canuto_new.F90	/^   19     IF(ri1.LE.0.D0) s2_back = 0.D0$/;"	l	subroutine:turb_2	file:
+2	canuto_ini.F90	/^ 2    a=a\/b                                         $/;"	l	subroutine:rtwi	file:
+20	canuto_new.F90	/^ 20     CONTINUE$/;"	l	subroutine:turb_2	file:
+21	canuto_new.F90	/^   21    IF(ifpureshear.EQ.1) tmp=0.5D0*(b1**2)*al2*sqrt(-an2(k)\/amtaun2)$/;"	l	subroutine:turb_2	file:
+22	canuto_new.F90	/^ 22   continue$/;"	l	subroutine:turb_2	file:
+250	canuto_new.F90	/^  250	CONTINUE$/;"	l	subroutine:interp1d	file:
+250	canuto_new.F90	/^  250	CONTINUE$/;"	l	subroutine:interp1d_expabs	file:
+250	canuto_new.F90	/^  250	CONTINUE$/;"	l	subroutine:interp2d	file:
+250	canuto_new.F90	/^  250	CONTINUE$/;"	l	subroutine:interp2d_expabs	file:
+252	canuto_new.F90	/^  252   CONTINUE$/;"	l	subroutine:interp1d	file:
+252	canuto_new.F90	/^  252   CONTINUE$/;"	l	subroutine:interp1d_expabs	file:
+252	canuto_new.F90	/^  252   CONTINUE$/;"	l	subroutine:interp2d	file:
+252	canuto_new.F90	/^  252   CONTINUE$/;"	l	subroutine:interp2d_expabs	file:
+270	canuto_new.F90	/^  270	CONTINUE$/;"	l	subroutine:interp1d	file:
+270	canuto_new.F90	/^  270	CONTINUE$/;"	l	subroutine:interp2d	file:
+270	canuto_new.F90	/^  270	CONTINUE$/;"	l	subroutine:interp2d_expabs	file:
+272	canuto_new.F90	/^  272	CONTINUE$/;"	l	subroutine:interp2d	file:
+272	canuto_new.F90	/^  272	CONTINUE$/;"	l	subroutine:interp2d_expabs	file:
+3	canuto_ini.F90	/^ 3    tol=tol*d                            $/;"	l	subroutine:rtwi	file:
+307	sw_absor.F90	/^307     continue$/;"	l	subroutine:sw_absor	file:
+33	canuto_new.F90	/^ 33   continue$/;"	l	subroutine:turb_2	file:
+33	core_daily.F90	/^   33 continue$/;"	l	subroutine:hsetup	file:
+4	canuto_ini.F90	/^ 4    if(abs(a)-tol) 5,5,6                $/;"	l	subroutine:rtwi	file:
+44	core_daily.F90	/^   44 continue$/;"	l	subroutine:hsetup	file:
+45	core_daily.F90	/^   45 continue$/;"	l	subroutine:hsetup	file:
+5	canuto_ini.F90	/^ 5    if(abs(val)-10.D0*tol) 7,7,6         $/;"	l	subroutine:rtwi	file:
+5	canuto_new.F90	/^    5   CONTINUE$/;"	l	subroutine:turb_2	file:
+50	core_daily.F90	/^   50 continue$/;"	l	subroutine:hsetup	file:
+6	canuto_ini.F90	/^ 6    continue                          $/;"	l	subroutine:rtwi	file:
+7	canuto_ini.F90	/^ 7    return                                        $/;"	l	subroutine:rtwi	file:
+8	canuto_ini.F90	/^ 8    ier=2                                       $/;"	l	subroutine:rtwi	file:
+9000	canuto_new.F90	/^ 9000 FORMAT(12(1pe11.3))$/;"	l	subroutine:turb_2	file:
+9001	canuto_ini.F90	/^ 9001 FORMAT(2(I8,'   ',1pe11.3),8(1pe11.3))$/;"	l	subroutine:turb_ini	file:
+9001	canuto_new.F90	/^ 9001 FORMAT(2(I8,'   ',1pe11.3),8(1pe11.3))$/;"	l	subroutine:turb_2	file:
+9010	canuto_new.F90	/^ 9010 FORMAT(14(1pe11.3))$/;"	l	subroutine:turb_2	file:
+9020	canuto_new.F90	/^ 9020 FORMAT(15(1pe11.3))$/;"	l	subroutine:turb_2	file:
+9030	canuto_new.F90	/^ 9030 FORMAT(16(1pe11.3))$/;"	l	subroutine:turb_2	file:
+9040	canuto_new.F90	/^ 9040 FORMAT(1pe11.3,154X,1pe11.3)$/;"	l	subroutine:turb_2	file:
+9050	canuto_ini.F90	/^ 9050 FORMAT(I8,'  ',2E16.4,I8,'  ')$/;"	l	subroutine:turb_ini	file:
+9050	canuto_new.F90	/^ 9050 FORMAT(I8,'  ',2E16.4,I8,'  ')$/;"	l	subroutine:turb_2	file:
+9100	canuto_ini.F90	/^ 9100 FORMAT(I8,'  ',2E12.4,3F11.6,2F11.4)$/;"	l	subroutine:turb_ini	file:
+9100	canuto_new.F90	/^ 9100 FORMAT(I8,'  ',2E12.4,3F11.6,2F11.4)$/;"	l	subroutine:turb_2	file:
+9150	canuto_ini.F90	/^ 9150 FORMAT(F11.3,5E12.4,3F10.6,F9.3)$/;"	l	subroutine:turb_ini	file:
+9150	canuto_new.F90	/^ 9150 FORMAT(F11.3,5E12.4,3F10.6,F9.3)$/;"	l	subroutine:turb_2	file:
+9160	canuto_ini.F90	/^ 9160 FORMAT(F11.3,6E10.4,3F10.6,F9.3)$/;"	l	subroutine:turb_ini	file:
+9160	canuto_new.F90	/^ 9160 FORMAT(F11.3,6E10.4,3F10.6,F9.3)$/;"	l	subroutine:turb_2	file:
+9200	canuto_ini.F90	/^ 9200 FORMAT(I12,'    ',5E16.6)$/;"	l	subroutine:turb_ini	file:
+9200	canuto_new.F90	/^ 9200 FORMAT(I12,'    ',5E16.6)$/;"	l	subroutine:turb_2	file:
+9268	canuto_ini.F90	/^ 9268 FORMAT(I6,5F15.9)$/;"	l	subroutine:turb_ini	file:
+9268	canuto_new.F90	/^ 9268 FORMAT(I6,5F15.9)$/;"	l	subroutine:turb_2	file:
+9928	canuto_new.F90	/^ 9928  format('interp1dtest',2i5,1p,7e12.4)$/;"	l	subroutine:turb_2	file:
+ABMON	pconst_mod.F90	/^      CHARACTER (LEN=3):: ABMON(/;"	v	module:pconst_mod
+ABMON1	pconst_mod.F90	/^      CHARACTER (LEN=3):: ABMON1(/;"	v	module:pconst_mod
+ACCUMM	accumm.F90	/^      SUBROUTINE ACCUMM$/;"	s
+ACCUMM_PT	OBM.F90	/^  SUBROUTINE ACCUMM_PT$/;"	s
+ADDPS	addps.F90	/^      SUBROUTINE ADDPS$/;"	s
+AFB1	pconst_mod.F90	/^                    VSEA,AFB1,/;"	v	module:pconst_mod
+AFB2	pconst_mod.F90	/^                    VSEA,AFB1,AFB2,/;"	v	module:pconst_mod
+AFC1	pconst_mod.F90	/^                    VSEA,AFB1,AFB2,AFC1,/;"	v	module:pconst_mod
+AFC2	pconst_mod.F90	/^                    VSEA,AFB1,AFB2,AFC1,AFC2,/;"	v	module:pconst_mod
+AFT1	pconst_mod.F90	/^                    VSEA,AFB1,AFB2,AFC1,AFC2,AFT1,/;"	v	module:pconst_mod
+AFT2	pconst_mod.F90	/^                    VSEA,AFB1,AFB2,AFC1,AFC2,AFT1,AFT2$/;"	v	module:pconst_mod
+AFT2	pconst_mod.F90	/^                    VSEA,AFB1,AFB2,AFC1,AFC2,AFT1,AFT2,/;"	v	module:pconst_mod
+AH	pconst_mod.F90	/^      real(r8),dimension(jmt)::AM,AH$/;"	v	module:pconst_mod
+AM	pconst_mod.F90	/^      real(r8),dimension(jmt)::AM,/;"	v	module:pconst_mod
+ASEA	pconst_mod.F90	/^      real(r8)::  D0,CP,G,C0F,TBICE,OD0,SAG,CAG,OD0CP,ASEA,/;"	v	module:pconst_mod
+ASEA	pconst_mod.F90	/^      real(r8):: D0,CP,G,C0F,TBICE,OD0,SAG,CAG,OD0CP,ASEA,/;"	v	module:pconst_mod
+A_1	sw_mod.F90	/^      real(r8) :: c0,c1,A_1,/;"	v	module:sw_mod
+A_11	sw_mod.F90	/^      real(r8),dimension(31) :: chloc,A_11,/;"	v	module:sw_mod
+A_12	sw_mod.F90	/^      real(r8),dimension(31) :: chloc,A_11,A_12,/;"	v	module:sw_mod
+A_2	sw_mod.F90	/^      real(r8) :: c0,c1,A_1,B_1,A_2,/;"	v	module:sw_mod
+BAROSF	diag_mod.F90	/^      SUBROUTINE BAROSF$/;"	s	module:diag_mod
+BAROTR	barotr.F90	/^      SUBROUTINE BAROTR$/;"	s
+BCLINC	bclinc.F90	/^      SUBROUTINE BCLINC$/;"	s
+BIOSOURCE	OBM.F90	/^  SUBROUTINE BIOSOURCE(/;"	s
+BUOYSOL	forc_mod.F90	/^      real(r8),dimension(imt,jmt)::USTAR,BUOYTUR,BUOYSOL$/;"	v	module:forc_mod
+BUOYTUR	forc_mod.F90	/^      real(r8),dimension(imt,jmt)::USTAR,BUOYTUR,/;"	v	module:forc_mod
+B_1	sw_mod.F90	/^      real(r8) :: c0,c1,A_1,B_1,/;"	v	module:sw_mod
+B_11	sw_mod.F90	/^      real(r8),dimension(31) :: chloc,A_11,A_12,B_11,/;"	v	module:sw_mod
+B_12	sw_mod.F90	/^      real(r8),dimension(31) :: chloc,A_11,A_12,B_11,B_12$/;"	v	module:sw_mod
+B_2	sw_mod.F90	/^      real(r8) :: c0,c1,A_1,B_1,A_2,B_2,/;"	v	module:sw_mod
+C	pconst_mod.F90	/^      REAL(r8):: TO(KM),SO(KM),C(/;"	v	module:pconst_mod
+C0F	pconst_mod.F90	/^      real(r8)::  D0,CP,G,C0F,/;"	v	module:pconst_mod
+C0F	pconst_mod.F90	/^      real(r8):: D0,CP,G,C0F,/;"	v	module:pconst_mod
+CAG	pconst_mod.F90	/^      real(r8)::  D0,CP,G,C0F,TBICE,OD0,SAG,CAG,/;"	v	module:pconst_mod
+CAG	pconst_mod.F90	/^      real(r8):: D0,CP,G,C0F,TBICE,OD0,SAG,CAG,/;"	v	module:pconst_mod
+CF1	pconst_mod.F90	/^      real(r8),dimension(imt)::CF1,/;"	v	module:pconst_mod
+CF2	pconst_mod.F90	/^      real(r8),dimension(imt)::CF1,CF2,/;"	v	module:pconst_mod
+CFORCE	OBM.F90	/^  SUBROUTINE CFORCE$/;"	s
+CONST	const.F90	/^      SUBROUTINE CONST$/;"	s
+CONVADJ	convadj.F90	/^      SUBROUTINE CONVADJ$/;"	s
+CONVADJ_PT	convadj_pt.F90	/^      SUBROUTINE CONVADJ_PT$/;"	s
+CORE_DAILY	core_daily.F90	/^      SUBROUTINE CORE_DAILY(/;"	s
+COST	pconst_mod.F90	/^      real(r8),dimension(jmt):: COSU,COST$/;"	v	module:pconst_mod
+COST_global	pconst_mod.F90	/^       real(r8),dimension(:),allocatable::COSU_global,COST_global$/;"	v	module:pconst_mod
+COSU	pconst_mod.F90	/^      real(r8),dimension(jmt):: COSU,/;"	v	module:pconst_mod
+COSU_global	pconst_mod.F90	/^       real(r8),dimension(:),allocatable::COSU_global,/;"	v	module:pconst_mod
+CP	pconst_mod.F90	/^      real(r8)::  D0,CP,/;"	v	module:pconst_mod
+CP	pconst_mod.F90	/^      real(r8):: D0,CP,/;"	v	module:pconst_mod
+CTRLC	OBM.F90	/^  SUBROUTINE CTRLC$/;"	s
+CV1	pconst_mod.F90	/^                    FF,CV1,/;"	v	module:pconst_mod
+CV1_global	pconst_mod.F90	/^                    FF_global,CV1_global,/;"	v	module:pconst_mod
+CV2	pconst_mod.F90	/^                    FF,CV1,CV2,/;"	v	module:pconst_mod
+CV2_global	pconst_mod.F90	/^                    FF_global,CV1_global,CV2_global,/;"	v	module:pconst_mod
+CXT	pconst_mod.F90	/^      real(r8),dimension(jmt):: CXT,/;"	v	module:pconst_mod
+CXT_global	pconst_mod.F90	/^      real(r8),dimension(:),allocatable:: CXT_global,/;"	v	module:pconst_mod
+CXU	pconst_mod.F90	/^      real(r8),dimension(jmt):: CXT,CXU,/;"	v	module:pconst_mod
+CXU_global	pconst_mod.F90	/^      real(r8),dimension(:),allocatable:: CXT_global,CXU_global,/;"	v	module:pconst_mod
+CYT	pconst_mod.F90	/^      real(r8),dimension(jmt):: CXT,CXU,CYT,/;"	v	module:pconst_mod
+CYT_global	pconst_mod.F90	/^      real(r8),dimension(:),allocatable:: CXT_global,CXU_global,CYT_global,/;"	v	module:pconst_mod
+CYU	pconst_mod.F90	/^      real(r8),dimension(jmt):: CXT,CXU,CYT,CYU /;"	v	module:pconst_mod
+CYU_global	pconst_mod.F90	/^      real(r8),dimension(:),allocatable:: CXT_global,CXU_global,CYT_global,CYU_global /;"	v	module:pconst_mod
+D0	pconst_mod.F90	/^      real(r8)::  D0,/;"	v	module:pconst_mod
+D0	pconst_mod.F90	/^      real(r8):: D0,/;"	v	module:pconst_mod
+DEALLOCATE_PT	OBM.F90	/^  SUBROUTINE DEALLOCATE_PT$/;"	s
+DEGtoRAD	constant_mod.F90	/^  real(SHR_KIND_R8), parameter ::  DEGtoRAD /;"	v	module:constant_mod
+DENS	dens.F90	/^      FUNCTION DENS /;"	f
+DENSITY	density.F90	/^      SUBROUTINE DENSITY$/;"	s
+DOWN	msg_mod.F90	/^      integer,parameter :: UPUP=1, DOWN=/;"	v	module:msg_mod
+DTB	pconst_mod.F90	/^      REAL(r8):: DTB,/;"	v	module:pconst_mod
+DTB2	pconst_mod.F90	/^      REAL(r8):: DTB,DTC,DTS,DTB2,/;"	v	module:pconst_mod
+DTC	pconst_mod.F90	/^      REAL(r8):: DTB,DTC,/;"	v	module:pconst_mod
+DTC2	pconst_mod.F90	/^      REAL(r8):: DTB,DTC,DTS,DTB2,DTC2,/;"	v	module:pconst_mod
+DTS	pconst_mod.F90	/^      REAL(r8):: DTB,DTC,DTS,/;"	v	module:pconst_mod
+DUST_DATA	OBM_mod.F90	/^     logical:: DUST_DATA,/;"	v	module:carbon_mod
+DXDYT	pconst_mod.F90	/^                    SINU,DYT,DYR,DXDYU,DXDYT,/;"	v	module:pconst_mod
+DXDYT_global	pconst_mod.F90	/^                    SINU_global,DYT_global,DYR_global,DXDYU_global,DXDYT_global,/;"	v	module:pconst_mod
+DXDYU	pconst_mod.F90	/^                    SINU,DYT,DYR,DXDYU,/;"	v	module:pconst_mod
+DXDYU_global	pconst_mod.F90	/^                    SINU_global,DYT_global,DYR_global,DXDYU_global,/;"	v	module:pconst_mod
+DYR	pconst_mod.F90	/^                    SINU,DYT,DYR,/;"	v	module:pconst_mod
+DYR_IN	pconst_mod.F90	/^      real(r4),dimension(jmt)::DYR_IN$/;"	v	module:pconst_mod
+DYR_IN_global	pconst_mod.F90	/^      real(r4),dimension(jmt_global)::DYR_IN_global$/;"	v	module:pconst_mod
+DYR_global	pconst_mod.F90	/^                    SINU_global,DYT_global,DYR_global,/;"	v	module:pconst_mod
+DYT	pconst_mod.F90	/^                    SINU,DYT,/;"	v	module:pconst_mod
+DYT_global	pconst_mod.F90	/^                    SINU_global,DYT_global,/;"	v	module:pconst_mod
+EBEA	pconst_mod.F90	/^                    R1D,R2C,R2D,EBEA,/;"	v	module:pconst_mod
+EBEA_global	pconst_mod.F90	/^                    R1D_global,R2C_global,R2D_global,EBEA_global,/;"	v	module:pconst_mod
+EBEB	pconst_mod.F90	/^                    R1D,R2C,R2D,EBEA,EBEB,/;"	v	module:pconst_mod
+EBEB_global	pconst_mod.F90	/^                    R1D_global,R2C_global,R2D_global,EBEA_global,EBEB_global,/;"	v	module:pconst_mod
+EBLA	pconst_mod.F90	/^                    R1D,R2C,R2D,EBEA,EBEB, &$/;"	v	module:pconst_mod
+EBLA_global	pconst_mod.F90	/^                    R1D_global,R2C_global,R2D_global,EBEA_global,EBEB_global, &$/;"	v	module:pconst_mod
+EBLB	pconst_mod.F90	/^                    EBLA,EBLB,/;"	v	module:pconst_mod
+EBLB_global	pconst_mod.F90	/^                    EBLA_global,EBLB_global,/;"	v	module:pconst_mod
+ENERGY	energy.F90	/^      SUBROUTINE ENERGY$/;"	s
+EPEA	pconst_mod.F90	/^                    EBLA,EBLB,EPEA,/;"	v	module:pconst_mod
+EPEA_global	pconst_mod.F90	/^                    EBLA_global,EBLB_global,EPEA_global,/;"	v	module:pconst_mod
+EPEB	pconst_mod.F90	/^                    EBLA,EBLB,EPEA,EPEB,/;"	v	module:pconst_mod
+EPEB_global	pconst_mod.F90	/^                    EBLA_global,EBLB_global,EPEA_global,EPEB_global,/;"	v	module:pconst_mod
+EPLA	pconst_mod.F90	/^                    EBLA,EBLB,EPEA,EPEB,EPLA,/;"	v	module:pconst_mod
+EPLA_global	pconst_mod.F90	/^                    EBLA_global,EBLB_global,EPEA_global,EPEB_global,EPLA_global,/;"	v	module:pconst_mod
+EPLB	pconst_mod.F90	/^                    EBLA,EBLB,EPEA,EPEB,EPLA,EPLB$/;"	v	module:pconst_mod
+EPLB_global	pconst_mod.F90	/^                    EBLA_global,EBLB_global,EPEA_global,EPEB_global,EPLA_global,EPLB_global$/;"	v	module:pconst_mod
+F3	isopyc_mod.F90	/^      REAL(r8) , dimension(JMT) :: F3$/;"	v	module:isopyc_mod
+FE_FLUX_DATA	OBM_mod.F90	/^     logical:: DUST_DATA,FE_FLUX_DATA$/;"	v	module:carbon_mod
+FF	pconst_mod.F90	/^      real(r8),dimension(jmt)::OUY,OTX,OUX,SOTX,SOUX, &$/;"	v	module:pconst_mod
+FF1	pconst_mod.F90	/^      real(r8),dimension(jmt):: FF1,/;"	v	module:pconst_mod
+FF1_global	pconst_mod.F90	/^     real(r8),dimension(jmt_global):: FF1_global$/;"	v	module:pconst_mod
+FF_global	pconst_mod.F90	/^      real(r8),dimension(jmt_global)::OUY_global,OTX_global,OUX_global,SOTX_global,SOUX_global, &$/;"	v	module:pconst_mod
+FILTER	filter.F90	/^      SUBROUTINE FILTER /;"	s
+FILTER_MOMENTUM	smuvh.F90	/^      SUBROUTINE FILTER_MOMENTUM(/;"	s
+FILTER_TRACER	smuvh.F90	/^      SUBROUTINE FILTER_TRACER(/;"	s
+FLUX_PT	OBM.F90	/^     SUBROUTINE FLUX_PT$/;"	s
+FLUX_TA	OBM.F90	/^SUBROUTINE FLUX_TA$/;"	s
+Fe_a	OBM_mod.F90	/^     real,parameter::Fe_a /;"	v	module:carbon_mod
+Fe_bioava	OBM_mod.F90	/^     real,parameter::Fe_bioava=/;"	v	module:carbon_mod
+Fe_s	OBM_mod.F90	/^     real,parameter::Fe_s=/;"	v	module:carbon_mod
+Fe_scav	OBM_mod.F90	/^     real,dimension(imt,jmt,km)::Fe_scav$/;"	v	module:carbon_mod
+Fe_scav_io	OBM_mod.F90	/^     real,dimension(imt_global,jmt_global,km)::Fe_scav_io$/;"	v	module:carbon_mod
+Fe_scav_prof	OBM_mod.F90	/^     real,dimension(km)::Fe_scav_prof,/;"	v	module:carbon_mod
+Fe_source	OBM_mod.F90	/^     real,dimension(imt,jmt,km)::Fe_source$/;"	v	module:carbon_mod
+Feup_io	OBM_mod.F90	/^     real,dimension(imt_global,jmt_global)::O2up_io,Feup_io$/;"	v	module:coutput_mod
+G	pconst_mod.F90	/^      real(r8)::  D0,CP,G,/;"	v	module:pconst_mod
+G	pconst_mod.F90	/^      real(r8):: D0,CP,G,/;"	v	module:pconst_mod
+GRIDS	grids.F90	/^      SUBROUTINE GRIDS$/;"	s
+GRIDS_PT	grids_pt_mod.F90	/^SUBROUTINE GRIDS_PT /;"	s	module:GRIDS_PT_MOD
+GRIDS_PT_MOD	grids_pt_mod.F90	/^      MODULE GRIDS_PT_MOD$/;"	m
+ICESNOW	icesnow.F90	/^      SUBROUTINE ICESNOW$/;"	s
+IDAY	pconst_mod.F90	/^      INTEGER :: NUMBER,NSTART,IY0,IYFM,MON0,MEND,IMD,IDAY,/;"	v	module:pconst_mod
+IDTP	OBM_mod.F90	/^integer:: NPP,IDTP$/;"	v	module:carbon_mod
+II	pconst_mod.F90	/^      INTEGER :: NUMBER,NSTART,IY0,IYFM,MON0,MEND,IMD,IDAY,II,/;"	v	module:pconst_mod
+IMD	pconst_mod.F90	/^      INTEGER :: NUMBER,NSTART,IY0,IYFM,MON0,MEND,IMD,/;"	v	module:pconst_mod
+INIRUN	inirun.F90	/^      SUBROUTINE INIRUN$/;"	s
+INIRUN_PT	OBM.F90	/^    SUBROUTINE INIRUN_PT$/;"	s
+INTFOR	intfor.F90	/^      SUBROUTINE INTFOR$/;"	s
+INTFOR_PT	OBM.F90	/^  SUBROUTINE INTFOR_PT$/;"	s
+INVTRI	invtri.F90	/^      SUBROUTINE INVTRI /;"	s
+IO_HIST	pconst_mod.F90	/^      INTEGER :: NUMBER,NSTART,IY0,IYFM,MON0,MEND,IMD,IDAY,II,JJ,IO_HIST,/;"	v	module:pconst_mod
+IO_REST	pconst_mod.F90	/^      INTEGER :: NUMBER,NSTART,IY0,IYFM,MON0,MEND,IMD,IDAY,II,JJ,IO_HIST,IO_REST,/;"	v	module:pconst_mod
+IO_out	OBM_mod.F90	/^      integer::IO_out,/;"	v	module:coutput_mod
+ISB	pconst_mod.F90	/^      INTEGER:: NBB,NCC,NSS,ISB,/;"	v	module:pconst_mod
+ISC	pconst_mod.F90	/^      INTEGER:: NBB,NCC,NSS,ISB,ISC,/;"	v	module:pconst_mod
+ISOADV	isoadv.F90	/^      SUBROUTINE ISOADV$/;"	s
+ISOFLUX	isoflux.F90	/^      SUBROUTINE ISOFLUX /;"	s
+ISOFLUX_PT	OBM.F90	/^      SUBROUTINE ISOFLUX_PT /;"	s
+ISOP	pconst_mod.F90	/^      INTEGER:: ISOP$/;"	v	module:pconst_mod
+ISOPYC	isopyc.F90	/^      SUBROUTINE ISOPYC /;"	s
+ISOPYC	isopyc.F90	/^      SUBROUTINE ISOPYC$/;"	s
+ISOPYI	isopyi.F90	/^      SUBROUTINE ISOPYI$/;"	s
+IST	pconst_mod.F90	/^      INTEGER:: NBB,NCC,NSS,ISB,ISC,IST,/;"	v	module:pconst_mod
+IY0	pconst_mod.F90	/^      INTEGER :: NUMBER,NSTART,IY0,/;"	v	module:pconst_mod
+IYFM	pconst_mod.F90	/^      INTEGER :: NUMBER,NSTART,IY0,IYFM,/;"	v	module:pconst_mod
+JJ	pconst_mod.F90	/^      INTEGER :: NUMBER,NSTART,IY0,IYFM,MON0,MEND,IMD,IDAY,II,JJ,/;"	v	module:pconst_mod
+K1	isopyc_mod.F90	/^      real(r8),dimension(:,:,:,:),allocatable:: K1,/;"	v	module:isopyc_mod
+K1_3	k1_3.F90	/^      SUBROUTINE K1_3$/;"	s
+K2	isopyc_mod.F90	/^      real(r8),dimension(:,:,:,:),allocatable:: K1,K2,/;"	v	module:isopyc_mod
+K2_3	k2_3.F90	/^      SUBROUTINE K2_3$/;"	s
+K3	isopyc_mod.F90	/^      real(r8),dimension(:,:,:,:),allocatable:: K1,K2,K3$/;"	v	module:isopyc_mod
+K3_123	k3_123.F90	/^      SUBROUTINE K3_123$/;"	s
+KARMAN	pconst_mod.F90	/^                    VSEA,AFB1,AFB2,AFC1,AFC2,AFT1,AFT2,KARMAN,/;"	v	module:pconst_mod
+LEFT	msg_mod.F90	/^      integer,parameter :: UPUP=1, DOWN=2, LEFT=/;"	v	module:msg_mod
+LM	OBM_mod.F90	/^      integer,parameter::LM=/;"	v	module:carbon_mod
+LOCAL_TO_GLOBAL_PT	OBM.F90	/^  SUBROUTINE LOCAL_TO_GLOBAL_PT(/;"	s
+MEND	pconst_mod.F90	/^      INTEGER :: NUMBER,NSTART,IY0,IYFM,MON0,MEND,/;"	v	module:pconst_mod
+MM00	mm00.F90	/^      SUBROUTINE MM00 /;"	s
+MON0	pconst_mod.F90	/^      INTEGER :: NUMBER,NSTART,IY0,IYFM,MON0,/;"	v	module:pconst_mod
+MONTH	pconst_mod.F90	/^      INTEGER:: NBB,NCC,NSS,ISB,ISC,IST,MONTH$/;"	v	module:pconst_mod
+MPI_PR	precision_mod.F90	/^integer*4, parameter :: MPI_PR /;"	v	module:precision_mod
+MPI_PR1	precision_mod.F90	/^integer*4, parameter :: MPI_PR1 /;"	v	module:precision_mod
+M_chl	sw_mod.F90	/^      integer,parameter :: M_chl=/;"	v	module:sw_mod
+NBB	pconst_mod.F90	/^      INTEGER:: NBB,/;"	v	module:pconst_mod
+NCC	pconst_mod.F90	/^      INTEGER:: NBB,NCC,/;"	v	module:pconst_mod
+NMONTH	pconst_mod.F90	/^      INTEGER:: NMONTH(/;"	v	module:pconst_mod
+NNMONTH	pconst_mod.F90	/^      INTEGER:: NMONTH(12),NNMONTH(/;"	v	module:pconst_mod
+NPP	OBM_mod.F90	/^integer:: NPP,/;"	v	module:carbon_mod
+NSS	pconst_mod.F90	/^      INTEGER:: NBB,NCC,NSS,/;"	v	module:pconst_mod
+NSTART	pconst_mod.F90	/^      INTEGER :: NUMBER,NSTART,/;"	v	module:pconst_mod
+NSTARTC	OBM_mod.F90	/^      integer::NSTARTC$/;"	v	module:carbon_mod
+NUMBER	pconst_mod.F90	/^      INTEGER :: NUMBER,/;"	v	module:pconst_mod
+O2up_io	OBM_mod.F90	/^     real,dimension(imt_global,jmt_global)::O2up_io,/;"	v	module:coutput_mod
+OD0	pconst_mod.F90	/^      real(r8)::  D0,CP,G,C0F,TBICE,OD0,/;"	v	module:pconst_mod
+OD0	pconst_mod.F90	/^      real(r8):: D0,CP,G,C0F,TBICE,OD0,/;"	v	module:pconst_mod
+OD0CP	pconst_mod.F90	/^      real(r8)::  D0,CP,G,C0F,TBICE,OD0,SAG,CAG,OD0CP,/;"	v	module:pconst_mod
+OD0CP	pconst_mod.F90	/^      real(r8):: D0,CP,G,C0F,TBICE,OD0,SAG,CAG,OD0CP,/;"	v	module:pconst_mod
+ONBB	pconst_mod.F90	/^      REAL(r8):: DTB,DTC,DTS,DTB2,DTC2,ONBB,/;"	v	module:pconst_mod
+ONBC	pconst_mod.F90	/^      REAL(r8):: DTB,DTC,DTS,DTB2,DTC2,ONBB,ONBC,/;"	v	module:pconst_mod
+ONCC	pconst_mod.F90	/^      REAL(r8):: DTB,DTC,DTS,DTB2,DTC2,ONBB,ONBC,ONCC$/;"	v	module:pconst_mod
+OTX	pconst_mod.F90	/^      real(r8),dimension(jmt)::OUY,OTX,/;"	v	module:pconst_mod
+OTX_global	pconst_mod.F90	/^      real(r8),dimension(jmt_global)::OUY_global,OTX_global,/;"	v	module:pconst_mod
+OUX	pconst_mod.F90	/^      real(r8),dimension(jmt)::OUY,OTX,OUX,/;"	v	module:pconst_mod
+OUX_global	pconst_mod.F90	/^      real(r8),dimension(jmt_global)::OUY_global,OTX_global,OUX_global,/;"	v	module:pconst_mod
+OUY	pconst_mod.F90	/^      real(r8),dimension(jmt)::OUY,/;"	v	module:pconst_mod
+OUY_global	pconst_mod.F90	/^      real(r8),dimension(jmt_global)::OUY_global,/;"	v	module:pconst_mod
+PAX	work_mod.F90	/^      real(r8),dimension(imt,jmt):: PXB,PYB,PAX,/;"	v	module:work_mod
+PAY	work_mod.F90	/^      real(r8),dimension(imt,jmt):: PXB,PYB,PAX,PAY,/;"	v	module:work_mod
+PCO2	OBM.F90	/^  SUBROUTINE PCO2(/;"	s
+PI	pconst_mod.F90	/^      REAL(r8):: PI,/;"	v	module:pconst_mod
+PO	pconst_mod.F90	/^      REAL(r8):: TO(KM),SO(KM),C(KM,9),&$/;"	v	module:pconst_mod
+POP_CplIndices	POP_CplIndices.F90	/^module POP_CplIndices$/;"	m
+POP_CplIndicesSet	POP_CplIndices.F90	/^  subroutine POP_CplIndicesSet(/;"	s	module:POP_CplIndices
+POP_k	OBM_mod.F90	/^      real,parameter::POP_k=/;"	v	module:carbon_mod
+PTRACER	OBM.F90	/^      SUBROUTINE PTRACER$/;"	s
+PXB	work_mod.F90	/^      real(r8),dimension(imt,jmt):: PXB,/;"	v	module:work_mod
+PYB	work_mod.F90	/^      real(r8),dimension(imt,jmt):: PXB,PYB,/;"	v	module:work_mod
+P_Fe	OBM_mod.F90	/^     real,dimension(imt,jmt,kmp1)::P_Fe$/;"	v	module:carbon_mod
+Q	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   Q /;"	v	module:buf_mod
+R1A	pconst_mod.F90	/^                    SINU,DYT,DYR,DXDYU,DXDYT, &$/;"	v	module:pconst_mod
+R1A_global	pconst_mod.F90	/^                    SINU_global,DYT_global,DYR_global,DXDYU_global,DXDYT_global, &$/;"	v	module:pconst_mod
+R1B	pconst_mod.F90	/^                    R1A,R1B,/;"	v	module:pconst_mod
+R1B_global	pconst_mod.F90	/^                    R1A_global,R1B_global,/;"	v	module:pconst_mod
+R1C	pconst_mod.F90	/^                    R1A,R1B,R2A,R2B,R1C,/;"	v	module:pconst_mod
+R1C_global	pconst_mod.F90	/^                    R1A_global,R1B_global,R2A_global,R2B_global,R1C_global,/;"	v	module:pconst_mod
+R1D	pconst_mod.F90	/^                    R1A,R1B,R2A,R2B,R1C, &$/;"	v	module:pconst_mod
+R1D_global	pconst_mod.F90	/^                    R1A_global,R1B_global,R2A_global,R2B_global,R1C_global, &$/;"	v	module:pconst_mod
+R1E	pconst_mod.F90	/^                   ,R1E,/;"	v	module:pconst_mod
+R1E_global	pconst_mod.F90	/^                   ,R1E_global,/;"	v	module:pconst_mod
+R1F	pconst_mod.F90	/^                   ,R1E,R1F,/;"	v	module:pconst_mod
+R1F_global	pconst_mod.F90	/^                   ,R1E_global,R1F_global,/;"	v	module:pconst_mod
+R2A	pconst_mod.F90	/^                    R1A,R1B,R2A,/;"	v	module:pconst_mod
+R2A_global	pconst_mod.F90	/^                    R1A_global,R1B_global,R2A_global,/;"	v	module:pconst_mod
+R2B	pconst_mod.F90	/^                    R1A,R1B,R2A,R2B,/;"	v	module:pconst_mod
+R2B_global	pconst_mod.F90	/^                    R1A_global,R1B_global,R2A_global,R2B_global,/;"	v	module:pconst_mod
+R2C	pconst_mod.F90	/^                    R1D,R2C,/;"	v	module:pconst_mod
+R2C_global	pconst_mod.F90	/^                    R1D_global,R2C_global,/;"	v	module:pconst_mod
+R2D	pconst_mod.F90	/^                    R1D,R2C,R2D,/;"	v	module:pconst_mod
+R2D_global	pconst_mod.F90	/^                    R1D_global,R2C_global,R2D_global,/;"	v	module:pconst_mod
+R2E	pconst_mod.F90	/^                   ,R1E,R1F,R2E,/;"	v	module:pconst_mod
+R2E_global	pconst_mod.F90	/^                   ,R1E_global,R1F_global,R2E_global,/;"	v	module:pconst_mod
+R2F	pconst_mod.F90	/^                   ,R1E,R1F,R2E,R2F /;"	v	module:pconst_mod
+R2F_global	pconst_mod.F90	/^                   ,R1E_global,R1F_global,R2E_global,R2F_global /;"	v	module:pconst_mod
+R3E	pconst_mod.F90	/^                   ,R3E,/;"	v	module:pconst_mod
+R3E_global	pconst_mod.F90	/^                   ,R3E_global,/;"	v	module:pconst_mod
+R3F	pconst_mod.F90	/^                   ,R3E,R3F,/;"	v	module:pconst_mod
+R3F_global	pconst_mod.F90	/^                   ,R3E_global,R3F_global,/;"	v	module:pconst_mod
+R4E	pconst_mod.F90	/^                   ,R3E,R3F,R4E,/;"	v	module:pconst_mod
+R4E_global	pconst_mod.F90	/^                   ,R3E_global,R3F_global,R4E_global,/;"	v	module:pconst_mod
+R4F	pconst_mod.F90	/^                   ,R3E,R3F,R4E,R4F$/;"	v	module:pconst_mod
+R4F_global	pconst_mod.F90	/^                   ,R3E_global,R3F_global,R4E_global,R4F_global$/;"	v	module:pconst_mod
+RAA	pconst_mod.F90	/^      real(r8),dimension(jmt):: dtdy,dtdx,RAA,/;"	v	module:pconst_mod
+RAA_global	pconst_mod.F90	/^      real(r8),dimension(jmt_global):: dtdy_global,dtdx_global,RAA_global,/;"	v	module:pconst_mod
+RADIUS	pconst_mod.F90	/^      REAL(r8):: PI,RADIUS,/;"	v	module:pconst_mod
+RBB	pconst_mod.F90	/^      real(r8),dimension(jmt):: dtdy,dtdx,RAA,RBB$/;"	v	module:pconst_mod
+RBB_global	pconst_mod.F90	/^      real(r8),dimension(jmt_global):: dtdy_global,dtdx_global,RAA_global,RBB_global$/;"	v	module:pconst_mod
+RDRIVER	rdriver.F90	/^      SUBROUTINE RDRIVER$/;"	s
+READYBIO	OBM.F90	/^  SUBROUTINE READYBIO(/;"	s
+READYC	readyc.F90	/^      SUBROUTINE READYC$/;"	s
+READYT	readyt.F90	/^      SUBROUTINE READYT$/;"	s
+REFDATE	pconst_mod.F90	/^      INTEGER :: NUMBER,NSTART,IY0,IYFM,MON0,MEND,IMD,IDAY,II,JJ,IO_HIST,IO_REST,rest_freq,hist_freq,REFDATE$/;"	v	module:pconst_mod
+RIGHT	msg_mod.F90	/^      integer,parameter :: UPUP=1, DOWN=2, LEFT=3, RIGHT=/;"	v	module:msg_mod
+RR	pconst_mod.F90	/^                    VSEA,AFB1,AFB2,AFC1,AFC2,AFT1,AFT2,KARMAN,RR$/;"	v	module:pconst_mod
+RRD1	pconst_mod.F90	/^      real(r8),dimension(jmt):: FF1,RRD1,/;"	v	module:pconst_mod
+RRD2	pconst_mod.F90	/^      real(r8),dimension(jmt):: FF1,RRD1,RRD2$/;"	v	module:pconst_mod
+RTEND	pmix_mod.F90	/^      INTEGER:: RTST,RTEND,/;"	v	module:pmix_mod
+RTST	pmix_mod.F90	/^      INTEGER:: RTST,/;"	v	module:pmix_mod
+RUEND	pmix_mod.F90	/^      INTEGER:: RTST,RTEND,RUST,RUEND$/;"	v	module:pmix_mod
+RUN_TIME	run_time.F90	/^      SUBROUTINE RUN_TIME(/;"	s
+RUST	pmix_mod.F90	/^      INTEGER:: RTST,RTEND,RUST,/;"	v	module:pmix_mod
+ReFe	OBM_mod.F90	/^     real,dimension(km)::Fe_scav_prof,ReFe /;"	v	module:carbon_mod
+SAG	pconst_mod.F90	/^      real(r8)::  D0,CP,G,C0F,TBICE,OD0,SAG,/;"	v	module:pconst_mod
+SAG	pconst_mod.F90	/^      real(r8):: D0,CP,G,C0F,TBICE,OD0,SAG,/;"	v	module:pconst_mod
+SF1	pconst_mod.F90	/^      real(r8),dimension(imt)::CF1,CF2,SF1,/;"	v	module:pconst_mod
+SF2	pconst_mod.F90	/^      real(r8),dimension(imt)::CF1,CF2,SF1,SF2$/;"	v	module:pconst_mod
+SGEC	OBM.F90	/^  SUBROUTINE SGEC$/;"	s
+SINT	pconst_mod.F90	/^                    FF,CV1,CV2,SNLAT,SINT,/;"	v	module:pconst_mod
+SINT_global	pconst_mod.F90	/^                    FF_global,CV1_global,CV2_global,SNLAT_global,SINT_global,/;"	v	module:pconst_mod
+SINU	pconst_mod.F90	/^                    FF,CV1,CV2,SNLAT,SINT, &$/;"	v	module:pconst_mod
+SINU_global	pconst_mod.F90	/^                    FF_global,CV1_global,CV2_global,SNLAT_global,SINT_global, &$/;"	v	module:pconst_mod
+SMOOTH	smth.F90	/^      SUBROUTINE SMOOTH /;"	s
+SMOOTH2	smth.F90	/^      SUBROUTINE SMOOTH2 /;"	s
+SMOOTH3	smth.F90	/^      SUBROUTINE SMOOTH3 /;"	s
+SMTS	smuvh.F90	/^      SUBROUTINE SMTS /;"	s
+SMUV	smuvh.F90	/^      SUBROUTINE SMUV /;"	s
+SMZ0	smuvh.F90	/^      SUBROUTINE SMZ0 /;"	s
+SNLAT	pconst_mod.F90	/^                    FF,CV1,CV2,SNLAT,/;"	v	module:pconst_mod
+SNLAT_global	pconst_mod.F90	/^                    FF_global,CV1_global,CV2_global,SNLAT_global,/;"	v	module:pconst_mod
+SO	pconst_mod.F90	/^      REAL(r8):: TO(KM),SO(/;"	v	module:pconst_mod
+SOTX	pconst_mod.F90	/^      real(r8),dimension(jmt)::OUY,OTX,OUX,SOTX,/;"	v	module:pconst_mod
+SOTX_global	pconst_mod.F90	/^      real(r8),dimension(jmt_global)::OUY_global,OTX_global,OUX_global,SOTX_global,/;"	v	module:pconst_mod
+SOUX	pconst_mod.F90	/^      real(r8),dimension(jmt)::OUY,OTX,OUX,SOTX,SOUX,/;"	v	module:pconst_mod
+SOUX_global	pconst_mod.F90	/^      real(r8),dimension(jmt_global)::OUY_global,OTX_global,OUX_global,SOTX_global,SOUX_global,/;"	v	module:pconst_mod
+SSAVEINS	ssave-cdf-instant.F90	/^      subroutine SSAVEINS$/;"	s
+SSAVEMON	ssave-cdf-month.F90	/^      subroutine SSAVEMON$/;"	s
+SSAVE_PT	OBM.F90	/^  SUBROUTINE SSAVE_PT$/;"	s
+TBICE	pconst_mod.F90	/^      real(r8)::  D0,CP,G,C0F,TBICE,/;"	v	module:pconst_mod
+TBICE	pconst_mod.F90	/^      real(r8):: D0,CP,G,C0F,TBICE,/;"	v	module:pconst_mod
+TF	work_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: WKB,WKC,WKD,TF$/;"	v	module:work_mod
+TFe_scav	OBM_mod.F90	/^     real,dimension(imt,jmt,km)::TFe_scav /;"	v	module:carbon_mod
+TLEAD	tracer_mod.F90	/^      real(r8),dimension(imt,jmt):: TLEAD$/;"	v	module:tracer_mod
+TO	pconst_mod.F90	/^      REAL(r8):: TO(/;"	v	module:pconst_mod
+TORAD	pconst_mod.F90	/^      REAL(r8):: PI,RADIUS,TORAD$/;"	v	module:pconst_mod
+TRACER	tracer.F90	/^      SUBROUTINE TRACER$/;"	s
+T_cpl	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   T_cpl(/;"	v	module:buf_mod
+Tfrz	constant_mod.F90	/^  real(SHR_KIND_R8), parameter ::  Tfrz /;"	v	module:constant_mod
+Tr	sw_mod.F90	/^      real(r8) :: ztr(km),Tr(/;"	v	module:sw_mod
+Tzro	constant_mod.F90	/^  real(SHR_KIND_R8), parameter ::  Tzro /;"	v	module:constant_mod
+UPUP	msg_mod.F90	/^      integer,parameter :: UPUP=/;"	v	module:msg_mod
+UPWELL	upwell.F90	/^      SUBROUTINE UPWELL /;"	s
+UPWELL_PT	OBM.F90	/^      SUBROUTINE UPWELL_PT /;"	s
+USTAR	forc_mod.F90	/^      real(r8),dimension(imt,jmt)::USTAR,/;"	v	module:forc_mod
+VINTEG	vinteg.F90	/^      SUBROUTINE VINTEG /;"	s
+VSEA	pconst_mod.F90	/^      real(r8)::  D0,CP,G,C0F,TBICE,OD0,SAG,CAG,OD0CP,ASEA, &$/;"	v	module:pconst_mod
+VSEA	pconst_mod.F90	/^      real(r8):: D0,CP,G,C0F,TBICE,OD0,SAG,CAG,OD0CP,ASEA, &$/;"	v	module:pconst_mod
+WGP	work_mod.F90	/^      real(r8),dimension(imt,jmt):: PXB,PYB,PAX,PAY,WHX,WHY,WGP$/;"	v	module:work_mod
+WHX	work_mod.F90	/^      real(r8),dimension(imt,jmt):: PXB,PYB,PAX,PAY,WHX,/;"	v	module:work_mod
+WHY	work_mod.F90	/^      real(r8),dimension(imt,jmt):: PXB,PYB,PAX,PAY,WHX,WHY,/;"	v	module:work_mod
+WKB	work_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: WKB,/;"	v	module:work_mod
+WKC	work_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: WKB,WKC,/;"	v	module:work_mod
+WKD	work_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: WKB,WKC,WKD,/;"	v	module:work_mod
+YY00	yy00.F90	/^      SUBROUTINE YY00$/;"	s
+a0_b	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::a0_b,/;"	v	module:carbon_mod
+a1_b	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::a0_b,a1_b,/;"	v	module:carbon_mod
+a2_b	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::a0_b,a1_b,a2_b,/;"	v	module:carbon_mod
+a3mon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km)::a3mon$/;"	v	module:output_mod
+aay_iso	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::aay_iso,/;"	v	module:tracer_mod
+aaymon_iso	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::aaymon_iso,/;"	v	module:output_mod
+adv_vbtiso	isopyc_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: adv_vetiso,adv_vntiso,adv_vbtiso$/;"	v	module:isopyc_mod
+adv_vetiso	isopyc_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: adv_vetiso,/;"	v	module:isopyc_mod
+adv_vntiso	isopyc_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: adv_vetiso,adv_vntiso,/;"	v	module:isopyc_mod
+ah3	pconst_mod.F90	/^      real(r8),dimension(imt,jmt,km)::am3,ah3$/;"	v	module:pconst_mod
+ahice	pconst_mod.F90	/^      real(r8)::amv,ahv,ahice$/;"	v	module:pconst_mod
+ahisop	isopyc_mod.F90	/^      real(r8):: ahisop,/;"	v	module:isopyc_mod
+ahv	pconst_mod.F90	/^      real(r8)::amv,ahv,/;"	v	module:pconst_mod
+ahv_back	pconst_mod.F90	/^      real(r8),dimension(jmt_global):: ahv_back$/;"	v	module:pconst_mod
+akm_dims	cdf_mod.F90	/^              mth_dims(mth_rank),mld_dims(mld_rank),akm_dims(/;"	v	module:cdf_mod
+akm_id	cdf_mod.F90	/^               mth_id,mld_id,akm_id,/;"	v	module:cdf_mod
+akm_rank	cdf_mod.F90	/^               mth_rank=3,mld_rank=3,akm_rank=/;"	v	module:cdf_mod
+akmmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km)::akmmon,/;"	v	module:output_mod
+akmt	pconst_mod.F90	/^      real(r8),dimension(imt,jmt,km)::akmu,akmt$/;"	v	module:pconst_mod
+akmu	pconst_mod.F90	/^      real(r8),dimension(imt,jmt,km)::akmu,/;"	v	module:pconst_mod
+ako	canuto_mod.F90	/^        ,visc_cbu_limit,diff_cbt_limit, theta_rcrp, theta_rcrn,ako,/;"	v	module:canuto_mod
+aks_dims	cdf_mod.F90	/^              mth_dims(mth_rank),mld_dims(mld_rank),akm_dims(akm_rank),akt_dims(akt_rank),aks_dims(/;"	v	module:cdf_mod
+aks_id	cdf_mod.F90	/^               mth_id,mld_id,akm_id,akt_id,aks_id /;"	v	module:cdf_mod
+aks_rank	cdf_mod.F90	/^               mth_rank=3,mld_rank=3,akm_rank=4,akt_rank=4,aks_rank=/;"	v	module:cdf_mod
+aksmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km)::akmmon,aktmon,aksmon$/;"	v	module:output_mod
+akt	pconst_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::akt$/;"	v	module:pconst_mod
+akt_dims	cdf_mod.F90	/^              mth_dims(mth_rank),mld_dims(mld_rank),akm_dims(akm_rank),akt_dims(/;"	v	module:cdf_mod
+akt_id	cdf_mod.F90	/^               mth_id,mld_id,akm_id,akt_id,/;"	v	module:cdf_mod
+akt_rank	cdf_mod.F90	/^               mth_rank=3,mld_rank=3,akm_rank=4,akt_rank=/;"	v	module:cdf_mod
+aktmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km)::akmmon,aktmon,/;"	v	module:output_mod
+alead	tracer_mod.F90	/^      real(r8),allocatable,dimension(:,:)::hi,itice,alead$/;"	v	module:tracer_mod
+alead_io	tracer_mod.F90	/^      real(r8),allocatable,dimension(:,:)::hi_io,itice_io,alead_io$/;"	v	module:tracer_mod
+am3	pconst_mod.F90	/^      real(r8),dimension(imt,jmt,km)::am3,/;"	v	module:pconst_mod
+am_dims	cdf_mod.F90	/^      integer:: am_id,am_rank,am_dims(/;"	v	module:cdf_mod
+am_ext	param_mod.F90	/^      real(r8) :: am_ext /;"	v	module:param_mod
+am_id	cdf_mod.F90	/^      integer:: am_id,/;"	v	module:cdf_mod
+am_rank	cdf_mod.F90	/^      integer, parameter :: am_rank=/;"	v	module:cdf_mod
+am_rank	cdf_mod.F90	/^      integer:: am_id,am_rank,/;"	v	module:cdf_mod
+am_tro	param_mod.F90	/^      real(r8) :: am_tro /;"	v	module:param_mod
+amld	tracer_mod.F90	/^      real(r8),dimension(imt,jmt)::amld$/;"	v	module:tracer_mod
+amtaun2a1	canuto_mod.F90	/^       REAL(r8) and2on2a1(-mt:mt),amtaun2a1(/;"	v	module:canuto_mod
+amv	pconst_mod.F90	/^      real(r8)::amv,/;"	v	module:pconst_mod
+amx	pconst_mod.F90	/^      real(r8),dimension(imt,jmt,km)::amx,/;"	v	module:pconst_mod
+amy	pconst_mod.F90	/^      real(r8),dimension(imt,jmt,km)::amx,amy$/;"	v	module:pconst_mod
+and2on2a1	canuto_mod.F90	/^       REAL(r8) and2on2a1(/;"	v	module:canuto_mod
+ar0	OBM_mod.F90	/^      real,parameter::ar0=/;"	v	module:carbon_mod
+area	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   area(/;"	v	module:buf_mod
+arg	sw_mod.F90	/^      real(r8) :: arg_/;"	v	module:sw_mod
+arg_max	sw_mod.F90	/^      real(r8) :: arg_max,/;"	v	module:sw_mod
+at	tracer_mod.F90	/^      real(r8),allocata/;"	v	module:tracer_mod
+at_io	tracer_mod.F90	/^      real(r8),allocatable,dimension(:,:,:,:)::at_io$/;"	v	module:tracer_mod
+atb	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,0:km,NTRA)::atb$/;"	v	module:tracer_mod
+athkdf	isopyc_mod.F90	/^      real(r8):: ahisop, athkdf,/;"	v	module:isopyc_mod
+ax	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::ax,/;"	v	module:tracer_mod
+ax_iso	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::ax_iso,/;"	v	module:tracer_mod
+axmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::axmon,/;"	v	module:output_mod
+axmon_iso	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::axmon_iso,/;"	v	module:output_mod
+ay	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::ax,ay,/;"	v	module:tracer_mod
+ay_iso	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::ax_iso,ay_iso,/;"	v	module:tracer_mod
+aymon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::axmon,aymon,/;"	v	module:output_mod
+aymon_iso	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::axmon_iso,aymon_iso,/;"	v	module:output_mod
+az	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::ax,ay,az$/;"	v	module:tracer_mod
+az_iso	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::ax_iso,ay_iso,az_iso$/;"	v	module:tracer_mod
+azmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::axmon,aymon,azmon$/;"	v	module:output_mod
+azmon_iso	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::axmon_iso,aymon_iso,azmon_iso$/;"	v	module:output_mod
+b0_b	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::a0_b,a1_b,a2_b,b0_b,/;"	v	module:carbon_mod
+b1	canuto_mod.F90	/^        ,sma1(-mt:mt),sha1(-mt:mt),ssa1(-mt:mt) ,rri,rnd2on2,dri, deltheta_r,b1 /;"	v	module:canuto_mod
+b1_b	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::a0_b,a1_b,a2_b,b0_b,b1_b,/;"	v	module:carbon_mod
+b2_b	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::a0_b,a1_b,a2_b,b0_b,b1_b,b2_b,/;"	v	module:carbon_mod
+back_l_0	canuto_mod.F90	/^        ,visc_cbu_limit,diff_cbt_limit, theta_rcrp, theta_rcrn,ako,back_l_0 /;"	v	module:canuto_mod
+basin	pconst_mod.F90	/^      integer,dimension(imt_global,jmt_global):: basin$/;"	v	module:pconst_mod
+bioconst	OBM.F90	/^      NAMELIST \/bioconst\//;"	n	subroutine:CTRLC
+bomh	OBM_mod.F90	/^      real,allocatable,dimension(:)::boml,bomm,bomh$/;"	v	module:cforce_mod
+boml	OBM_mod.F90	/^      real,allocatable,dimension(:)::boml,/;"	v	module:cforce_mod
+bomm	OBM_mod.F90	/^      real,allocatable,dimension(:)::boml,bomm,/;"	v	module:cforce_mod
+bomn	OBM_mod.F90	/^     real,dimension(ny)::bomn,/;"	v	module:cforce_mod
+boms	OBM_mod.F90	/^     real,dimension(ny)::bomn,boms$/;"	v	module:cforce_mod
+boundary	boundary.F90	/^      subroutine boundary$/;"	s
+bsf	output_mod.F90	/^      real(r4),dimension(imt,jmt_global):: bsf$/;"	v	module:output_mod
+bsf_dims	cdf_mod.F90	/^              lev1_dims(lev1_rank), bsf_dims(/;"	v	module:cdf_mod
+bsf_id	cdf_mod.F90	/^               ic1_id,ic2_id, net1_id, net2_id, ts_id,  ss_id,us_id,vs_id,ws_id, psi_id, bsf_id,/;"	v	module:cdf_mod
+bsf_rank	cdf_mod.F90	/^                            us_rank=4, vs_rank=4, ws_rank=4, psi_rank=3,lev1_rank=1, bsf_rank=/;"	v	module:cdf_mod
+buf_mod	buf_mod.F90	/^module buf_mod$/;"	m
+buffer	dyn_mod.F90	/^      real(r8),allocatable,dimension(:,:):: buffer$/;"	v	module:dyn_mod
+buffer3_r4	cdf_mod.F90	/^      real(r4),allocatable,dimension(:,:,:):: buffer3_r4 /;"	v	module:cdf_mod
+buffer_r4	cdf_mod.F90	/^      real(r4),allocatable,dimension(:,:):: buffer_r4 /;"	v	module:cdf_mod
+buffer_real4	work_mod.F90	/^      real(r4),dimension(:,:),allocatable::buffer_real4$/;"	v	module:work_mod
+buffr	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   buffr(/;"	v	module:buf_mod
+buffs	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   buffs(/;"	v	module:buf_mod
+c0	sw_mod.F90	/^      real(r8) :: c0,/;"	v	module:sw_mod
+c1	sw_mod.F90	/^      real(r8) :: c0,c1,/;"	v	module:sw_mod
+c_b	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::a0_b,a1_b,a2_b,b0_b,b1_b,b2_b,c_b$/;"	v	module:carbon_mod
+caco3VarID	OBM_mod.F90	/^   integer::prodVarID,fpopVarID,pldocVarID,remiVarID,jpopVarID,caco3VarID$/;"	v	module:coutput_mod
+caco3mon	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::jpopmon,caco3mon$/;"	v	module:coutput_mod
+caco3mon_io	OBM_mod.F90	/^     real,dimension(imt_global,jmt_global,km)::jpopmon_io,caco3mon_io$/;"	v	module:coutput_mod
+canuto_mod	canuto_mod.F90	/^module canuto_mod$/;"	m
+carbon_mod	OBM_mod.F90	/^  module carbon_mod$/;"	m
+cartcomm	msg_mod.F90	/^      integer my_rank, source, dest, nbrs(4), dims(2),coords(2),cartcomm,/;"	v	module:msg_mod
+case_desc	control_mod.F90	/^  character(len=64) :: case_desc /;"	v	module:control_mod
+case_name	control_mod.F90	/^  character(len=16) :: case_name /;"	v	module:control_mod
+catm	OBM_mod.F90	/^      real,dimension(3)::catm$/;"	v	module:cforce_mod
+ccVarID	OBM_mod.F90	/^   integer::ccVarID,/;"	v	module:coutput_mod
+ccmon	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::ccmon$/;"	v	module:coutput_mod
+ccmon_io	OBM_mod.F90	/^      real,dimension(imt_global,jmt_global,km)::ccmon_io$/;"	v	module:coutput_mod
+ccoeff	canuto_new.F90	/^      subroutine ccoeff(/;"	s
+ccoeff1	canuto_new.F90	/^      subroutine ccoeff1(/;"	s
+cct	OBM_mod.F90	/^   real,dimension(imt,jmt_global)::cct$/;"	v	module:coutput_mod
+cdate	control_mod.F90	/^  integer       :: cdate /;"	v	module:control_mod
+cdf_mod	cdf_mod.F90	/^module cdf_mod$/;"	m
+cfcatm	OBM_mod.F90	/^     real,dimension(2)::cfcatm$/;"	v	module:cforce_mod
+cforce_mod	OBM_mod.F90	/^  module cforce_mod$/;"	m
+check_err	ssave-cdf-instant.F90	/^      SUBROUTINE check_err /;"	s
+chk_var1	energy.F90	/^      SUBROUTINE chk_var1(/;"	s
+chk_var2d	energy.F90	/^      SUBROUTINE chk_var2d(/;"	s
+chk_var3d	energy.F90	/^      SUBROUTINE chk_var3d(/;"	s
+chk_var3d1	energy.F90	/^      SUBROUTINE chk_var3d1(/;"	s
+chl_temp	sw_mod.F90	/^      real(r8) :: chl_temp,/;"	v	module:sw_mod
+chlamnt	sw_mod.F90	/^      real(r8) :: percm,chlamnt$/;"	v	module:sw_mod
+chlindx	sw_mod.F90	/^      INTEGER :: mc,chlindx /;"	v	module:sw_mod
+chlmax	sw_mod.F90	/^      real(r8) :: chl_temp,chlmin,chlmax,/;"	v	module:sw_mod
+chlmin	sw_mod.F90	/^      real(r8) :: chl_temp,chlmin,/;"	v	module:sw_mod
+chloc	sw_mod.F90	/^      real(r8),dimension(31) :: chloc,/;"	v	module:sw_mod
+chloro	forc_mod.F90	/^                   ,nswv,dqdt,chloro&/;"	v	module:forc_mod
+chloro3	forc_mod.F90	/^                    ,nswv3,dqdt3,chloro3&/;"	v	module:forc_mod
+chloro3_io	forc_mod.F90	/^                   ,nswv3_io,dqdt3_io,chloro3_io&/;"	v	module:forc_mod
+cld	forc_mod.F90	/^      real(r8),dimension(imt,jmt)::su,sv,psa,tsa,sss,swv,uva,qar,cld,/;"	v	module:forc_mod
+cld3	forc_mod.F90	/^                   swv3,cld3,/;"	v	module:forc_mod
+cld3_io	forc_mod.F90	/^                    swv3_io,cld3_io,/;"	v	module:forc_mod
+cleanup	licomcpl7.F90	/^  subroutine cleanup$/;"	s
+co2_cpl	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   co2_cpl(/;"	v	module:buf_mod
+constant_mod	constant_mod.F90	/^module constant_mod$/;"	m
+control_mod	control_mod.F90	/^  module control_mod$/;"	m
+controlc	OBM.F90	/^      NAMELIST \/controlc\//;"	n	subroutine:CTRLC
+coords	msg_mod.F90	/^      integer my_rank, source, dest, nbrs(4), dims(2),coords(/;"	v	module:msg_mod
+count1	cdf_mod.F90	/^      integer:: start1(1),count1(/;"	v	module:cdf_mod
+count2	cdf_mod.F90	/^      integer:: start2(2),count2(/;"	v	module:cdf_mod
+count3	cdf_mod.F90	/^      integer:: start3(3),count3(/;"	v	module:cdf_mod
+count4	cdf_mod.F90	/^      integer:: start4(4),count4(/;"	v	module:cdf_mod
+coutput_mod	OBM_mod.F90	/^  module coutput_mod$/;"	m
+csg	OBM_mod.F90	/^      real,allocatable,dimension(:)::csgn/;"	v	module:cforce_mod
+csgn	OBM_mod.F90	/^      real,allocatable,dimension(:)::csgn,/;"	v	module:cforce_mod
+csgx	OBM_mod.F90	/^      real,allocatable,dimension(:)::csgn,csg,csgx$/;"	v	module:cforce_mod
+cstrdytr	isopyc_mod.F90	/^      real(r8)::  zt(km),dzw(0:km),dzwr(0:km),dzr(km),dytr(jmt),&$/;"	v	module:isopyc_mod
+curr_ymd_cpl	pconst_mod.F90	/^    integer(kind(1))   :: curr_ymd_cpl /;"	v	module:pconst_mod
+curr_ymd_licom	pconst_mod.F90	/^    integer(kind(1))   :: curr_ymd_licom /;"	v	module:pconst_mod
+d_cal	OBM_mod.F90	/^      real,parameter::d_cal=/;"	v	module:carbon_mod
+dand2on2	canuto_mod.F90	/^       REAL(r8) and2on2a1(-mt:mt),amtaun2a1(-mt:mt),dand2on2 /;"	v	module:canuto_mod
+data_dir	control_mod.F90	/^  character(len=256):: data_dir /;"	v	module:control_mod
+data_file	control_mod.F90	/^  character(len=256):: data_file /;"	v	module:control_mod
+data_form	control_mod.F90	/^  character(len=16) :: data_form /;"	v	module:control_mod
+data_latname	control_mod.F90	/^  character(len=16) :: data_latname /;"	v	module:control_mod
+data_lonname	control_mod.F90	/^  character(len=16) :: data_lonname /;"	v	module:control_mod
+data_sstname	control_mod.F90	/^  character(len=16) :: data_sstname /;"	v	module:control_mod
+day	control_mod.F90	/^  integer       :: day /;"	v	module:control_mod
+day_dims	cdf_mod.F90	/^              mth_dims(mth_rank),mld_dims(mld_rank),akm_dims(akm_rank),akt_dims(akt_rank),aks_dims(aks_rank), day_dims(/;"	v	module:cdf_mod
+day_id	cdf_mod.F90	/^             ,h0_id,u_id,v_id,t_id,s_id,h1_id,h2_id,h3_id,month_id, day_id$/;"	v	module:cdf_mod
+day_rank	cdf_mod.F90	/^             ,h0_rank=2,u_rank=3,v_rank=3,t_rank=3,s_rank=3,h1_rank=2,h2_rank=2,h3_rank=2,month_rank=1, day_rank=/;"	v	module:cdf_mod
+dciso1	isopyc_mod.F90	/^      real(r4) :: dciso1(/;"	v	module:isopyc_mod
+dciso2	isopyc_mod.F90	/^      real(r4) :: dciso1(imt,km,jmt), dciso2(/;"	v	module:isopyc_mod
+dd_cpl	pconst_mod.F90	/^    integer(kind(1))   :: yy_cpl,mm_cpl,dd_cpl,/;"	v	module:pconst_mod
+dd_licom	pconst_mod.F90	/^    integer(kind(1))   :: yy_licom,mm_licom,dd_licom,/;"	v	module:pconst_mod
+ddd	forc_mod.F90	/^      real(r8),dimension(imt,jmt)::su,sv,psa,tsa,sss,swv,uva,qar,cld,&$/;"	v	module:forc_mod
+ddy	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::ddy$/;"	v	module:tracer_mod
+ddy_iso	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::aay_iso,ddy_iso$/;"	v	module:tracer_mod
+ddymon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::ddymon$/;"	v	module:output_mod
+ddymon_iso	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::aaymon_iso,ddymon_iso$/;"	v	module:output_mod
+delldoc	OBM_mod.F90	/^      real*8::delldoc$/;"	v	module:carbon_mod
+delta_a	OBM_mod.F90	/^      real,dimension(km)::r_cap,delta_a$/;"	v	module:carbon_mod
+deltheta_r	canuto_mod.F90	/^        ,sma1(-mt:mt),sha1(-mt:mt),ssa1(-mt:mt) ,rri,rnd2on2,dri, deltheta_r,/;"	v	module:canuto_mod
+dest	msg_mod.F90	/^      integer my_rank, source, dest,/;"	v	module:msg_mod
+dfricmx	pconst_mod.F90	/^      real(r8) :: dfricmx,/;"	v	module:pconst_mod
+dhdx	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   dhdx /;"	v	module:buf_mod
+dhdx_io	dyn_mod.F90	/^      real(r4),dimension(imt_global,jmt_global)::t_cpl_io,s_cpl_io,u_cpl_io,v_cpl_io,dhdx_io,/;"	v	module:dyn_mod
+dhdy	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   dhdy /;"	v	module:buf_mod
+dhdy_io	dyn_mod.F90	/^      real(r4),dimension(imt_global,jmt_global)::t_cpl_io,s_cpl_io,u_cpl_io,v_cpl_io,dhdx_io,dhdy_io,/;"	v	module:dyn_mod
+diag_bsf	diag_mod.F90	/^      logical :: diag_msf,diag_bsf,/;"	v	module:diag_mod
+diag_budget	diag_mod.F90	/^      logical :: diag_msf,diag_bsf,diag_budget,/;"	v	module:diag_mod
+diag_eod	control_mod.F90	/^  integer       :: diag_eod /;"	v	module:control_mod
+diag_heat_transport	diag_mod.F90	/^      SUBROUTINE diag_heat_transport$/;"	s	module:diag_mod
+diag_mod	diag_mod.F90	/^module diag_mod$/;"	m
+diag_msf	diag_mod.F90	/^      logical :: diag_msf,/;"	v	module:diag_mod
+diag_mth	diag_mod.F90	/^      logical :: diag_msf,diag_bsf,diag_budget,diag_mth$/;"	v	module:diag_mod
+diag_now	control_mod.F90	/^  integer       :: diag_now /;"	v	module:control_mod
+diag_tracer	diag_mod.F90	/^      subroutine diag_tracer$/;"	s	module:diag_mod
+diff_cbt_back	pmix_mod.F90	/^      real(r8):: wndmix, fricmx, diff_cbt_back,/;"	v	module:pmix_mod
+diff_cbt_limit	canuto_mod.F90	/^        ,visc_cbu_limit,diff_cbt_limit,/;"	v	module:canuto_mod
+diff_cbt_limit	pmix_mod.F90	/^      real(r8):: wndmix, fricmx, diff_cbt_back, diff_cbt_limit,/;"	v	module:pmix_mod
+dims	msg_mod.F90	/^      integer my_rank, source, dest, nbrs(4), dims(/;"	v	module:msg_mod
+distribute_1d	global_to_local.F90	/^      subroutine distribute_1d(/;"	s
+dlam	param_mod.F90	/^      real(r8) :: dlam /;"	v	module:param_mod
+dlogchl	sw_mod.F90	/^      real(r8) :: chl_temp,chlmin,chlmax,dlogchl /;"	v	module:sw_mod
+dlu	dyn_mod.F90	/^      real(r8),dimension(:,:,:),allocatable::gg,dlu,/;"	v	module:dyn_mod
+dlub	dyn_mod.F90	/^      real(r8),dimension(:,:),allocatable::dlub,/;"	v	module:dyn_mod
+dlv	dyn_mod.F90	/^      real(r8),dimension(:,:,:),allocatable::gg,dlu,dlv$/;"	v	module:dyn_mod
+dlvb	dyn_mod.F90	/^      real(r8),dimension(:,:),allocatable::dlub,dlvb$/;"	v	module:dyn_mod
+domain_file	control_mod.F90	/^  character(len=256):: domain_file /;"	v	module:control_mod
+domain_nx	control_mod.F90	/^  integer           :: domain_nx /;"	v	module:control_mod
+domain_ny	control_mod.F90	/^  integer           :: domain_ny /;"	v	module:control_mod
+dpco2a	OBM_mod.F90	/^      real,dimension(imt,jmt)::dpco2a$/;"	v	module:carbon_mod
+dpco2o	OBM_mod.F90	/^      real,dimension(imt,jmt)::pco2a,pco2o,dpco2o$/;"	v	module:carbon_mod
+dptlim	isopyc_mod.F90	/^      real(r8):: ahisop, athkdf, dptlim(/;"	v	module:isopyc_mod
+dqdt	forc_mod.F90	/^                   ,nswv,dqdt,/;"	v	module:forc_mod
+dqdt3	forc_mod.F90	/^                    ,nswv3,dqdt3,/;"	v	module:forc_mod
+dqdt3_io	forc_mod.F90	/^                   ,nswv3_io,dqdt3_io,/;"	v	module:forc_mod
+dri	canuto_mod.F90	/^        ,sma1(-mt:mt),sha1(-mt:mt),ssa1(-mt:mt) ,rri,rnd2on2,dri,/;"	v	module:canuto_mod
+dslope	isopyc_mod.F90	/^              , dslope,/;"	v	module:isopyc_mod
+dtdx	pconst_mod.F90	/^      real(r8),dimension(jmt):: dtdy,dtdx,/;"	v	module:pconst_mod
+dtdx_global	pconst_mod.F90	/^      real(r8),dimension(jmt_global):: dtdy_global,dtdx_global,/;"	v	module:pconst_mod
+dtdy	pconst_mod.F90	/^      real(r8),dimension(jmt):: dtdy,/;"	v	module:pconst_mod
+dtdy_global	pconst_mod.F90	/^      real(r8),dimension(jmt_global):: dtdy_global,/;"	v	module:pconst_mod
+dust_f	OBM_mod.F90	/^      real,dimension(imt,jmt)::fe_f,dust_f /;"	v	module:cforce_mod
+dust_flux	OBM_mod.F90	/^      real,dimension(imt,jmt,12)::fe_flux,dust_flux /;"	v	module:cforce_mod
+dust_in	OBM_mod.F90	/^     real,dimension(imt,jmt,km)::dust_in$/;"	v	module:carbon_mod
+duu10n	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   duu10n(/;"	v	module:buf_mod
+dwndmix	pconst_mod.F90	/^      real(r8) :: dfricmx,dwndmix$/;"	v	module:pconst_mod
+dx	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::dx,/;"	v	module:tracer_mod
+dx_iso	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::dx_iso,/;"	v	module:tracer_mod
+dxmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::dxmon,/;"	v	module:output_mod
+dxmon_iso	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::dxmon_iso,/;"	v	module:output_mod
+dy	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::dx,dy,/;"	v	module:tracer_mod
+dy_iso	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::dx_iso,dy_iso,/;"	v	module:tracer_mod
+dymon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::dxmon,dymon,/;"	v	module:output_mod
+dymon_iso	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::dxmon_iso,dymon_iso,/;"	v	module:output_mod
+dyn_mod	dyn_mod.F90	/^module dyn_mod$/;"	m
+dytr	isopyc_mod.F90	/^      real(r8)::  zt(km),dzw(0:km),dzwr(0:km),dzr(km),dytr(/;"	v	module:isopyc_mod
+dyur	isopyc_mod.F90	/^                      cstrdytr(jmt),dyur(/;"	v	module:isopyc_mod
+dz	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::dx,dy,dz$/;"	v	module:tracer_mod
+dz_iso	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::dx_iso,dy_iso,dz_iso$/;"	v	module:tracer_mod
+dzmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::dxmon,dymon,dzmon$/;"	v	module:output_mod
+dzmon_iso	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::dxmon_iso,dymon_iso,dzmon_iso$/;"	v	module:output_mod
+dzp	pconst_mod.F90	/^      real(r8),dimension(km):: zkt,dzp,/;"	v	module:pconst_mod
+dzph	pconst_mod.F90	/^      real(r8),dimension(imt,jmt)::ohbt,ohbu,dzph,/;"	v	module:pconst_mod
+dzr	isopyc_mod.F90	/^      real(r8)::  zt(km),dzw(0:km),dzwr(0:km),dzr(/;"	v	module:isopyc_mod
+dzw	isopyc_mod.F90	/^      real(r8)::  zt(km),dzw(/;"	v	module:isopyc_mod
+dzwr	isopyc_mod.F90	/^      real(r8)::  zt(km),dzw(0:km),dzwr(/;"	v	module:isopyc_mod
+e	isopyc_mod.F90	/^      rea/;"	v	module:isopyc_mod
+eday	control_mod.F90	/^  integer       :: eday /;"	v	module:control_mod
+eday0	control_mod.F90	/^  integer       :: eday0 /;"	v	module:control_mod
+eplatidepend_	canuto_new.F90	/^	FUNCTION eplatidepend_(/;"	f
+eps_bot0	canuto_mod.F90	/^      REAL(r8) eps_bot0$/;"	v	module:canuto_mod
+eps_bot__under	canuto_mod.F90	/^      REAL(r8) eps_bot__under	/;"	v	module:canuto_mod
+epson2__	canuto_mod.F90	/^      REAL(r8) epson2__$/;"	v	module:canuto_mod
+evap	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   evap /;"	v	module:buf_mod
+exch_boundary	exchange.F90	/^      subroutine exch_boundary(/;"	s
+exchange_1D_boundary	exchange.F90	/^      subroutine exchange_1D_boundary(/;"	s
+exchange_2D_boundary	exchange.F90	/^      subroutine exchange_2D_boundary(/;"	s
+exchange_2d	exchange.F90	/^      subroutine exchange_2d(/;"	s
+exchange_2d_real	exchange.F90	/^      subroutine exchange_2d_real(/;"	s
+exchange_3d	exchange.F90	/^      subroutine exchange_3d(/;"	s
+exchange_3d_iso	exchange.F90	/^      subroutine exchange_3d_iso(/;"	s
+exchange_boundary	exchange.F90	/^      subroutine exchange_boundary(/;"	s
+exchange_pack	exchange.F90	/^      subroutine exchange_pack(/;"	s
+fct	canuto_new.F90	/^      function fct(/;"	f
+fct_sal	canuto_ini.F90	/^      function fct_sal(/;"	f
+fctysal	canuto_new.F90	/^      function fctysal(/;"	f
+feVarID	OBM_mod.F90	/^   integer::ccVarID,tcVarID,po4VarID,ldocVarID,taVarID,o2VarID,feVarID$/;"	v	module:coutput_mod
+fe_f	OBM_mod.F90	/^      real,dimension(imt,jmt)::fe_f,/;"	v	module:cforce_mod
+fe_flux	OBM_mod.F90	/^      real,dimension(imt,jmt,12)::fe_flux,/;"	v	module:cforce_mod
+femon	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::o2mon,femon /;"	v	module:coutput_mod
+femon_io	OBM_mod.F90	/^     real,dimension(imt_global,jmt_global,km)::o2mon_io,femon_io /;"	v	module:coutput_mod
+fepos	OBM_mod.F90	/^     real,parameter::fepos=/;"	v	module:carbon_mod
+feup	OBM_mod.F90	/^      real,dimension(imt,jmt)::o2up,feup$/;"	v	module:coutput_mod
+flux_Fe_io	OBM_mod.F90	/^     real,dimension(imt_global,jmt_global,km)::flux_Fe_io$/;"	v	module:carbon_mod
+flux_cpl	flux_cpl.F90	/^  SUBROUTINE flux_cpl$/;"	s	module:fluxcpl
+flux_o2	oxygen.F90	/^subroutine flux_o2$/;"	s
+fluxcpl	flux_cpl.F90	/^module fluxcpl$/;"	m
+forc_mod	forc_mod.F90	/^module forc_mod$/;"	m
+formld	canuto_new.F90	/^      subroutine formld(/;"	s
+formld_rh	canuto_new.F90	/^      subroutine formld_rh(/;"	s
+formld_te	canuto_new.F90	/^      subroutine formld_te(/;"	s
+fpopVarID	OBM_mod.F90	/^   integer::prodVarID,fpopVarID,/;"	v	module:coutput_mod
+fpopmon	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::prodmon,fpopmon,/;"	v	module:coutput_mod
+fpopmon_io	OBM_mod.F90	/^     real,dimension(imt_global,jmt_global,km)::prodmon_io,fpopmon_io,/;"	v	module:coutput_mod
+fresh	forc_mod.F90	/^                   ,lwv,seaice,rain,snow,fresh,/;"	v	module:forc_mod
+fricmx	pmix_mod.F90	/^      real(r8):: wndmix, fricmx,/;"	v	module:pmix_mod
+fzisop	isopyc_mod.F90	/^      real(r8):: ahisop, athkdf, dptlim(nrpl+1), fzisop(/;"	v	module:isopyc_mod
+g	constant_mod.F90	/^  real(SHR_KIND_R8), parameter ::  g /;"	v	module:constant_mod
+gamma	pconst_mod.F90	/^      real(r8)::gamma$/;"	v	module:pconst_mod
+gather_1d	local_to_global.F90	/^      subroutine gather_1d(/;"	s
+gg	dyn_mod.F90	/^      real(r8),dimension(:,:,:),allocatable::gg,/;"	v	module:dyn_mod
+global_distribute	global_to_local.F90	/^      subroutine global_distribute(/;"	s
+global_distribute_real	global_to_local.F90	/^      subroutine global_distribute_real(/;"	s
+global_gather	local_to_global.F90	/^     subroutine global_gather(/;"	s
+global_to_local_1d	global_to_local.F90	/^      subroutine global_to_local_1d(/;"	s
+global_to_local_2d	global_to_local.F90	/^      subroutine global_to_local_2d(/;"	s
+global_to_local_3d	global_to_local.F90	/^      subroutine global_to_local_3d(/;"	s
+global_to_local_4d	global_to_local.F90	/^      subroutine global_to_local_4d(/;"	s
+global_to_local_4d_real	global_to_local.F90	/^      subroutine global_to_local_4d_real(/;"	s
+h0	dyn_mod.F90	/^      real(r8),allocatable,dimension(:,:)::h0$/;"	v	module:dyn_mod
+h0_dims	cdf_mod.F90	/^             ,h0_dims(/;"	v	module:cdf_mod
+h0_id	cdf_mod.F90	/^             ,h0_id,/;"	v	module:cdf_mod
+h0_rank	cdf_mod.F90	/^             ,h0_rank=/;"	v	module:cdf_mod
+h0bf	dyn_mod.F90	/^      real(r8),dimension(imt,jmt)::h0l,h0f,h0bl,h0bf$/;"	v	module:dyn_mod
+h0bl	dyn_mod.F90	/^      real(r8),dimension(imt,jmt)::h0l,h0f,h0bl,/;"	v	module:dyn_mod
+h0f	dyn_mod.F90	/^      real(r8),dimension(imt,jmt)::h0l,h0f,/;"	v	module:dyn_mod
+h0l	dyn_mod.F90	/^      real(r8),dimension(imt,jmt)::h0l,/;"	v	module:dyn_mod
+h0p	dyn_mod.F90	/^      real(r8),dimension(imt,jmt)::ub,vb,ubp,vbp,h0p$/;"	v	module:dyn_mod
+h1_dims	cdf_mod.F90	/^             ,h1_dims(/;"	v	module:cdf_mod
+h1_id	cdf_mod.F90	/^             ,h0_id,u_id,v_id,t_id,s_id,h1_id,/;"	v	module:cdf_mod
+h1_rank	cdf_mod.F90	/^             ,h0_rank=2,u_rank=3,v_rank=3,t_rank=3,s_rank=3,h1_rank=/;"	v	module:cdf_mod
+h2_dims	cdf_mod.F90	/^             ,h1_dims(h1_rank),h2_dims(/;"	v	module:cdf_mod
+h2_id	cdf_mod.F90	/^             ,h0_id,u_id,v_id,t_id,s_id,h1_id,h2_id,/;"	v	module:cdf_mod
+h2_rank	cdf_mod.F90	/^             ,h0_rank=2,u_rank=3,v_rank=3,t_rank=3,s_rank=3,h1_rank=2,h2_rank=/;"	v	module:cdf_mod
+h3_dims	cdf_mod.F90	/^             ,h1_dims(h1_rank),h2_dims(h2_rank),h3_dims(/;"	v	module:cdf_mod
+h3_id	cdf_mod.F90	/^             ,h0_id,u_id,v_id,t_id,s_id,h1_id,h2_id,h3_id,/;"	v	module:cdf_mod
+h3_rank	cdf_mod.F90	/^             ,h0_rank=2,u_rank=3,v_rank=3,t_rank=3,s_rank=3,h1_rank=2,h2_rank=2,h3_rank=/;"	v	module:cdf_mod
+handle_error	wrap_nf.F90	/^subroutine handle_error(/;"	s
+hbx	pconst_mod.F90	/^      real(r8),dimension(imt,jmt)::ohbt,ohbu,dzph,hbx,/;"	v	module:pconst_mod
+hby	pconst_mod.F90	/^      real(r8),dimension(imt,jmt)::ohbt,ohbu,dzph,hbx,hby$/;"	v	module:pconst_mod
+hd_dims	cdf_mod.F90	/^                z0_dims( z0_rank), hi_dims( hi_rank), hd_dims(/;"	v	module:cdf_mod
+hd_id	cdf_mod.F90	/^      integer::  lat_id,lon_id,lev1_id,lev_id,time_id,z0_id,hi_id,hd_id,/;"	v	module:cdf_mod
+hd_rank	cdf_mod.F90	/^      integer, parameter ::lat_rank=1,lon_rank=1,lev_rank=1,time_rank=1,z0_rank=3,hi_rank=3, &$/;"	v	module:cdf_mod
+hdmon	output_mod.F90	/^      real(r4),dimension(imt,jmt)::z0mon,himon,hdmon$/;"	v	module:output_mod
+hf	OBM_mod.F90	/^      real,parameter::hf=/;"	v	module:carbon_mod
+hf_Fe	OBM_mod.F90	/^     real,parameter::hf_Fe=/;"	v	module:carbon_mod
+hi	tracer_mod.F90	/^      real(r8),allocatable,dimension(:,:)::hi,/;"	v	module:tracer_mod
+hi_dims	cdf_mod.F90	/^                z0_dims( z0_rank), hi_dims(/;"	v	module:cdf_mod
+hi_id	cdf_mod.F90	/^      integer::  lat_id,lon_id,lev1_id,lev_id,time_id,z0_id,hi_id,/;"	v	module:cdf_mod
+hi_io	tracer_mod.F90	/^      real(r8),allocatable,dimension(:,:)::hi_io,/;"	v	module:tracer_mod
+hi_rank	cdf_mod.F90	/^      integer, parameter ::lat_rank=1,lon_rank=1,lev_rank=1,time_rank=1,z0_rank=3,hi_rank=/;"	v	module:cdf_mod
+himon	output_mod.F90	/^      real(r4),dimension(imt,jmt)::z0mon,himon,/;"	v	module:output_mod
+hist_eod	control_mod.F90	/^  integer       :: hist_eod /;"	v	module:control_mod
+hist_freq	pconst_mod.F90	/^      INTEGER :: NUMBER,NSTART,IY0,IYFM,MON0,MEND,IMD,IDAY,II,JJ,IO_HIST,IO_REST,rest_freq,hist_freq,/;"	v	module:pconst_mod
+hist_now	control_mod.F90	/^  integer       :: hist_now /;"	v	module:control_mod
+hist_tav	control_mod.F90	/^  integer       :: hist_tav /;"	v	module:control_mod
+hsetup	core_daily.F90	/^      subroutine hsetup(/;"	s
+i	param_mod.F90	/^      in/;"	v	module:param_mod
+i8	precision_mod.F90	/^integer, parameter :: i8 /;"	v	module:precision_mod
+i_f_num	pconst_mod.F90	/^      integer :: i_f_num /;"	v	module:pconst_mod
+i_global	pconst_mod.F90	/^      integer,dimension(imt):: i_global$/;"	v	module:pconst_mod
+i_num	pconst_mod.F90	/^      integer :: i_num /;"	v	module:pconst_mod
+i_start	pconst_mod.F90	/^       integer,dimension(:),allocatable:: i_start,/;"	v	module:pconst_mod
+ibuffr	buf_mod.F90	/^  integer   ibuffr(/;"	v	module:buf_mod
+ibuffs	buf_mod.F90	/^  integer   ibuffs(/;"	v	module:buf_mod
+ic1_dims	cdf_mod.F90	/^                z0_dims( z0_rank), hi_dims( hi_rank), hd_dims( hd_rank), ic1_dims(/;"	v	module:cdf_mod
+ic1_id	cdf_mod.F90	/^      integer::  lat_id,lon_id,lev1_id,lev_id,time_id,z0_id,hi_id,hd_id, &$/;"	v	module:cdf_mod
+ic1_rank	cdf_mod.F90	/^                            hd_rank=3,ic1_rank=/;"	v	module:cdf_mod
+ic2_dims	cdf_mod.F90	/^                z0_dims( z0_rank), hi_dims( hi_rank), hd_dims( hd_rank), ic1_dims( ic1_rank), &$/;"	v	module:cdf_mod
+ic2_id	cdf_mod.F90	/^               ic1_id,ic2_id,/;"	v	module:cdf_mod
+ic2_rank	cdf_mod.F90	/^                            hd_rank=3,ic1_rank=3,ic2_rank=/;"	v	module:cdf_mod
+iceday	OBM_mod.F90	/^      real,dimension(imt,jmt)::iceday$/;"	v	module:cforce_mod
+icmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,2):: icmon$/;"	v	module:output_mod
+icondear	canuto_mod.F90	/^      INTEGER icondear$/;"	v	module:canuto_mod
+ierr	control_mod.F90	/^  integer, private :: ierr /;"	v	module:control_mod
+ierr	param_mod.F90	/^      integer:: i,j,k,m,n,ierr,/;"	v	module:param_mod
+ifirst	canuto_mod.F90	/^      integer :: ifirst$/;"	v	module:canuto_mod
+ifrac	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   ifrac(/;"	v	module:buf_mod
+ifshearmin	canuto_mod.F90	/^      LOGICAL ifshearmin$/;"	v	module:canuto_mod
+ifzeroshear	canuto_mod.F90	/^      LOGICAL ifzeroshear$/;"	v	module:canuto_mod
+ilomega	canuto_mod.F90	/^      INTEGER ilomega$/;"	v	module:canuto_mod
+imm	param_mod.F90	/^      integer,parameter:: imm_/;"	v	module:param_mod
+imm_global	param_mod.F90	/^      integer,parameter:: imm_global=/;"	v	module:param_mod
+imt	param_mod.F90	/^      integer,parameter:: imt=/;"	v	module:param_mod
+imt_global	param_mod.F90	/^      integer,parameter:: imt_global=/;"	v	module:param_mod
+index_o2x_Faoo_fco2_ocn	POP_CplIndices.F90	/^  integer :: index_o2x_Faoo_fco2_ocn$/;"	v	module:POP_CplIndices
+index_o2x_Faoo_fdms_ocn	POP_CplIndices.F90	/^  integer :: index_o2x_Faoo_fdms_ocn$/;"	v	module:POP_CplIndices
+index_o2x_Fioo_q	POP_CplIndices.F90	/^  integer :: index_o2x_Fioo_q$/;"	v	module:POP_CplIndices
+index_o2x_So_dhdx	POP_CplIndices.F90	/^  integer :: index_o2x_So_dhdx$/;"	v	module:POP_CplIndices
+index_o2x_So_dhdy	POP_CplIndices.F90	/^  integer :: index_o2x_So_dhdy$/;"	v	module:POP_CplIndices
+index_o2x_So_s	POP_CplIndices.F90	/^  integer :: index_o2x_So_s$/;"	v	module:POP_CplIndices
+index_o2x_So_t	POP_CplIndices.F90	/^  integer :: index_o2x_So_t /;"	v	module:POP_CplIndices
+index_o2x_So_u	POP_CplIndices.F90	/^  integer :: index_o2x_So_u$/;"	v	module:POP_CplIndices
+index_o2x_So_v	POP_CplIndices.F90	/^  integer :: index_o2x_So_v$/;"	v	module:POP_CplIndices
+index_x2o_Forr_ioff	POP_CplIndices.F90	/^  integer :: index_x2o_Forr_ioff /;"	v	module:POP_CplIndices
+index_x2o_Forr_roff	POP_CplIndices.F90	/^  integer :: index_x2o_Forr_roff /;"	v	module:POP_CplIndices
+index_x2o_Foxx_bcphidry	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_bcphidry /;"	v	module:POP_CplIndices
+index_x2o_Foxx_bcphiwet	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_bcphiwet /;"	v	module:POP_CplIndices
+index_x2o_Foxx_bcphodry	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_bcphodry /;"	v	module:POP_CplIndices
+index_x2o_Foxx_dstdry1	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_dstdry1 /;"	v	module:POP_CplIndices
+index_x2o_Foxx_dstdry2	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_dstdry2 /;"	v	module:POP_CplIndices
+index_x2o_Foxx_dstdry3	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_dstdry3 /;"	v	module:POP_CplIndices
+index_x2o_Foxx_dstdry4	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_dstdry4 /;"	v	module:POP_CplIndices
+index_x2o_Foxx_dstwet1	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_dstwet1 /;"	v	module:POP_CplIndices
+index_x2o_Foxx_dstwet2	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_dstwet2 /;"	v	module:POP_CplIndices
+index_x2o_Foxx_dstwet3	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_dstwet3 /;"	v	module:POP_CplIndices
+index_x2o_Foxx_dstwet4	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_dstwet4 /;"	v	module:POP_CplIndices
+index_x2o_Foxx_evap	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_evap /;"	v	module:POP_CplIndices
+index_x2o_Foxx_lat	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_lat /;"	v	module:POP_CplIndices
+index_x2o_Foxx_lwdn	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_lwdn /;"	v	module:POP_CplIndices
+index_x2o_Foxx_lwup	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_lwup /;"	v	module:POP_CplIndices
+index_x2o_Foxx_melth	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_melth /;"	v	module:POP_CplIndices
+index_x2o_Foxx_meltw	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_meltw /;"	v	module:POP_CplIndices
+index_x2o_Foxx_ocphidry	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_ocphidry /;"	v	module:POP_CplIndices
+index_x2o_Foxx_ocphiwet	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_ocphiwet /;"	v	module:POP_CplIndices
+index_x2o_Foxx_ocphodry	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_ocphodry /;"	v	module:POP_CplIndices
+index_x2o_Foxx_prec	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_prec /;"	v	module:POP_CplIndices
+index_x2o_Foxx_rain	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_rain /;"	v	module:POP_CplIndices
+index_x2o_Foxx_salt	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_salt /;"	v	module:POP_CplIndices
+index_x2o_Foxx_sen	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_sen /;"	v	module:POP_CplIndices
+index_x2o_Foxx_snow	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_snow /;"	v	module:POP_CplIndices
+index_x2o_Foxx_swnet	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_swnet /;"	v	module:POP_CplIndices
+index_x2o_Foxx_taux	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_taux /;"	v	module:POP_CplIndices
+index_x2o_Foxx_tauy	POP_CplIndices.F90	/^  integer :: index_x2o_Foxx_tauy /;"	v	module:POP_CplIndices
+index_x2o_Sa_co2diag	POP_CplIndices.F90	/^  integer :: index_x2o_Sa_co2diag /;"	v	module:POP_CplIndices
+index_x2o_Sa_co2prog	POP_CplIndices.F90	/^  integer :: index_x2o_Sa_co2prog /;"	v	module:POP_CplIndices
+index_x2o_Sa_pslv	POP_CplIndices.F90	/^  integer :: index_x2o_Sa_pslv /;"	v	module:POP_CplIndices
+index_x2o_Si_ifrac	POP_CplIndices.F90	/^  integer :: index_x2o_Si_ifrac /;"	v	module:POP_CplIndices
+index_x2o_So_duu10n	POP_CplIndices.F90	/^  integer :: index_x2o_So_duu10n /;"	v	module:POP_CplIndices
+info_dbug	control_mod.F90	/^  integer           :: info_dbug /;"	v	module:control_mod
+info_sleep	control_mod.F90	/^  real(SHR_KIND_R8)          :: info_sleep /;"	v	module:control_mod
+info_time	control_mod.F90	/^  integer           :: info_time /;"	v	module:control_mod
+interp1d	canuto_new.F90	/^	subroutine interp1d(/;"	s
+interp1d_expabs	canuto_new.F90	/^	SUBROUTINE interp1d_expabs(/;"	s
+interp2d	canuto_new.F90	/^	SUBROUTINE interp2d(/;"	s
+interp2d_expabs	canuto_new.F90	/^	SUBROUTINE interp2d_expabs(/;"	s
+interplation	core_daily.F90	/^      subroutine interplation(/;"	s
+iret	cdf_mod.F90	/^      integer:: iret$/;"	v	module:cdf_mod
+isopyc_mod	isopyc_mod.F90	/^module isopyc_mod$/;"	m
+isp	OBM_mod.F90	/^      integer::isp$/;"	v	module:carbon_mod
+itice	tracer_mod.F90	/^      real(r8),allocatable,dimension(:,:)::hi,itice,/;"	v	module:tracer_mod
+itice_io	tracer_mod.F90	/^      real(r8),allocatable,dimension(:,:)::hi_io,itice_io,/;"	v	module:tracer_mod
+itnu	pconst_mod.F90	/^      integer,dimension(imt,jmt):: itnu$/;"	v	module:pconst_mod
+ix	pconst_mod.F90	/^      integer :: ix,/;"	v	module:pconst_mod
+iy	pconst_mod.F90	/^      integer :: ix,iy$/;"	v	module:pconst_mod
+j	param_mod.F90	/^      integer:: i,j,/;"	v	module:param_mod
+j_f_num	pconst_mod.F90	/^      integer :: j_f_num /;"	v	module:pconst_mod
+j_global	pconst_mod.F90	/^      integer,dimension(jmt):: j_global$/;"	v	module:pconst_mod
+j_loop	param_mod.F90	/^      integer :: j_loop /;"	v	module:param_mod
+j_num	pconst_mod.F90	/^      integer :: j_num /;"	v	module:pconst_mod
+j_start	pconst_mod.F90	/^       integer,dimension(:),allocatable:: i_start,j_start$/;"	v	module:pconst_mod
+jem	param_mod.F90	/^      integer,parameter:: jem=/;"	v	module:param_mod
+jet	param_mod.F90	/^      integer,parameter:: jet=/;"	v	module:param_mod
+jj_end	param_mod.F90	/^      integer::jj_start,jj_end /;"	v	module:param_mod
+jj_start	param_mod.F90	/^      integer::jj_start,/;"	v	module:param_mod
+jmm	param_mod.F90	/^      integer,parameter:: imm_global=imt_global-1,imm=imt-1,jmm=/;"	v	module:param_mod
+jmm_global	param_mod.F90	/^      integer,parameter:: jmm_global=/;"	v	module:param_mod
+jmt	param_mod.F90	/^      integer,parameter:: jmt=/;"	v	module:param_mod
+jmt_global	param_mod.F90	/^      integer,parameter:: jmt_global=/;"	v	module:param_mod
+jpopVarID	OBM_mod.F90	/^   integer::prodVarID,fpopVarID,pldocVarID,remiVarID,jpopVarID,/;"	v	module:coutput_mod
+jpopmon	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::jpopmon,/;"	v	module:coutput_mod
+jpopmon_io	OBM_mod.F90	/^     real,dimension(imt_global,jmt_global,km)::jpopmon_io,/;"	v	module:coutput_mod
+jsm	param_mod.F90	/^      integer,parameter:: jsm=/;"	v	module:param_mod
+jst	param_mod.F90	/^      integer,parameter:: jst=/;"	v	module:param_mod
+jst_global	param_mod.F90	/^      integer,parameter:: jst_global=/;"	v	module:param_mod
+jstart	param_mod.F90	/^      integer,parameter:: jstart /;"	v	module:param_mod
+k	param_mod.F90	/^      integer:: i,j,k,/;"	v	module:param_mod
+kappa_b	OBM_mod.F90	/^      real,dimension(km)::kappa_b$/;"	v	module:carbon_mod
+kb0	grids_pt_mod.F90	/^    real,parameter::kb0=/;"	v	module:GRIDS_PT_MOD
+kisrpl	isopyc_mod.F90	/^      real(r8):: kisrpl(/;"	v	module:isopyc_mod
+klv	pconst_mod.F90	/^      integer :: klv$/;"	v	module:pconst_mod
+km	param_mod.F90	/^      integer,parameter:: km=/;"	v	module:param_mod
+kmm1	param_mod.F90	/^      integer,parameter:: imm_global=imt_global-1,imm=imt-1,jmm=jmt-1,kmp1=km+1,kmm1=/;"	v	module:param_mod
+kmmix	OBM_mod.F90	/^      integer,parameter::kmmix=/;"	v	module:carbon_mod
+kmp1	param_mod.F90	/^      integer,parameter:: imm_global=imt_global-1,imm=imt-1,jmm=jmt-1,kmp1=/;"	v	module:param_mod
+kmt	grids_pt_mod.F90	/^    integer,dimension(imt,jmt)::kmt$/;"	v	module:GRIDS_PT_MOD
+krplin	isopyc_mod.F90	/^      integer:: krplin(/;"	v	module:isopyc_mod
+kyear	OBM_mod.F90	/^      integer,allocatable,dimension(:)::kyear$/;"	v	module:cforce_mod
+lat	pconst_mod.F90	/^      real(r4),dimension(jmt_global):: lat$/;"	v	module:pconst_mod
+lat1	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   lat1(/;"	v	module:buf_mod
+lat_dim	cdf_mod.F90	/^      integer:: lon_dim,lat_dim,/;"	v	module:cdf_mod
+lat_dims	cdf_mod.F90	/^      integer::  lat_dims(/;"	v	module:cdf_mod
+lat_id	cdf_mod.F90	/^      integer::  lat_id,/;"	v	module:cdf_mod
+lat_len	cdf_mod.F90	/^      integer, parameter :: lon_len=imt_global,lat_len=/;"	v	module:cdf_mod
+lat_rank	cdf_mod.F90	/^      integer, parameter ::lat_rank=/;"	v	module:cdf_mod
+latvap	constant_mod.F90	/^  real(SHR_KIND_R8), parameter ::  latvap /;"	v	module:constant_mod
+ldocVarID	OBM_mod.F90	/^   integer::ccVarID,tcVarID,po4VarID,ldocVarID,/;"	v	module:coutput_mod
+ldocga	OBM_mod.F90	/^      real::ldocga=/;"	v	module:carbon_mod
+ldocmon	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::po4mon,ldocmon,/;"	v	module:coutput_mod
+ldocmon_io	OBM_mod.F90	/^     real,dimension(imt_global,jmt_global,km)::po4mon_io,ldocmon_io,/;"	v	module:coutput_mod
+lev	pconst_mod.F90	/^      real(r4),dimension(km):: lev$/;"	v	module:pconst_mod
+lev1	pconst_mod.F90	/^      real(r4),dimension(km+1):: lev1$/;"	v	module:pconst_mod
+lev1_dim	cdf_mod.F90	/^      integer:: lon_dim,lat_dim,lev1_dim,/;"	v	module:cdf_mod
+lev1_dims	cdf_mod.F90	/^                us_dims( us_rank), vs_dims( vs_rank), ws_dims( ws_rank),psi_dims(psi_rank), &$/;"	v	module:cdf_mod
+lev1_id	cdf_mod.F90	/^      integer::  lat_id,lon_id,lev1_id,/;"	v	module:cdf_mod
+lev1_len	cdf_mod.F90	/^      integer, parameter :: lon_len=imt_global,lat_len=jmt_global,lev_len=km,lev1_len=/;"	v	module:cdf_mod
+lev1_rank	cdf_mod.F90	/^                            us_rank=4, vs_rank=4, ws_rank=4, psi_rank=3,lev1_rank=/;"	v	module:cdf_mod
+lev_dim	cdf_mod.F90	/^      integer:: lon_dim,lat_dim,lev1_dim,lev_dim,/;"	v	module:cdf_mod
+lev_dims	cdf_mod.F90	/^      integer::  lat_dims(lat_rank),lon_dims(lon_rank),lev_dims(/;"	v	module:cdf_mod
+lev_id	cdf_mod.F90	/^      integer::  lat_id,lon_id,lev1_id,lev_id,/;"	v	module:cdf_mod
+lev_len	cdf_mod.F90	/^      integer, parameter :: lon_len=imt_global,lat_len=jmt_global,lev_len=/;"	v	module:cdf_mod
+lev_rank	cdf_mod.F90	/^      integer, parameter ::lat_rank=1,lon_rank=1,lev_rank=/;"	v	module:cdf_mod
+licom_SetGSMap_mct	licomcpl7.F90	/^  subroutine licom_SetGSMap_mct(/;"	s
+licom_domain_mct	licomcpl7.F90	/^  subroutine licom_domain_mct(/;"	s
+licom_export_mct	licomcpl7.F90	/^  subroutine licom_export_mct(/;"	s
+licom_final_mct	licomcpl7.F90	/^  subroutine licom_final_mct$/;"	s
+licom_import_mct	licomcpl7.F90	/^  subroutine licom_import_mct(/;"	s
+licom_init_mct	licomcpl7.F90	/^  subroutine licom_init_mct(/;"	s
+licom_run_mct	licomcpl7.F90	/^  subroutine licom_run_mct(/;"	s
+licomqice	tracer_mod.F90	/^      real(r4),dimension(imt,jmt),public:: licomqice$/;"	v	module:tracer_mod
+local_to_global	local_to_global.F90	/^      subroutine local_to_global(/;"	s
+local_to_global_4d	local_to_global.F90	/^     subroutine local_to_global_4d(/;"	s
+local_to_global_4d_double	local_to_global.F90	/^     subroutine local_to_global_4d_double(/;"	s
+logchl	sw_mod.F90	/^      real(r8) :: arg_max,arg,logchl$/;"	v	module:sw_mod
+lon	pconst_mod.F90	/^      real(r4),dimension(imt_global):: lon$/;"	v	module:pconst_mod
+lon_dim	cdf_mod.F90	/^      integer:: lon_dim,/;"	v	module:cdf_mod
+lon_dims	cdf_mod.F90	/^      integer::  lat_dims(lat_rank),lon_dims(/;"	v	module:cdf_mod
+lon_id	cdf_mod.F90	/^      integer::  lat_id,lon_id,/;"	v	module:cdf_mod
+lon_len	cdf_mod.F90	/^      integer, parameter :: lon_len=/;"	v	module:cdf_mod
+lon_rank	cdf_mod.F90	/^      integer, parameter ::lat_rank=1,lon_rank=/;"	v	module:cdf_mod
+lthf	forc_mod.F90	/^                   ,lthf,/;"	v	module:forc_mod
+lthf_dims	cdf_mod.F90	/^             ,sshf_dims(sshf_rank),lthf_dims(/;"	v	module:cdf_mod
+lthf_id	cdf_mod.F90	/^               ,su_id,sv_id,sshf_id,lthf_id,/;"	v	module:cdf_mod
+lthf_rank	cdf_mod.F90	/^              ,su_rank=3,sv_rank=3,sshf_rank=3,lthf_rank=/;"	v	module:cdf_mod
+lthfmon	output_mod.F90	/^      real(r4),dimension(imt,jmt)::lthfmon,/;"	v	module:output_mod
+lwdn	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   lwdn /;"	v	module:buf_mod
+lwup	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   lwup /;"	v	module:buf_mod
+lwv	forc_mod.F90	/^                   ,lwv,/;"	v	module:forc_mod
+lwv3	forc_mod.F90	/^                   ,wspd3,wspdu3,wspdv3,lwv3,/;"	v	module:forc_mod
+lwv3_io	forc_mod.F90	/^                   ,wspdu3_io,wspdv3_io,lwv3_io,/;"	v	module:forc_mod
+lwv_dims	cdf_mod.F90	/^             ,sshf_dims(sshf_rank),lthf_dims(lthf_rank),lwv_dims(/;"	v	module:cdf_mod
+lwv_id	cdf_mod.F90	/^               ,su_id,sv_id,sshf_id,lthf_id,lwv_id,/;"	v	module:cdf_mod
+lwv_rank	cdf_mod.F90	/^              ,su_rank=3,sv_rank=3,sshf_rank=3,lthf_rank=3,lwv_rank=/;"	v	module:cdf_mod
+lwvmon	output_mod.F90	/^      real(r4),dimension(imt,jmt)::lthfmon,sshfmon,lwvmon,/;"	v	module:output_mod
+m	param_mod.F90	/^      integer:: i,j,k,m,/;"	v	module:param_mod
+mask	buf_mod.F90	/^  integer ,save, allocatable ::   mask(/;"	v	module:buf_mod
+mc	sw_mod.F90	/^      INTEGER :: mc,/;"	v	module:sw_mod
+mcoeff	canuto_new.F90	/^      subroutine mcoeff(/;"	s
+melth	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   melth(/;"	v	module:buf_mod
+meltw	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   meltw(/;"	v	module:buf_mod
+mikel2	canuto_new.F90	/^      subroutine mikel2(/;"	s
+mikesal2a	canuto_new.F90	/^      subroutine mikesal2a(/;"	s
+mksmsh	canuto_new.F90	/^      subroutine mksmsh(/;"	s
+mksmshss1	canuto_new.F90	/^      subroutine mksmshss1(/;"	s
+mld_dims	cdf_mod.F90	/^              mth_dims(mth_rank),mld_dims(/;"	v	module:cdf_mod
+mld_id	cdf_mod.F90	/^               mth_id,mld_id,/;"	v	module:cdf_mod
+mld_rank	cdf_mod.F90	/^               mth_rank=3,mld_rank=/;"	v	module:cdf_mod
+mldmon	output_mod.F90	/^      real(r4),dimension(imt,jmt)::mldmon$/;"	v	module:output_mod
+mm_cpl	pconst_mod.F90	/^    integer(kind(1))   :: yy_cpl,mm_cpl,/;"	v	module:pconst_mod
+mm_licom	pconst_mod.F90	/^    integer(kind(1))   :: yy_licom,mm_licom,/;"	v	module:pconst_mod
+monthR	OBM_mod.F90	/^      integer::yearR,monthR$/;"	v	module:carbon_mod
+month_dims	cdf_mod.F90	/^              mth_dims(mth_rank),mld_dims(mld_rank),akm_dims(akm_rank),akt_dims(akt_rank),aks_dims(aks_rank), day_dims(day_rank), month_dims(/;"	v	module:cdf_mod
+month_id	cdf_mod.F90	/^             ,h0_id,u_id,v_id,t_id,s_id,h1_id,h2_id,h3_id,month_id,/;"	v	module:cdf_mod
+month_rank	cdf_mod.F90	/^             ,h0_rank=2,u_rank=3,v_rank=3,t_rank=3,s_rank=3,h1_rank=2,h2_rank=2,h3_rank=2,month_rank=/;"	v	module:cdf_mod
+mpi_comm_ocn	msg_mod.F90	/^      integer ,save            :: mpi_comm_ocn$/;"	v	module:msg_mod
+msf	diag_mod.F90	/^      SUBROUTINE msf$/;"	s	module:diag_mod
+msg_mod	msg_mod.F90	/^module msg_mod$/;"	m
+mss_dir	control_mod.F90	/^  character(len=64) :: mss_dir /;"	v	module:control_mod
+mss_opts	control_mod.F90	/^  character(len=16) :: mss_opts /;"	v	module:control_mod
+mss_pass	control_mod.F90	/^  character(len=16) :: mss_pass /;"	v	module:control_mod
+mss_rmlf	control_mod.F90	/^  integer           :: mss_rmlf /;"	v	module:control_mod
+mss_rtpd	control_mod.F90	/^  integer           :: mss_rtpd /;"	v	module:control_mod
+mth	output_mod.F90	/^      real(r4),dimension(jmt_global,2,NTRA):: mth,/;"	v	module:output_mod
+mth_adv	output_mod.F90	/^      real(r4),dimension(jmt_global,2,NTRA):: mth,mth_adv,/;"	v	module:output_mod
+mth_adv_iso	output_mod.F90	/^      real(r4),dimension(jmt_global,2,NTRA):: mth,mth_adv,mth_dif,mth_adv_iso$/;"	v	module:output_mod
+mth_dif	output_mod.F90	/^      real(r4),dimension(jmt_global,2,NTRA):: mth,mth_adv,mth_dif,/;"	v	module:output_mod
+mth_dims	cdf_mod.F90	/^              lev1_dims(lev1_rank), bsf_dims(bsf_rank),&$/;"	v	module:cdf_mod
+mth_id	cdf_mod.F90	/^               ic1_id,ic2_id, net1_id, net2_id, ts_id,  ss_id,us_id,vs_id,ws_id, psi_id, bsf_id,&$/;"	v	module:cdf_mod
+mth_rank	cdf_mod.F90	/^                            us_rank=4, vs_rank=4, ws_rank=4, psi_rank=3,lev1_rank=1, bsf_rank=3,&$/;"	v	module:cdf_mod
+my_rank	msg_mod.F90	/^      integer my_rank,/;"	v	module:msg_mod
+mytid	param_mod.F90	/^      integer:: i,j,k,m,n,ierr, mytid$/;"	v	module:param_mod
+n	param_mod.F90	/^      int/;"	v	module:param_mod
+n_proc	param_mod.F90	/^      integer,parameter:: n_proc=/;"	v	module:param_mod
+na	pconst_mod.F90	/^      integer,dimension(imt,jmt):: na$/;"	v	module:pconst_mod
+namctl	const.F90	/^      namelist \/namctl\//;"	n	subroutine:CONST
+nbrs	msg_mod.F90	/^      integer my_rank, source, dest, nbrs(/;"	v	module:msg_mod
+ncFileID	OBM_mod.F90	/^   integer::ncFileID$/;"	v	module:coutput_mod
+ncar_ocean_fluxes	core_daily.F90	/^subroutine ncar_ocean_fluxes /;"	s
+ncid	cdf_mod.F90	/^      integer:: ncid$/;"	v	module:cdf_mod
+ncpl	control_mod.F90	/^  integer           :: ncpl /;"	v	module:control_mod
+net	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,NTRA)::net$/;"	v	module:tracer_mod
+net1_dims	cdf_mod.F90	/^               ic2_dims(ic2_rank),net1_dims(/;"	v	module:cdf_mod
+net1_id	cdf_mod.F90	/^               ic1_id,ic2_id, net1_id,/;"	v	module:cdf_mod
+net1_rank	cdf_mod.F90	/^                            hd_rank=3,ic1_rank=3,ic2_rank=3, net1_rank=/;"	v	module:cdf_mod
+net2_dims	cdf_mod.F90	/^               ic2_dims(ic2_rank),net1_dims(net1_rank), net2_dims(/;"	v	module:cdf_mod
+net2_id	cdf_mod.F90	/^               ic1_id,ic2_id, net1_id, net2_id,/;"	v	module:cdf_mod
+net2_rank	cdf_mod.F90	/^                            hd_rank=3,ic1_rank=3,ic2_rank=3, net1_rank=3,net2_rank=/;"	v	module:cdf_mod
+netmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,NTRA)::netmon$/;"	v	module:output_mod
+netsw	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   netsw(/;"	v	module:buf_mod
+nibuff	buf_mod.F90	/^  integer,parameter :: nibuff /;"	v	module:buf_mod
+nproc	msg_mod.F90	/^      integer:: nproc$/;"	v	module:msg_mod
+nptra	OBM_mod.F90	/^      integer,parameter::nptra=/;"	v	module:carbon_mod
+nrcv	buf_mod.F90	/^  integer,parameter :: nrcv /;"	v	module:buf_mod
+nrpl	isopyc_mod.F90	/^      integer,parameter:: nrpl=/;"	v	module:isopyc_mod
+nsg1	OBM_mod.F90	/^      integer::nsg1$/;"	v	module:carbon_mod
+nsnd	buf_mod.F90	/^  integer,parameter :: nsnd /;"	v	module:buf_mod
+nsub	sw_mod.F90	/^      integer,parameter :: nsub /;"	v	module:sw_mod
+nswv	forc_mod.F90	/^                   ,nswv,/;"	v	module:forc_mod
+nswv3	forc_mod.F90	/^                    ,nswv3,/;"	v	module:forc_mod
+nswv3_io	forc_mod.F90	/^                   ,nswv3_io,/;"	v	module:forc_mod
+nta_pt	OBM_mod.F90	/^      real,dimension(imt,jmt)::nta_pt$/;"	v	module:carbon_mod
+ntra	param_mod.F90	/^      integer,parameter:: ntra=/;"	v	module:param_mod
+num_overlap	param_mod.F90	/^      integer,parameter:: num_overlap=/;"	v	module:param_mod
+number_day	pconst_mod.F90	/^      INTEGER:: number_day,/;"	v	module:pconst_mod
+number_month	pconst_mod.F90	/^      INTEGER:: number_day, number_month$/;"	v	module:pconst_mod
+nv	buf_mod.F90	/^  integer               ::   nv /;"	v	module:buf_mod
+nx	buf_mod.F90	/^  integer               ::   nx /;"	v	module:buf_mod
+nx_proc	param_mod.F90	/^      integer,parameter:: nx_proc=/;"	v	module:param_mod
+nxg	buf_mod.F90	/^  integer               ::   nxg /;"	v	module:buf_mod
+ny	OBM_mod.F90	/^      integer::ny$/;"	v	module:carbon_mod
+ny	OBM_mod.F90	/^     integer,parameter::ny=/;"	v	module:cforce_mod
+ny	buf_mod.F90	/^  integer               ::   ny /;"	v	module:buf_mod
+ny_proc	param_mod.F90	/^      integer,parameter:: ny_proc=/;"	v	module:param_mod
+nyg	buf_mod.F90	/^  integer               ::   nyg /;"	v	module:buf_mod
+o2VarID	OBM_mod.F90	/^   integer::ccVarID,tcVarID,po4VarID,ldocVarID,taVarID,o2VarID,/;"	v	module:coutput_mod
+o2mon	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::o2mon,/;"	v	module:coutput_mod
+o2mon_io	OBM_mod.F90	/^     real,dimension(imt_global,jmt_global,km)::o2mon_io,/;"	v	module:coutput_mod
+o2up	OBM_mod.F90	/^      real,dimension(imt,jmt)::o2up,/;"	v	module:coutput_mod
+ocn_cpl_dt	pconst_mod.F90	/^    integer:: ocn_cpl_dt$/;"	v	module:pconst_mod
+odzp	pconst_mod.F90	/^      real(r8),dimension(km):: zkt,dzp,odzp,/;"	v	module:pconst_mod
+odzt	pconst_mod.F90	/^      real(r8),dimension(km):: zkt,dzp,odzp,odzt$/;"	v	module:pconst_mod
+ohbt	pconst_mod.F90	/^      real(r8),dimension(imt,jmt)::ohbt,/;"	v	module:pconst_mod
+ohbu	pconst_mod.F90	/^      real(r8),dimension(imt,jmt)::ohbt,ohbu,/;"	v	module:pconst_mod
+omega	constant_mod.F90	/^  real(SHR_KIND_R8), parameter ::  omega /;"	v	module:constant_mod
+ourl2	canuto_new.F90	/^      subroutine ourl2(/;"	s
+oursal2_2a	canuto_ini.F90	/^	   SUBROUTINE oursal2_2a(/;"	s
+oursal2_zeroshear	canuto_new.F90	/^	   subroutine oursal2_zeroshear(/;"	s
+out_dir	pconst_mod.F90	/^      CHARACTER (LEN=80):: out_dir$/;"	v	module:pconst_mod
+output1d	output_1dto4d.F90	/^      subroutine output1d(/;"	s
+output2d	output_1dto4d.F90	/^     subroutine output2d(/;"	s
+output_mod	output_mod.F90	/^module output_mod$/;"	m
+param_mod	param_mod.F90	/^module param_mod$/;"	m
+patm	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   patm /;"	v	module:buf_mod
+pco2	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   pco2(/;"	v	module:buf_mod
+pco2a	OBM_mod.F90	/^      real,dimension(imt,jmt)::pco2a,/;"	v	module:carbon_mod
+pco2dry	OBM_mod.F90	/^      real::pco2dry$/;"	v	module:cforce_mod
+pco2dry0	OBM_mod.F90	/^      real,parameter::pco2dry0=/;"	v	module:cforce_mod
+pco2o	OBM_mod.F90	/^      real,dimension(imt,jmt)::pco2a,pco2o,/;"	v	module:carbon_mod
+pco2s	buf_mod.F90	/^  real(SHR_KIND_R8) pco2s$/;"	v	module:buf_mod
+pco2up	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   pco2up(/;"	v	module:buf_mod
+pco2ups	buf_mod.F90	/^  real(SHR_KIND_R8) pco2ups$/;"	v	module:buf_mod
+pconst_mod	pconst_mod.F90	/^module pconst_mod$/;"	m
+pdensity	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km)::pdensity$/;"	v	module:tracer_mod
+pen	pmix_mod.F90	/^      REAL(r8):: pen(/;"	v	module:pmix_mod
+pen_chl	pmix_mod.F90	/^      real(r8),dimension(imt,jmt,km):: pen_chl /;"	v	module:pmix_mod
+penetrate	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km)::penetrate$/;"	v	module:tracer_mod
+penmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km)::penmon$/;"	v	module:output_mod
+percm	sw_mod.F90	/^      real(r8) :: percm,/;"	v	module:sw_mod
+periods	msg_mod.F90	/^      integer my_rank, source, dest, nbrs(4), dims(2),coords(2),cartcomm, periods(/;"	v	module:msg_mod
+pi	constant_mod.F90	/^  real(SHR_KIND_R8), parameter ::  pi /;"	v	module:constant_mod
+pldocVarID	OBM_mod.F90	/^   integer::prodVarID,fpopVarID,pldocVarID,/;"	v	module:coutput_mod
+pldocmon	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::prodmon,fpopmon,pldocmon,/;"	v	module:coutput_mod
+pldocmon_io	OBM_mod.F90	/^     real,dimension(imt_global,jmt_global,km)::prodmon_io,fpopmon_io,pldocmon_io,/;"	v	module:coutput_mod
+pmix_mod	pmix_mod.F90	/^module pmix_mod$/;"	m
+po4VarID	OBM_mod.F90	/^   integer::ccVarID,tcVarID,po4VarID,/;"	v	module:coutput_mod
+po4force	OBM_mod.F90	/^      real,dimension(imt,jmt,kmmix)::po4force$/;"	v	module:cforce_mod
+po4mon	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::po4mon,/;"	v	module:coutput_mod
+po4mon_io	OBM_mod.F90	/^     real,dimension(imt_global,jmt_global,km)::po4mon_io,/;"	v	module:coutput_mod
+po4obs	OBM_mod.F90	/^      real,dimension(imt,jmt,kmmix,12)::po4obs$/;"	v	module:cforce_mod
+po4obs_global	OBM_mod.F90	/^      real,dimension(imt_global,jmt_global,kmmix,12)::po4obs_global$/;"	v	module:cforce_mod
+post_cpl	post_cpl.F90	/^      SUBROUTINE post_cpl$/;"	s
+prec	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   prec /;"	v	module:buf_mod
+precision_mod	precision_mod.F90	/^module precision_mod$/;"	m
+pressure	OBM_mod.F90	/^      real,dimension(imt,jmt,12)::pressure$/;"	v	module:cforce_mod
+pressure_global	OBM_mod.F90	/^      real,dimension(imt_global,jmt_global,12)::pressure_global$/;"	v	module:cforce_mod
+pressureday	OBM_mod.F90	/^      real,dimension(imt,jmt)::pressureday$/;"	v	module:cforce_mod
+prodVarID	OBM_mod.F90	/^   integer::prodVarID,/;"	v	module:coutput_mod
+prodmon	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::prodmon,/;"	v	module:coutput_mod
+prodmon_io	OBM_mod.F90	/^     real,dimension(imt_global,jmt_global,km)::prodmon_io,/;"	v	module:coutput_mod
+psa	forc_mod.F90	/^      real(r8),dimension(imt,jmt)::su,sv,psa,/;"	v	module:forc_mod
+psa3	forc_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::su3,sv3,psa3,/;"	v	module:forc_mod
+psa3_io	forc_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::su3_io,sv3_io,psa3_io,/;"	v	module:forc_mod
+psi	output_mod.F90	/^      real(r4),dimension(jmt_global,km+1,2):: psi$/;"	v	module:output_mod
+psi_dims	cdf_mod.F90	/^                us_dims( us_rank), vs_dims( vs_rank), ws_dims( ws_rank),psi_dims(/;"	v	module:cdf_mod
+psi_id	cdf_mod.F90	/^               ic1_id,ic2_id, net1_id, net2_id, ts_id,  ss_id,us_id,vs_id,ws_id, psi_id,/;"	v	module:cdf_mod
+psi_rank	cdf_mod.F90	/^                            us_rank=4, vs_rank=4, ws_rank=4, psi_rank=/;"	v	module:cdf_mod
+pt	OBM_mod.F90	/^      real,dimension(imt,jmt,km,nptr/;"	v	module:carbon_mod
+pt_io	OBM_mod.F90	/^      real,dimension(imt_global,jmt_global,km,nptra)::pt_io$/;"	v	module:carbon_mod
+ptb	OBM_mod.F90	/^      real,dimension(imt,jmt,0:km,nptra)::ptb$/;"	v	module:carbon_mod
+ptb_io	OBM_mod.F90	/^      real,dimension(imt_global,jmt_global,km+1,nptra)::ptb_io$/;"	v	module:carbon_mod
+ptf	OBM_mod.F90	/^      real,dimension(imt,jmt,km,nptra)::ptf$/;"	v	module:carbon_mod
+q_io	dyn_mod.F90	/^      real(r4),dimension(imt_global,jmt_global)::t_cpl_io,s_cpl_io,u_cpl_io,v_cpl_io,dhdx_io,dhdy_io,q_io$/;"	v	module:dyn_mod
+qar	forc_mod.F90	/^      real(r8),dimension(imt,jmt)::su,sv,psa,tsa,sss,swv,uva,qar,/;"	v	module:forc_mod
+qar3	forc_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::su3,sv3,psa3,tsa3,qar3,/;"	v	module:forc_mod
+qar3_io	forc_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::su3_io,sv3_io,psa3_io,tsa3_io,qar3_io,/;"	v	module:forc_mod
+qice_global	tracer_mod.F90	/^      real(r4),dimension(imt_global,jmt_global):: qice_global$/;"	v	module:tracer_mod
+qqq	forc_mod.F90	/^                    ddd,qqq,/;"	v	module:forc_mod
+quad_sal_pureconv	canuto_new.F90	/^      SUBROUTINE quad_sal_pureconv(/;"	s
+r16	precision_mod.F90	/^integer, parameter :: r16 /;"	v	module:precision_mod
+r4	precision_mod.F90	/^integer, parameter :: r4 /;"	v	module:precision_mod
+r6	precision_mod.F90	/^integer, parameter :: r6 /;"	v	module:precision_mod
+r8	precision_mod.F90	/^integer, parameter :: r8 /;"	v	module:precision_mod
+r_cap	OBM_mod.F90	/^      real,dimension(km)::r_cap,/;"	v	module:carbon_mod
+r_cp	OBM_mod.F90	/^      real::r_cp,/;"	v	module:carbon_mod
+r_fec	OBM_mod.F90	/^     real,dimension(imt,jmt)::r_fec,/;"	v	module:carbon_mod
+r_fec0	OBM_mod.F90	/^      real::r_cp,r_np,tau_b,r_o2p,r_fec0$/;"	v	module:carbon_mod
+r_fep	OBM_mod.F90	/^     real,dimension(imt,jmt)::r_fec,r_fep$/;"	v	module:carbon_mod
+r_np	OBM_mod.F90	/^      real::r_cp,r_np,/;"	v	module:carbon_mod
+r_o2p	OBM_mod.F90	/^      real::r_cp,r_np,tau_b,r_o2p,/;"	v	module:carbon_mod
+r_rain	OBM_mod.F90	/^      real,parameter::r_rain=/;"	v	module:carbon_mod
+rain	forc_mod.F90	/^                   ,lwv,seaice,rain,/;"	v	module:forc_mod
+rain3	forc_mod.F90	/^                   ,wspd3,wspdu3,wspdv3,lwv3,seaice3,rain3,/;"	v	module:forc_mod
+rain3_io	forc_mod.F90	/^                   ,wspdu3_io,wspdv3_io,lwv3_io,seaice3_io,rain3_io,/;"	v	module:forc_mod
+rdca	OBM_mod.F90	/^      real,parameter::rdca=/;"	v	module:cforce_mod
+read_core	core_daily.F90	/^      subroutine read_core(/;"	s
+read_core1	core_daily.F90	/^      subroutine read_core1(/;"	s
+remiVarID	OBM_mod.F90	/^   integer::prodVarID,fpopVarID,pldocVarID,remiVarID,/;"	v	module:coutput_mod
+remimon	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::prodmon,fpopmon,pldocmon,remimon$/;"	v	module:coutput_mod
+remimon_io	OBM_mod.F90	/^     real,dimension(imt_global,jmt_global,km)::prodmon_io,fpopmon_io,pldocmon_io,remimon_io$/;"	v	module:coutput_mod
+reorder	msg_mod.F90	/^      integer my_rank, source, dest, nbrs(4), dims(2),coords(2),cartcomm, periods(2), reorder$/;"	v	module:msg_mod
+rest_bfile	control_mod.F90	/^  character(len=64) :: rest_bfile /;"	v	module:control_mod
+rest_date	control_mod.F90	/^  integer           :: rest_date /;"	v	module:control_mod
+rest_eod	control_mod.F90	/^  integer       :: rest_eod /;"	v	module:control_mod
+rest_freq	control_mod.F90	/^  character(len=16) :: rest_freq /;"	v	module:control_mod
+rest_freq	pconst_mod.F90	/^      INTEGER :: NUMBER,NSTART,IY0,IYFM,MON0,MEND,IMD,IDAY,II,JJ,IO_HIST,IO_REST,rest_freq,/;"	v	module:pconst_mod
+rest_lag	control_mod.F90	/^  integer           :: rest_lag /;"	v	module:control_mod
+rest_nday	control_mod.F90	/^  integer           :: rest_nday /;"	v	module:control_mod
+rest_now	control_mod.F90	/^  integer       :: rest_now /;"	v	module:control_mod
+rest_odate	control_mod.F90	/^  integer           :: rest_odate /;"	v	module:control_mod
+rest_pfile	control_mod.F90	/^  character(len=64) :: rest_pfile /;"	v	module:control_mod
+rest_type	control_mod.F90	/^  character(len=16) :: rest_type /;"	v	module:control_mod
+restore	forc_mod.F90	/^      real(r8),dimension(imt,jmt,km,ntra)::restore$/;"	v	module:forc_mod
+restore_io	forc_mod.F90	/^      real(r8),dimension(imt,jmt_global,km,ntra)::restore_io$/;"	v	module:forc_mod
+rhoi	isopyc_mod.F90	/^      real(r8),dimension(:,:,:,:),allocatable:: e,rhoi$/;"	v	module:isopyc_mod
+ric	pmix_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: ric,/;"	v	module:pmix_mod
+ricdt	pmix_mod.F90	/^      real(r8),dimension(imt,jmt,kmm1):: ricdt$/;"	v	module:pmix_mod
+rict	pmix_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: ric,rict$/;"	v	module:pmix_mod
+ridt	pmix_mod.F90	/^      real(r8),dimension(imt,jmt,kmm1):: ridt,/;"	v	module:pmix_mod
+rit	pmix_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: rit,/;"	v	module:pmix_mod
+riu	pmix_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: rit,riu$/;"	v	module:pmix_mod
+rnd2on2	canuto_mod.F90	/^        ,sma1(-mt:mt),sha1(-mt:mt),ssa1(-mt:mt) ,rri,rnd2on2,/;"	v	module:canuto_mod
+roff	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   roff /;"	v	module:buf_mod
+rri	canuto_mod.F90	/^        ,sma1(-mt:mt),sha1(-mt:mt),ssa1(-mt:mt) ,rri,/;"	v	module:canuto_mod
+rtwi	canuto_ini.F90	/^      subroutine rtwi(/;"	s
+runoff	forc_mod.F90	/^                   ,lwv,seaice,rain,snow,fresh,runoff&/;"	v	module:forc_mod
+runoff3	forc_mod.F90	/^                   ,wspd3,wspdu3,wspdv3,lwv3,seaice3,rain3,snow3,runoff3$/;"	v	module:forc_mod
+runoff3_io	forc_mod.F90	/^                   ,wspdu3_io,wspdv3_io,lwv3_io,seaice3_io,rain3_io,snow3_io,runoff3_io$/;"	v	module:forc_mod
+s0	OBM_mod.F90	/^      real::t0,s0$/;"	v	module:carbon_mod
+s2t	pmix_mod.F90	/^      real(r8),dimension(imt,jmt,kmm1):: ridt,s2u,s2t$/;"	v	module:pmix_mod
+s2u	pmix_mod.F90	/^      real(r8),dimension(imt,jmt,kmm1):: ridt,s2u,/;"	v	module:pmix_mod
+s_cpl	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   s_cpl(/;"	v	module:buf_mod
+s_cpl_io	dyn_mod.F90	/^      real(r4),dimension(imt_global,jmt_global)::t_cpl_io,s_cpl_io,/;"	v	module:dyn_mod
+s_dims	cdf_mod.F90	/^             ,h0_dims(h0_rank),u_dims(u_rank),v_dims(v_rank),t_dims(t_rank),s_dims(/;"	v	module:cdf_mod
+s_id	cdf_mod.F90	/^             ,h0_id,u_id,v_id,t_id,s_id,/;"	v	module:cdf_mod
+s_imt	param_mod.F90	/^      integer,parameter:: s_imt=/;"	v	module:param_mod
+s_jmt	param_mod.F90	/^      integer,parameter:: s_imt=192,s_jmt=/;"	v	module:param_mod
+s_lat	pconst_mod.F90	/^      real(r8),dimension(s_jmt):: s_lat$/;"	v	module:pconst_mod
+s_lon	pconst_mod.F90	/^      real(r8),dimension(s_imt):: s_lon$/;"	v	module:pconst_mod
+s_rank	cdf_mod.F90	/^             ,h0_rank=2,u_rank=3,v_rank=3,t_rank=3,s_rank=/;"	v	module:cdf_mod
+salt	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   salt /;"	v	module:buf_mod
+scale_bot	canuto_mod.F90	/^      REAL(r8) scale_bot$/;"	v	module:canuto_mod
+sdxdy	grids_pt_mod.F90	/^    real(kind=8),dimension(km)::sdxdy,/;"	v	module:GRIDS_PT_MOD
+sdxdy0	grids_pt_mod.F90	/^    real(kind=8),dimension(km)::sdxdy,sdxdy0$/;"	v	module:GRIDS_PT_MOD
+seaice	forc_mod.F90	/^                   ,lwv,seaice,/;"	v	module:forc_mod
+seaice3	forc_mod.F90	/^                   ,wspd3,wspdu3,wspdv3,lwv3,seaice3,/;"	v	module:forc_mod
+seaice3_io	forc_mod.F90	/^                   ,wspdu3_io,wspdv3_io,lwv3_io,seaice3_io,/;"	v	module:forc_mod
+sec	control_mod.F90	/^  integer       :: sec /;"	v	module:control_mod
+sen	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   sen /;"	v	module:buf_mod
+setbcx	setbcx.F90	/^      SUBROUTINE setbcx /;"	s
+sge	OBM_mod.F90	/^      real,dimension(imt,jmt)::sge,/;"	v	module:carbon_mod
+sgeo2	oxygen.F90	/^subroutine sgeo2$/;"	s
+sha1	canuto_mod.F90	/^        ,sma1(-mt:mt),sha1(/;"	v	module:canuto_mod
+sigma_b	OBM_mod.F90	/^      real::sigma_b$/;"	v	module:carbon_mod
+slmxr	isopyc_mod.F90	/^      real(r8):: ahisop, athkdf, dptlim(nrpl+1), fzisop(km), slmxr$/;"	v	module:isopyc_mod
+slopec	isopyc_mod.F90	/^              , dslope, slopec$/;"	v	module:isopyc_mod
+sma1	canuto_mod.F90	/^        ,sma1(/;"	v	module:canuto_mod
+smag2	smag.F90	/^      SUBROUTINE smag2 /;"	s
+smag3	smag.F90	/^      SUBROUTINE smag3 /;"	s
+smag3	smag.F90	/^      SUBROUTINE smag3$/;"	s
+smshsc_a3	canuto_ini.F90	/^      subroutine smshsc_a3(/;"	s
+snow	forc_mod.F90	/^                   ,lwv,seaice,rain,snow,/;"	v	module:forc_mod
+snow3	forc_mod.F90	/^                   ,wspd3,wspdu3,wspdv3,lwv3,seaice3,rain3,snow3,/;"	v	module:forc_mod
+snow3_io	forc_mod.F90	/^                   ,wspdu3_io,wspdv3_io,lwv3_io,seaice3_io,rain3_io,snow3_io,/;"	v	module:forc_mod
+sol	OBM_mod.F90	/^     real::sol,/;"	v	module:cforce_mod
+source	msg_mod.F90	/^      integer my_rank, source,/;"	v	module:msg_mod
+spval	output_mod.F90	/^      real(r4), parameter :: spval /;"	v	module:output_mod
+ss_dims	cdf_mod.F90	/^               ic2_dims(ic2_rank),net1_dims(net1_rank), net2_dims(net2_rank),ts_dims( ts_rank), ss_dims(/;"	v	module:cdf_mod
+ss_id	cdf_mod.F90	/^               ic1_id,ic2_id, net1_id, net2_id, ts_id,  ss_id,/;"	v	module:cdf_mod
+ss_rank	cdf_mod.F90	/^                            hd_rank=3,ic1_rank=3,ic2_rank=3, net1_rank=3,net2_rank=3,ts_rank=4,ss_rank=/;"	v	module:cdf_mod
+ssa1	canuto_mod.F90	/^        ,sma1(-mt:mt),sha1(-mt:mt),ssa1(/;"	v	module:canuto_mod
+ssf	forc_mod.F90	/^       real(r8),dimension(imt,jmt):: tsf,ssf$/;"	v	module:forc_mod
+ssf_global	forc_mod.F90	/^       real(r4),dimension(imt_global,jmt_global):: tsf_global,ssf_global,/;"	v	module:forc_mod
+ssfc	OBM_mod.F90	/^      real,dimension(imt,jmt)::sge,ssfc$/;"	v	module:carbon_mod
+ssfcmon	OBM_mod.F90	/^   real,dimension(imt,jmt)::ssfcmon$/;"	v	module:coutput_mod
+ssfcmon_io	OBM_mod.F90	/^   real,dimension(imt_global,jmt_global)::ssfcmon_io$/;"	v	module:coutput_mod
+sshf	forc_mod.F90	/^                   ,lthf,sshf /;"	v	module:forc_mod
+sshf_dims	cdf_mod.F90	/^             ,sshf_dims(/;"	v	module:cdf_mod
+sshf_id	cdf_mod.F90	/^               ,su_id,sv_id,sshf_id,/;"	v	module:cdf_mod
+sshf_rank	cdf_mod.F90	/^              ,su_rank=3,sv_rank=3,sshf_rank=/;"	v	module:cdf_mod
+sshfmon	output_mod.F90	/^      real(r4),dimension(imt,jmt)::lthfmon,sshfmon,/;"	v	module:output_mod
+ssmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km)::wsmon,tsmon,ssmon,/;"	v	module:output_mod
+sss	forc_mod.F90	/^      real(r8),dimension(imt,jmt)::su,sv,psa,tsa,sss,/;"	v	module:forc_mod
+sss3	forc_mod.F90	/^                   swv3,cld3,sss3,/;"	v	module:forc_mod
+sss3_io	forc_mod.F90	/^                    swv3_io,cld3_io,sss3_io,/;"	v	module:forc_mod
+sst	forc_mod.F90	/^                    ddd,qqq,sst&/;"	v	module:forc_mod
+sst3	forc_mod.F90	/^                   swv3,cld3,sss3,sst3&/;"	v	module:forc_mod
+sst3_io	forc_mod.F90	/^                    swv3_io,cld3_io,sss3_io,sst3_io&/;"	v	module:forc_mod
+start1	cdf_mod.F90	/^      integer:: start1(/;"	v	module:cdf_mod
+start2	cdf_mod.F90	/^      integer:: start2(/;"	v	module:cdf_mod
+start3	cdf_mod.F90	/^      integer:: start3(/;"	v	module:cdf_mod
+start4	cdf_mod.F90	/^      integer:: start4(/;"	v	module:cdf_mod
+status	msg_mod.F90	/^      integer :: status /;"	v	module:msg_mod
+stf	work_mod.F90	/^      real(r8),dimension(:,:),allocatable::stf$/;"	v	module:work_mod
+stop_eod	control_mod.F90	/^  integer       :: stop_eod /;"	v	module:control_mod
+stop_now	control_mod.F90	/^  integer       :: stop_now /;"	v	module:control_mod
+su	forc_mod.F90	/^      real(r8),dimension(imt,jmt)::su,/;"	v	module:forc_mod
+su3	forc_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::su3,/;"	v	module:forc_mod
+su3_io	forc_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::su3_io,/;"	v	module:forc_mod
+su_dims	cdf_mod.F90	/^             ,su_dims(/;"	v	module:cdf_mod
+su_global	forc_mod.F90	/^       real(r4),dimension(imt_global,jmt_global):: tsf_global,ssf_global,su_global,/;"	v	module:forc_mod
+su_id	cdf_mod.F90	/^               ,su_id,/;"	v	module:cdf_mod
+su_in_io	forc_mod.F90	/^      real(r4),dimension(imt_global,jmt_global)::su_in_io,/;"	v	module:forc_mod
+su_io	forc_mod.F90	/^      real(r8),dimension(imt_global,jmt_global)::su_io,/;"	v	module:forc_mod
+su_rank	cdf_mod.F90	/^              ,su_rank=/;"	v	module:cdf_mod
+sumon	output_mod.F90	/^      real(r4),dimension(imt,jmt)::sumon,/;"	v	module:output_mod
+sv	forc_mod.F90	/^      real(r8),dimension(imt,jmt)::su,sv,/;"	v	module:forc_mod
+sv3	forc_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::su3,sv3,/;"	v	module:forc_mod
+sv3_io	forc_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::su3_io,sv3_io,/;"	v	module:forc_mod
+sv_dims	cdf_mod.F90	/^             ,su_dims(su_rank),sv_dims(/;"	v	module:cdf_mod
+sv_global	forc_mod.F90	/^       real(r4),dimension(imt_global,jmt_global):: tsf_global,ssf_global,su_global,sv_global,/;"	v	module:forc_mod
+sv_id	cdf_mod.F90	/^               ,su_id,sv_id,/;"	v	module:cdf_mod
+sv_in_io	forc_mod.F90	/^      real(r4),dimension(imt_global,jmt_global)::su_in_io,sv_in_io$/;"	v	module:forc_mod
+sv_io	forc_mod.F90	/^      real(r8),dimension(imt_global,jmt_global)::su_io,sv_io$/;"	v	module:forc_mod
+sv_rank	cdf_mod.F90	/^              ,su_rank=3,sv_rank=/;"	v	module:cdf_mod
+svmon	output_mod.F90	/^      real(r4),dimension(imt,jmt)::sumon,svmon$/;"	v	module:output_mod
+sw_absor	sw_absor.F90	/^	  SUBROUTINE sw_absor$/;"	s
+sw_mod	sw_mod.F90	/^module sw_mod$/;"	m
+swv	forc_mod.F90	/^      real(r8),dimension(imt,jmt)::su,sv,psa,tsa,sss,swv,/;"	v	module:forc_mod
+swv3	forc_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::su3,sv3,psa3,tsa3,qar3,uva3, &$/;"	v	module:forc_mod
+swv3_io	forc_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::su3_io,sv3_io,psa3_io,tsa3_io,qar3_io,uva3_io, &$/;"	v	module:forc_mod
+swv_dims	cdf_mod.F90	/^             ,sshf_dims(sshf_rank),lthf_dims(lthf_rank),lwv_dims(lwv_rank),swv_dims(/;"	v	module:cdf_mod
+swv_global	forc_mod.F90	/^       real(r4),dimension(imt_global,jmt_global):: tsf_global,ssf_global,su_global,sv_global,swv_global$/;"	v	module:forc_mod
+swv_id	cdf_mod.F90	/^               ,su_id,sv_id,sshf_id,lthf_id,lwv_id,swv_id&/;"	v	module:cdf_mod
+swv_rank	cdf_mod.F90	/^              ,su_rank=3,sv_rank=3,sshf_rank=3,lthf_rank=3,lwv_rank=3,swv_rank=/;"	v	module:cdf_mod
+swvmon	output_mod.F90	/^      real(r4),dimension(imt,jmt)::lthfmon,sshfmon,lwvmon,swvmon$/;"	v	module:output_mod
+t0	OBM_mod.F90	/^      real::t0,/;"	v	module:carbon_mod
+t0_cdf	cdf_mod.F90	/^      real(r8) t0_cdf /;"	v	module:cdf_mod
+t1_cdf	cdf_mod.F90	/^      real(r4),dimension(imt_global,jmt_global,1)::  t2z_cdf,t1_cdf /;"	v	module:cdf_mod
+t2_cdf	cdf_mod.F90	/^      real(r4),dimension(imt_global,jmt_global,1):: t2_cdf /;"	v	module:cdf_mod
+t2z_cdf	cdf_mod.F90	/^      real(r4),dimension(imt_global,jmt_global,1)::  t2z_cdf,/;"	v	module:cdf_mod
+t3_cdf	cdf_mod.F90	/^      real(r4),dimension(imt_global,jmt_global,km,1)::  t3_cdf /;"	v	module:cdf_mod
+t_cpl_io	dyn_mod.F90	/^      real(r4),dimension(imt_global,jmt_global)::t_cpl_io,/;"	v	module:dyn_mod
+t_dims	cdf_mod.F90	/^             ,h0_dims(h0_rank),u_dims(u_rank),v_dims(v_rank),t_dims(/;"	v	module:cdf_mod
+t_id	cdf_mod.F90	/^             ,h0_id,u_id,v_id,t_id,/;"	v	module:cdf_mod
+t_rank	cdf_mod.F90	/^             ,h0_rank=2,u_rank=3,v_rank=3,t_rank=/;"	v	module:cdf_mod
+taVarID	OBM_mod.F90	/^   integer::ccVarID,tcVarID,po4VarID,ldocVarID,taVarID,/;"	v	module:coutput_mod
+taforce	OBM_mod.F90	/^      real,dimension(km)::taforce$/;"	v	module:cforce_mod
+tag_1d	msg_mod.F90	/^      integer, parameter :: tag_1d=/;"	v	module:msg_mod
+tag_2d	msg_mod.F90	/^      integer, parameter :: tag_1d=10, tag_2d=/;"	v	module:msg_mod
+tag_3d	msg_mod.F90	/^      integer, parameter :: tag_1d=10, tag_2d=100, tag_3d=/;"	v	module:msg_mod
+tag_4d	msg_mod.F90	/^      integer, parameter :: tag_1d=10, tag_2d=100, tag_3d=200,tag_4d=/;"	v	module:msg_mod
+tamon	OBM_mod.F90	/^      real,dimension(imt,jmt,km)::po4mon,ldocmon,tamon /;"	v	module:coutput_mod
+tamon_io	OBM_mod.F90	/^     real,dimension(imt_global,jmt_global,km)::po4mon_io,ldocmon_io,tamon_io$/;"	v	module:coutput_mod
+taobs	OBM_mod.F90	/^      real,dimension(km,12)::taobs$/;"	v	module:cforce_mod
+tau_b	OBM_mod.F90	/^      real::r_cp,r_np,tau_b,/;"	v	module:carbon_mod
+taux	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   taux /;"	v	module:buf_mod
+tauy	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   tauy /;"	v	module:buf_mod
+tcVarID	OBM_mod.F90	/^   integer::ccVarID,tcVarID,/;"	v	module:coutput_mod
+tdpco2o	OBM_mod.F90	/^      real,dimension(imt,jmt)::tpco2o,tdpco2o,/;"	v	module:coutput_mod
+tdpco2o_io	OBM_mod.F90	/^      real,dimension(imt_global,jmt_global)::tpco2o_io,tdpco2o_io,/;"	v	module:coutput_mod
+temp	work_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: work_1,work_2,work_3,temp$/;"	v	module:work_mod
+thermal	thermalexpansion.F90	/^       subroutine thermal(/;"	s
+theta_rcrn	canuto_mod.F90	/^        ,visc_cbu_limit,diff_cbt_limit, theta_rcrp, theta_rcrn,/;"	v	module:canuto_mod
+theta_rcrp	canuto_mod.F90	/^        ,visc_cbu_limit,diff_cbt_limit, theta_rcrp,/;"	v	module:canuto_mod
+time_dim	cdf_mod.F90	/^      integer:: lon_dim,lat_dim,lev1_dim,lev_dim,time_dim$/;"	v	module:cdf_mod
+time_dims	cdf_mod.F90	/^      integer::  lat_dims(lat_rank),lon_dims(lon_rank),lev_dims(lev_rank),time_dims(/;"	v	module:cdf_mod
+time_id	cdf_mod.F90	/^      integer::  lat_id,lon_id,lev1_id,lev_id,time_id,/;"	v	module:cdf_mod
+time_len	cdf_mod.F90	/^      integer, parameter :: lon_len=imt_global,lat_len=jmt_global,lev_len=km,lev1_len=km+1,time_len=/;"	v	module:cdf_mod
+time_rank	cdf_mod.F90	/^      integer, parameter ::lat_rank=1,lon_rank=1,lev_rank=1,time_rank=/;"	v	module:cdf_mod
+tmask	isopyc_mod.F90	/^                      cstrdytr(jmt),dyur(jmt),tmask(/;"	v	module:isopyc_mod
+tmp1	work_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: tmp1,/;"	v	module:work_mod
+tmp2	work_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: tmp1,tmp2,/;"	v	module:work_mod
+toa0	OBM_mod.F90	/^real,dimension(imt,jmt,km)::tocaco3,toa0$/;"	v	module:carbon_mod
+toa0_io	OBM_mod.F90	/^      real,dimension(imt_global,jmt_global,km)::tocaco3_io,toa0_io$/;"	v	module:carbon_mod
+tocaco3	OBM_mod.F90	/^real,dimension(imt,jmt,km)::tocaco3,/;"	v	module:carbon_mod
+tocaco3_io	OBM_mod.F90	/^      real,dimension(imt_global,jmt_global,km)::tocaco3_io,/;"	v	module:carbon_mod
+tod_cpl	pconst_mod.F90	/^    integer(kind(1))   :: yy_cpl,mm_cpl,dd_cpl,tod_cpl /;"	v	module:pconst_mod
+tod_licom	pconst_mod.F90	/^    integer(kind(1))   :: yy_licom,mm_licom,dd_licom,tod_licom /;"	v	module:pconst_mod
+totup	OBM_mod.F90	/^      real,dimension(imt,jmt)::tpco2o,tdpco2o,totup$/;"	v	module:coutput_mod
+totup_io	OBM_mod.F90	/^      real,dimension(imt_global,jmt_global)::tpco2o_io,tdpco2o_io,totup_io$/;"	v	module:coutput_mod
+tpco2o	OBM_mod.F90	/^      real,dimension(imt,jmt)::tpco2o,/;"	v	module:coutput_mod
+tpco2o_io	OBM_mod.F90	/^      real,dimension(imt_global,jmt_global)::tpco2o_io,/;"	v	module:coutput_mod
+tracer_mod	tracer_mod.F90	/^module tracer_mod$/;"	m
+trend	tracer_mod.F90	/^      real(r8),dimension(imt,jmt,km,NTRA)::trend$/;"	v	module:tracer_mod
+trendmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km,NTRA)::trendmon$/;"	v	module:output_mod
+ts_dims	cdf_mod.F90	/^               ic2_dims(ic2_rank),net1_dims(net1_rank), net2_dims(net2_rank),ts_dims(/;"	v	module:cdf_mod
+ts_id	cdf_mod.F90	/^               ic1_id,ic2_id, net1_id, net2_id, ts_id,/;"	v	module:cdf_mod
+ts_rank	cdf_mod.F90	/^                            hd_rank=3,ic1_rank=3,ic2_rank=3, net1_rank=3,net2_rank=3,ts_rank=/;"	v	module:cdf_mod
+tsa	forc_mod.F90	/^      real(r8),dimension(imt,jmt)::su,sv,psa,tsa,/;"	v	module:forc_mod
+tsa3	forc_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::su3,sv3,psa3,tsa3,/;"	v	module:forc_mod
+tsa3_io	forc_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::su3_io,sv3_io,psa3_io,tsa3_io,/;"	v	module:forc_mod
+tsf	forc_mod.F90	/^       real(r8),dimension(imt,jmt):: tsf,/;"	v	module:forc_mod
+tsf_global	forc_mod.F90	/^       real(r4),dimension(imt_global,jmt_global):: tsf_global,/;"	v	module:forc_mod
+tsmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km)::wsmon,tsmon,/;"	v	module:output_mod
+turb_2	canuto_new.F90	/^      subroutine turb_2(/;"	s
+turb_ini	canuto_ini.F90	/^      subroutine turb_ini$/;"	s
+u	dyn_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::u,/;"	v	module:dyn_mod
+u_cpl	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   u_cpl(/;"	v	module:buf_mod
+u_cpl_io	dyn_mod.F90	/^      real(r4),dimension(imt_global,jmt_global)::t_cpl_io,s_cpl_io,u_cpl_io,/;"	v	module:dyn_mod
+u_dims	cdf_mod.F90	/^             ,h0_dims(h0_rank),u_dims(/;"	v	module:cdf_mod
+u_id	cdf_mod.F90	/^             ,h0_id,u_id,/;"	v	module:cdf_mod
+u_rank	cdf_mod.F90	/^             ,h0_rank=2,u_rank=/;"	v	module:cdf_mod
+ub	dyn_mod.F90	/^      real(r8),dimension(imt,jmt)::ub,/;"	v	module:dyn_mod
+ubp	dyn_mod.F90	/^      real(r8),dimension(imt,jmt)::ub,vb,ubp,/;"	v	module:dyn_mod
+uk	work_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: tmp1,tmp2,uk,/;"	v	module:work_mod
+unitc	OBM_mod.F90	/^      real,parameter::unitc=/;"	v	module:carbon_mod
+up	dyn_mod.F90	/^      real(r8),dimension(imt,jmt,km)::up,/;"	v	module:dyn_mod
+uptake	OBM_mod.F90	/^      real*8,dimension(imt,jmt)::uptake$/;"	v	module:coutput_mod
+us_dims	cdf_mod.F90	/^               ic2_dims(ic2_rank),net1_dims(net1_rank), net2_dims(net2_rank),ts_dims( ts_rank), ss_dims( ss_rank), &$/;"	v	module:cdf_mod
+us_id	cdf_mod.F90	/^               ic1_id,ic2_id, net1_id, net2_id, ts_id,  ss_id,us_id,/;"	v	module:cdf_mod
+us_rank	cdf_mod.F90	/^                            hd_rank=3,ic1_rank=3,ic2_rank=3, net1_rank=3,net2_rank=3,ts_rank=4,ss_rank=4, &$/;"	v	module:cdf_mod
+usmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km)::wsmon,tsmon,ssmon,usmon,/;"	v	module:output_mod
+utf	dyn_mod.F90	/^      real(r8),dimension(imt,jmt,km)::utl,utf,/;"	v	module:dyn_mod
+utl	dyn_mod.F90	/^      real(r8),dimension(imt,jmt,km)::utl,/;"	v	module:dyn_mod
+uva	forc_mod.F90	/^      real(r8),dimension(imt,jmt)::su,sv,psa,tsa,sss,swv,uva,/;"	v	module:forc_mod
+uva3	forc_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::su3,sv3,psa3,tsa3,qar3,uva3,/;"	v	module:forc_mod
+uva3_io	forc_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::su3_io,sv3_io,psa3_io,tsa3_io,qar3_io,uva3_io,/;"	v	module:forc_mod
+v	dyn_mod.F90	/^      real(r8),allocatable,dimension(:,:,:)::u,v$/;"	v	module:dyn_mod
+v_cpl	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   v_cpl(/;"	v	module:buf_mod
+v_cpl_io	dyn_mod.F90	/^      real(r4),dimension(imt_global,jmt_global)::t_cpl_io,s_cpl_io,u_cpl_io,v_cpl_io,/;"	v	module:dyn_mod
+v_dims	cdf_mod.F90	/^             ,h0_dims(h0_rank),u_dims(u_rank),v_dims(/;"	v	module:cdf_mod
+v_id	cdf_mod.F90	/^             ,h0_id,u_id,v_id,/;"	v	module:cdf_mod
+v_rank	cdf_mod.F90	/^             ,h0_rank=2,u_rank=3,v_rank=/;"	v	module:cdf_mod
+vb	dyn_mod.F90	/^      real(r8),dimension(imt,jmt)::ub,vb,/;"	v	module:dyn_mod
+vbp	dyn_mod.F90	/^      real(r8),dimension(imt,jmt)::ub,vb,ubp,vbp,/;"	v	module:dyn_mod
+visc_cbu_back	pmix_mod.F90	/^      real(r8):: wndmix, fricmx, diff_cbt_back, diff_cbt_limit,&$/;"	v	module:pmix_mod
+visc_cbu_limit	canuto_mod.F90	/^        ,visc_cbu_limit,/;"	v	module:canuto_mod
+visc_cbu_limit	pmix_mod.F90	/^                     visc_cbu_back, visc_cbu_limit$/;"	v	module:pmix_mod
+vit	pconst_mod.F90	/^      real(r8),dimension(imt,jmt,km):: vit,/;"	v	module:pconst_mod
+vit_1d	pconst_mod.F90	/^      real(r8),dimension(imt_global,jmt,km):: vit_1d,/;"	v	module:pconst_mod
+vit_global	pconst_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: vit_global$/;"	v	module:pconst_mod
+vit_global_surface	pconst_mod.F90	/^      real(r8),dimension(imt_global,jmt_global):: vit_global_surface$/;"	v	module:pconst_mod
+viv	pconst_mod.F90	/^      real(r8),dimension(imt,jmt,km):: vit,viv /;"	v	module:pconst_mod
+viv_1d	pconst_mod.F90	/^      real(r8),dimension(imt_global,jmt,km):: vit_1d,viv_1d$/;"	v	module:pconst_mod
+vk	work_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: tmp1,tmp2,uk,vk$/;"	v	module:work_mod
+vp	dyn_mod.F90	/^      real(r8),dimension(imt,jmt,km)::up,vp$/;"	v	module:dyn_mod
+vs_dims	cdf_mod.F90	/^                us_dims( us_rank), vs_dims(/;"	v	module:cdf_mod
+vs_id	cdf_mod.F90	/^               ic1_id,ic2_id, net1_id, net2_id, ts_id,  ss_id,us_id,vs_id,/;"	v	module:cdf_mod
+vs_rank	cdf_mod.F90	/^                            us_rank=4, vs_rank=/;"	v	module:cdf_mod
+vsea2000	grids_pt_mod.F90	/^    real(kind=8)::vsea2000$/;"	v	module:GRIDS_PT_MOD
+vsmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km)::wsmon,tsmon,ssmon,usmon,vsmon$/;"	v	module:output_mod
+vtf	dyn_mod.F90	/^      real(r8),dimension(imt,jmt,km)::utl,utf,vtl,vtf$/;"	v	module:dyn_mod
+vtl	dyn_mod.F90	/^      real(r8),dimension(imt,jmt,km)::utl,utf,vtl,/;"	v	module:dyn_mod
+w11	sw_mod.F90	/^      real(r8) :: c0,c1,A_1,B_1,A_2,B_2,w11,/;"	v	module:sw_mod
+w12	sw_mod.F90	/^      real(r8) :: c0,c1,A_1,B_1,A_2,B_2,w11,w12 /;"	v	module:sw_mod
+w22np	OBM_mod.F90	/^      real,dimension(imt,jmt)::w22np$/;"	v	module:cforce_mod
+winds	OBM_mod.F90	/^      real,dimension(imt,jmt,12)::winds$/;"	v	module:cforce_mod
+winds_global	OBM_mod.F90	/^      real,dimension(imt_global,jmt_global,12)::winds_global$/;"	v	module:cforce_mod
+wka	work_mod.F90	/^      real(r8),dimension(imt,jmt,km)::wka$/;"	v	module:work_mod
+wki	work_mod.F90	/^      real(r8):: wki(/;"	v	module:work_mod
+wkj	work_mod.F90	/^      real(r8):: wki(imt),wkj(/;"	v	module:work_mod
+wkj_global	work_mod.F90	/^      real(r8):: wkj_global(/;"	v	module:work_mod
+wkk	work_mod.F90	/^      real(r8):: wki(imt),wkj(jmt),wkk(/;"	v	module:work_mod
+wndmix	pmix_mod.F90	/^      real(r8):: wndmix,/;"	v	module:pmix_mod
+work	work_mod.F90	/^      real(r8),dimension(imt,jmt) :: work,/;"	v	module:work_mod
+work1	work_mod.F90	/^      real(r8),dimension(imt,jmt) :: work,work1,/;"	v	module:work_mod
+work2	work_mod.F90	/^      real(r8),dimension(imt,jmt) :: work,work1,work2$/;"	v	module:work_mod
+work_1	work_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: work_1,/;"	v	module:work_mod
+work_2	work_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: work_1,work_2,/;"	v	module:work_mod
+work_3	work_mod.F90	/^      real(r8),dimension(:,:,:),allocatable:: work_1,work_2,work_3,/;"	v	module:work_mod
+work_global	work_mod.F90	/^      real(r8),dimension(:,:), allocatable :: work_global$/;"	v	module:work_mod
+work_mod	work_mod.F90	/^module work_mod$/;"	m
+wrap_close	wrap_nf.F90	/^subroutine wrap_close /;"	s
+wrap_create	wrap_nf.F90	/^subroutine wrap_create /;"	s
+wrap_def_dim	wrap_nf.F90	/^subroutine wrap_def_dim /;"	s
+wrap_def_var	wrap_nf.F90	/^subroutine wrap_def_var /;"	s
+wrap_get_att_text	wrap_nf.F90	/^subroutine wrap_get_att_text /;"	s
+wrap_get_var_int	wrap_nf.F90	/^subroutine wrap_get_var_int /;"	s
+wrap_get_var_realx	wrap_nf.F90	/^subroutine wrap_get_var_realx /;"	s
+wrap_get_vara_int	wrap_nf.F90	/^subroutine wrap_get_vara_int /;"	s
+wrap_get_vara_realx	wrap_nf.F90	/^subroutine wrap_get_vara_realx /;"	s
+wrap_inq_attlen	wrap_nf.F90	/^subroutine wrap_inq_attlen /;"	s
+wrap_inq_dim	wrap_nf.F90	/^subroutine wrap_inq_dim /;"	s
+wrap_inq_dimid	wrap_nf.F90	/^subroutine wrap_inq_dimid /;"	s
+wrap_inq_dimlen	wrap_nf.F90	/^subroutine wrap_inq_dimlen /;"	s
+wrap_inq_var	wrap_nf.F90	/^subroutine wrap_inq_var /;"	s
+wrap_inq_vardimid	wrap_nf.F90	/^subroutine wrap_inq_vardimid /;"	s
+wrap_inq_varid	wrap_nf.F90	/^subroutine wrap_inq_varid /;"	s
+wrap_inq_varname	wrap_nf.F90	/^subroutine wrap_inq_varname /;"	s
+wrap_open	wrap_nf.F90	/^subroutine wrap_open /;"	s
+wrap_put_att_realx	wrap_nf.F90	/^subroutine wrap_put_att_realx /;"	s
+wrap_put_att_text	wrap_nf.F90	/^subroutine wrap_put_att_text /;"	s
+wrap_put_var1_int	wrap_nf.F90	/^subroutine wrap_put_var1_int /;"	s
+wrap_put_var1_realx	wrap_nf.F90	/^subroutine wrap_put_var1_realx /;"	s
+wrap_put_var_int	wrap_nf.F90	/^subroutine wrap_put_var_int /;"	s
+wrap_put_var_realx	wrap_nf.F90	/^subroutine wrap_put_var_realx /;"	s
+wrap_put_vara_int	wrap_nf.F90	/^subroutine wrap_put_vara_int /;"	s
+wrap_put_vara_realx	wrap_nf.F90	/^subroutine wrap_put_vara_realx /;"	s
+wrap_put_vara_text	wrap_nf.F90	/^subroutine wrap_put_vara_text /;"	s
+ws	dyn_mod.F90	/^      real(r8),dimension(imt,jmt,kmp1)::ws$/;"	v	module:dyn_mod
+ws_dims	cdf_mod.F90	/^                us_dims( us_rank), vs_dims( vs_rank), ws_dims(/;"	v	module:cdf_mod
+ws_id	cdf_mod.F90	/^               ic1_id,ic2_id, net1_id, net2_id, ts_id,  ss_id,us_id,vs_id,ws_id,/;"	v	module:cdf_mod
+ws_rank	cdf_mod.F90	/^                            us_rank=4, vs_rank=4, ws_rank=/;"	v	module:cdf_mod
+wsmon	output_mod.F90	/^      real(r4),dimension(imt,jmt,km)::wsmon,/;"	v	module:output_mod
+wspd3	forc_mod.F90	/^                   ,wspd3,/;"	v	module:forc_mod
+wspdu3	forc_mod.F90	/^                   ,wspd3,wspdu3,/;"	v	module:forc_mod
+wspdu3_io	forc_mod.F90	/^                   ,wspdu3_io,/;"	v	module:forc_mod
+wspdv3	forc_mod.F90	/^                   ,wspd3,wspdu3,wspdv3,/;"	v	module:forc_mod
+wspdv3_io	forc_mod.F90	/^                   ,wspdu3_io,wspdv3_io,/;"	v	module:forc_mod
+wst_io	OBM_mod.F90	/^ real,dimension(imt_global,jmt_global,kmp1)::wst_io$/;"	v	module:carbon_mod
+wstmon	OBM_mod.F90	/^ real,dimension(imt_global,jmt_global,km)::wstmon$/;"	v	module:carbon_mod
+xc	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   xc(/;"	v	module:buf_mod
+xsol	OBM_mod.F90	/^     real::sol,xsol$/;"	v	module:cforce_mod
+xv	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   xv(/;"	v	module:buf_mod
+yc	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   yc(/;"	v	module:buf_mod
+year	control_mod.F90	/^  integer       :: year /;"	v	module:control_mod
+yearData	OBM_mod.F90	/^      integer::yearData,/;"	v	module:cforce_mod
+yearR	OBM_mod.F90	/^      integer::yearR,/;"	v	module:carbon_mod
+yearStart	OBM_mod.F90	/^      integer::yearData,yearStart$/;"	v	module:cforce_mod
+yearStore	OBM_mod.F90	/^      integer::IO_out,yearStore$/;"	v	module:coutput_mod
+yv	buf_mod.F90	/^  real(SHR_KIND_R8), allocatable ::   yv(/;"	v	module:buf_mod
+yy_cpl	pconst_mod.F90	/^    integer(kind(1))   :: yy_cpl,/;"	v	module:pconst_mod
+yy_licom	pconst_mod.F90	/^    integer(kind(1))   :: yy_licom,/;"	v	module:pconst_mod
+z0_dims	cdf_mod.F90	/^      integer::  lat_dims(lat_rank),lon_dims(lon_rank),lev_dims(lev_rank),time_dims(time_rank), &$/;"	v	module:cdf_mod
+z0_id	cdf_mod.F90	/^      integer::  lat_id,lon_id,lev1_id,lev_id,time_id,z0_id,/;"	v	module:cdf_mod
+z0_rank	cdf_mod.F90	/^      integer, parameter ::lat_rank=1,lon_rank=1,lev_rank=1,time_rank=1,z0_rank=/;"	v	module:cdf_mod
+z0mon	output_mod.F90	/^      real(r4),dimension(imt,jmt)::z0mon,/;"	v	module:output_mod
+zb	grids_pt_mod.F90	/^    real,dimension(km)::zb,/;"	v	module:GRIDS_PT_MOD
+zdc	OBM_mod.F90	/^      real,parameter::zdc=/;"	v	module:carbon_mod
+zkp	pconst_mod.F90	/^      real(r8),dimension(kmp1):: zkp$/;"	v	module:pconst_mod
+zkt	pconst_mod.F90	/^      real(r8),dimension(km):: zkt,/;"	v	module:pconst_mod
+zm	grids_pt_mod.F90	/^    real,dimension(km)::zb,ztop,zm$/;"	v	module:GRIDS_PT_MOD
+zt	isopyc_mod.F90	/^      real(r8)::  zt(/;"	v	module:isopyc_mod
+ztop	grids_pt_mod.F90	/^    real,dimension(km)::zb,ztop,/;"	v	module:GRIDS_PT_MOD
+ztr	sw_mod.F90	/^      real(r8) :: ztr(/;"	v	module:sw_mod

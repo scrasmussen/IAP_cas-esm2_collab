@@ -1,0 +1,88 @@
+26,27c26,27
+< <entry id="dyn" valid_values="eul,sld,fv,homme,iap" value="">
+< Dynamics package: eul, sld, fv, homme or iap.
+---
+> <entry id="dyn" valid_values="eul,sld,fv,homme,se" value="">
+> Dynamics package: eul, sld, fv, or se.
+35,36c35,41
+< <entry id="rad_driver" valid_values="0,1" value="0">
+< Radiation driver : 0 => no, 1 => yes.
+---
+> <entry id="offline_drv" valid_values="rad,stub" value="">
+>  Offline unit driver:
+>   rad : radiation offline unit driver
+>   stub : stub offline unit driver
+> </entry>
+> <entry id="waccmx" valid_values="0,1" value="0">
+> Option to turn on waccmx thermosphere/ionosphere extension: 0 => no, 1 => yes
+41,42c46,50
+< <entry id="microphys" valid_values="rk,mg" value="">
+< Microphysics package: rk (Rasch and Kristjansson), mg (Morrison and Gettelman two moment scheme).
+---
+> <entry id="microphys" valid_values="rk,mg1,mg1.5" value="">
+> Microphysics package: rk (Rasch and Kristjansson), mg1 (Morrison and Gettelman two moment scheme CAM5.1), mg1.5 (Morrison and Gettelman second version development).
+> </entry>
+> <entry id="macrophys" valid_values="rk,park,clubb_sgs,none" value="">
+> Macrophysics package: RK, Park, CLUBB_SGS.
+44c52,55
+< <entry id="pbl" valid_values="uw,hb,hbr" value="">
+---
+> <entry id="clubb_sgs" valid_values="0,1" value="0">
+> Switch to turn on/off CLUBB_SGS package: 0 => no, 1 => yes
+> </entry>
+> <entry id="pbl" valid_values="uw,hb,hbr,clubb_sgs" value="">
+46c57
+<  (Holtslag, Boville, and Rasch).
+---
+>  (Holtslag, Boville, and Rasch), clubb_sgs.
+52,54c63,71
+< <entry id="chem" valid_values="waccm_mozart,waccm_mozart_v1,waccm_ghg,trop_mozart,trop_strat_bam_v1,super_fast_llnl,super_fast_llnl_mam3,trop_ghg,trop_bam,trop_mam3,trop_mam7,none"
+<  value="">
+< Chemistry package: waccm_mozart, waccm_mozart_v1, waccm_ghg, trop_mozart, trop_strat_bam_v1, super_fast_llnl, trop_ghg, trop_bam, trop_mam3, trop_mam7, or none.
+---
+> <entry id="carma" valid_values="none,bc_strat,cirrus,dust,meteor_smoke,pmc,sea_salt,sulfate,test_detrain,test_growth,test_passive,test_radiative,test_swelling,test_tracers" value="none">
+> CARMA sectional microphysics: 
+> none (disabled), bc_strat (Stratospheric Black Carbon), cirrus (Cirrus Clouds), dust (Dust), meteor_smoke (Meteor Smoke), pmc (Polar Mesospheric Clouds), sea_salt (Sea Salt),
+> sulfate (Sulfate Aerosols), test_detrain (Detrainment), test_growth (Particle Growth), test_passive (Passive Dust), 
+> test_radiative (Radiatively Active Dust), test_swelling (Sea Salt), test_tracers (age trajectories).
+> </entry>
+> <entry id="chem" valid_values="waccm_mozart,waccm_mozart_mam3,waccm_mozart_sulfur,waccm_ghg,trop_mozart,trop_mozart_mam3,trop_mozart_soa,trop_strat_soa,trop_strat_mam3,trop_strat_mam7,super_fast_llnl,super_fast_llnl_mam3,trop_ghg,trop_bam,trop_mam3,trop_mam7,none,trop_strat_new" 
+>  value=""> trop_strat_new added by fkc
+> Chemistry package: waccm_mozart, waccm_mozart_mam3, waccm_mozart_sulfur, waccm_ghg, trop_mozart, trop_mozart_mam3, trop_mozart_soa, trop_strat_soa, trop_strat_mam3, trop_strat_mam7, super_fast_llnl, trop_ghg, trop_bam, trop_mam3, trop_mam7, or none.
+77,78c94,100
+< <entry id="ocn" valid_values="docn,dom,socn,aquaplanet,none" value="docn">
+< Use data ocean model, stub ocean, slab ocean, aqua planet ocean, or no ocn model in cam build: docn, dom, socn, aquaplanet, none
+---
+> <entry id="rof" valid_values="rtm,srof,none" value="rtm">
+> Use rtm, stub runoff or no runoff model in cam build: rtm, srof, none
+> </entry>
+> <entry id="ocn" valid_values="docn,dom,socn,aquaplanet,pop2" value="docn">
+> Use data ocean model (docn or dom), stub ocean (socn), or aqua planet ocean
+> (aquaplanet) in cam build.  When built from the CESM scripts the value of
+> ocn may be set to pop2, but this doesn't impact how CAM is built.
+80,81c102,103
+< <entry id="ice" valid_values="csim4,cice,sice,none" value="">
+< Use csim4, cice, stub ice model or no ice model in cam build: cice, csim4, sice, none
+---
+> <entry id="ice" valid_values="cice,sice,none" value="">
+> Use cice, stub ice model or no ice model in cam build: cice, sice, none
+104,106d125
+< <entry id="clm_vocsrc" valid_values="0,1" value="0">
+< Turn on CLM VOC Emissions: 0=off, 1=on.
+< </entry>
+159a179,181
+> <entry id="psubcols" value="1">
+> Maximum number of sub-columns in a column (physics data structure).
+> </entry>
+175c197
+< <entry id="fc_type" valid_values="pgi,intel,pathscale,lahey" value="">
+---
+> <entry id="fc_type" valid_values="pgi,intel,gnu,pathscale,lahey,xlf,nag" value="">
+213a236,238
+> <entry id="nc_ldflags" value="" list="1">
+> Arguments for linking NetCDF libraries.
+> </entry>
+231a257,259
+> <entry id="mct_libdir" value="">
+> Directory containing MCT library (for linking to external MCT).
+> </entry>

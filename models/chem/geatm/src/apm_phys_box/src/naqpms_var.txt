@@ -1,0 +1,78 @@
+
+inputs variables from NAQPMS :
+
+(0) intial value of prognostic variables
+
+    XN1D(N)   : N=1,NSO4+NSEA
+    XMDST(N)  : N=1,NDSTB
+    MBCOC8(8) : mass of 8 category BCOCS
+
+    MBCS 
+    MOCS
+    MDSTS
+    MSALTS
+
+    MSULFLV
+    MBCLV
+    MOCLV
+    MDSTLV
+    MSALTLV
+
+
+(1) SOAT : total SOA partitioned to particle phase
+
+(2) MNIT : total nitrate partitioned to particle phase
+
+(3) MNH4 : total ammonium partitioned to particle phase
+
+(4) MMSA : total MSA partitioned to particle phase
+
+(5) low volatile organic from oxidation
+
+    MSULFLV
+    MBCLV
+    MOCLV
+    MDSTLV
+    MSALTLV
+
+(6) CACID : sulfuric acid molecule number in one cubic centimeter
+
+(7) PACID : sulfuric acid molecule number production rate
+
+
+(8) meteorological and other variables
+
+    XLON   : longitude
+    XLAT   : latitude
+    PRESS  : pressure
+    YPSURF : surface pressure
+    
+
+
+
+====================================================
+====================================================
+
+variables returned from APM  :
+
+(1) prognostic variables
+
+    XN1D(N)   : N=1,NSO4+NSEA
+    XMDST(N)  : N=1,NDSTB
+    MBCOC8(8) : mass of 8 category BCOC
+
+    MBCS
+    MOCS
+    MDSTS
+    MSALTS
+
+    MSULFLV
+    MBCLV
+    MOCLV
+    MDSTLV
+    MSALTLV
+
+(2) CACID : sulfuric acid molecule number in one cubic centimeter
+
+
+

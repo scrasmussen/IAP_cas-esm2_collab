@@ -1,0 +1,32 @@
+
+unit transfer
+
+ppb->ug/m3
+
+gas(i04+ixy) = gas(i04+ixy)*                  &
+         GC_MOLWT(ig)/( (0.08206*T(i03+ixy))/(Plev(i03+ixy)/1000.) )
+
+
+
+ug/m3->ppb
+
+(i04+ixy) = gas(i04+ixy)*                          &
+        (0.08206*T(i03+ixy))/(Plev(i03+ixy)/1000.)/GC_MOLWT(ig)
+
+
+
+
+
+
+
+unit of gas variable in each module
+
+(1)
+
+
+
+
+
+
+
+

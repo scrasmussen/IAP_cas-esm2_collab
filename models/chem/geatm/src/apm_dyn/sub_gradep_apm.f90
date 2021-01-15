@@ -1,0 +1,46 @@
+ SUBROUTINE GRA_DEP_APM( MYID,C,CP1,GRAVEL2d,GRAVEL2d_p1,K,NZZ &
+                        ,DELTZ,DELTZP1,SX,EX,SY,EY,DT )
+ INTEGER MYID, SX, EX, SY, EY
+
+ REAL GRAVEL,GRAVELAER,GRAVELAER_p1
+ REAL, DIMENSION(SX-1:EX+1,SY-1:EY+1) :: C,CP1,DELTZ,DELTZP1
+
+ !++++ shun ++++
+ !REAL, DIMENSION(SX-1:EX+1,SY-1:EY+1) :: GRAVEL2d
+ !REAL, DIMENSION(SX-1:EX+1,SY-1:EY+1) :: GRAVEL2d_p1
+ REAL, DIMENSION(SX:EX,SY:EY) :: GRAVEL2d
+ REAL, DIMENSION(SX:EX,SY:EY) :: GRAVEL2d_p1
+
+
+!print*,SX,EX,SY,EY,DT
+
+!stop
+
+
+ DO J = SY,EY
+ DO I = SX,EX
+
+    !GRAVELAER=GRAVEL ! shun comment out
+    GRAVELAER=GRAVEL2d(i,j)
+    GRAVELAER_p1=GRAVEL2d_p1(i,j) ! shun
+
+    IF(K==NZZ)THEN
+      VALUE2=MAX(0.0,MIN(0.99,GRAVELAER*DT/DELTZ(I,J)))
+      C(I,J)=C(I,J)-C(I,J)*VALUE2
+    ELSE
+      !VALUE1=MAX(0.0,MIN(0.99,GRAVELAER*DT/DELTZP1(I,J)))   ! shun comment out
+      !VALUE2=MAX(0.0,MIN(0.99,GRAVELAER*DT/DELTZ(I,J)))     ! shun comment out
+      VALUE1=MAX(0.0,MIN(0.99,GRAVELAER_p1*DT/DELTZP1(I,J))) ! shun
+      VALUE2=MAX(0.0,MIN(0.99,GRAVELAER*DT/DELTZ(I,J)))      ! shun
+      if(K.ne.1) then
+         C(I,J)=C(I,J)+CP1(I,J)*VALUE1-C(I,J)*VALUE2
+      elseif(K.eq.1) then
+         C(I,J)=C(I,J)+CP1(I,J)*VALUE1 ! shun
+      endif
+    ENDIF
+
+ ENDDO
+ ENDDO
+
+ RETURN
+ END SUBROUTINE GRA_DEP_APM

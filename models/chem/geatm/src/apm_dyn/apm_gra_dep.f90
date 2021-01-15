@@ -1,0 +1,701 @@
+
+subroutine apm_gra_dep &
+ & ( lapm &
+ &  ,myid &
+ &  ,dt,numTGRV &
+ &  ,ne,nx,ny,nzz,nest,sy,ey,sx,ex &
+ &  ,dz &
+ &  ,ip2mem &
+ &  ,ip3mem,mem3d )
+
+use apm_varlist
+implicit none
+include 'apm_parm.inc'
+
+integer :: myid
+
+real    :: dt
+integer :: numTGRV
+
+logical :: lapm
+
+integer :: ne,nest
+integer :: nx(5),ny(5),nzz
+integer :: sy(5),ey(5),sx(5),ex(5)
+
+integer :: i,j,k,is,IT
+
+
+integer :: mem3d
+
+real,dimension(mem3d) :: dz
+
+integer :: ixy,i02,i03,I03_1,I03P1,iapm,iapm_1,iapm_p1,i03_kk
+
+integer :: ip2mem(nest)
+integer :: ip3mem(nzz,nest)
+
+real    :: gvel ! need to be modified
+
+integer :: kk
+real,dimension(mem3d) :: wk,wks
+
+real*8,allocatable,dimension(:) :: numcc,tmp,radius
+real*8 :: totalbc,totaloc
+
+real :: rgf_tmp,rgf_tmp_p1
+real :: diam,rhop
+
+integer,parameter :: ridx(1:8) = (/1,2,1,2,1,2,1,2/)
+
+character*2,parameter :: flagbcoc(1:8) = (/'bc','bc','oc','oc' &
+                                          ,'bc','bc','oc','oc'/)
+
+
+real,allocatable,dimension(:,:) :: diam2d,rhop2d,gvel2d
+
+real,allocatable,dimension(:,:) :: diam2d_p1,rhop2d_p1,gvel2d_p1
+
+
+allocate( diam2d( sx(ne):ex(ne),sy(ne):ey(ne) ) )
+allocate( rhop2d( sx(ne):ex(ne),sy(ne):ey(ne) ) )
+!allocate( gvel2d( sx(ne)-1:ex(ne)+1,sy(ne)-1:ey(ne)+1 ) )
+allocate( gvel2d( sx(ne):ex(ne),sy(ne):ey(ne) ) )
+
+allocate( diam2d_p1( sx(ne):ex(ne),sy(ne):ey(ne) ) )
+allocate( rhop2d_p1( sx(ne):ex(ne),sy(ne):ey(ne) ) )
+!allocate( gvel2d_p1( sx(ne)-1:ex(ne)+1,sy(ne)-1:ey(ne)+1 ) )
+allocate( gvel2d_p1( sx(ne):ex(ne),sy(ne):ey(ne) ) )
+
+!do is=1,NSO4
+!     diam = rd_sulf(is)*2.0 ! m
+!     rhop = densulf*1.0e+6       ! g/cm3 -> g/m3
+!     call vg_aer(diam,rhop,gvel)
+!     print*,'vg=',gvel,diam,rhop,is
+!enddo
+
+!stop
+
+
+
+! IF(lapm) THEN
+
+if(lcoated_dyn) then
+
+   ! distribute bulk seasalt coated sulfate to bins
+   if(.not.allocated(apm_msltsulf)) then
+      allocate(apm_msltsulf(saltmem))
+   else
+      stop 'allocate(apm_msltsulf) erro'
+   endif
+   if(.not.(allocated(numcc).and.allocated(tmp).and.allocated(radius))) then
+      allocate(numcc(NSEA))
+      allocate(tmp(NSEA))
+      allocate(radius(NSEA))
+   else
+      stop 'allocate(numcc) erro'
+   endif
+
+   DO k=1,nzz
+    i03=ip3mem(k,ne)
+    do j = sy(ne),ey(ne)
+    do i = sx(ne),ex(ne)
+      ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+      do is=1,NSEA
+        iapm=ip_salt(k,is,ne)
+        radius(is)=rd_salt(is)
+        numcc(is)= apm_salt(iapm+ixy)/ &
+                 & radius(is)**3.0d0
+                 !& (densalt*1.0e+12*4.0d0/3.0d0*apm_pi*radius(is)**3.0d0)
+        tmp(is)=numcc(is)*radius(is)**2
+      enddo
+      do is=1,NSEA
+        iapm=ip_salt(k,is,ne)
+        if(sum(tmp(:)).gt.0) then
+          apm_msltsulf(iapm+ixy)=msltsulf(i03+ixy)*tmp(is)/sum(tmp(:))
+        else
+          apm_msltsulf(iapm+ixy)=0
+        endif
+      enddo
+    enddo
+    enddo
+   ENDDO
+   if(allocated(numcc).and.allocated(tmp).and.allocated(radius)) then
+      deallocate(numcc)
+      deallocate(tmp)
+      deallocate(radius)
+   else
+      stop 'deallocate(numcc) erro'
+   endif
+   !!!!!
+
+   ! distribute bulk dust coated sulfate to bins
+   if(.not.allocated(apm_mdstsulf)) then
+      allocate(apm_mdstsulf(dustmem))
+   else
+      stop 'allocate(apm_mdstsulf) erro'
+   endif
+   if(.not.(allocated(numcc).and.allocated(tmp).and.allocated(radius))) then
+      allocate(numcc(NDSTB))
+      allocate(tmp(NDSTB))
+      allocate(radius(NDSTB))
+   else
+      stop 'allocate(numcc) erro'
+   endif
+   DO k=1,nzz
+    i03=ip3mem(k,ne)
+    do j = sy(ne),ey(ne)
+    do i = sx(ne),ex(ne)
+      ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+      do is=1,NDSTB
+        iapm=ip_dust(k,is,ne)
+        radius(is)=rd_dust(is)
+        numcc(is)= apm_dust(iapm+ixy)/ &
+                 & radius(is)**3.0d0
+                 !& (densalt*1.0e+12*4.0d0/3.0d0*apm_pi*radius(is)**3.0d0)
+        tmp(is)=numcc(is)*radius(is)**2
+      enddo
+      do is=1,NDSTB
+        iapm=ip_dust(k,is,ne)
+        if(sum(tmp(:)).gt.0) then
+          apm_mdstsulf(iapm+ixy)=mdstsulf(i03+ixy)*tmp(is)/sum(tmp(:))
+        else
+          apm_mdstsulf(iapm+ixy)=0
+        endif
+      enddo
+    enddo
+    enddo
+   ENDDO
+   if(allocated(numcc).and.allocated(tmp).and.allocated(radius)) then
+      deallocate(numcc)
+      deallocate(tmp)
+      deallocate(radius)
+   else
+      stop 'deallocate(numcc) erro'
+   endif
+   !!!!!
+
+   ! distribute bulk BC coated sulfate to bins
+   if(.not.allocated(apm_mbcocsulf)) then
+      allocate(apm_mbcocsulf(bcocmem))
+   else
+      stop 'allocate(apm_mbcocsulf) erro'
+   endif
+   if(.not.(allocated(numcc).and.allocated(tmp).and.allocated(radius))) then
+      allocate(numcc(NBCOCT))
+      allocate(tmp(NBCOCT))
+      allocate(radius(NBCOCT))
+   else
+      stop 'allocate(numcc) erro'
+   endif
+   DO k=1,nzz
+    i03=ip3mem(k,ne)
+    do j = sy(ne),ey(ne)
+    do i = sx(ne),ex(ne)
+      ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+      do is=1,NBCOCT
+        iapm=ip_bcoc(k,is,ne)
+        radius(is)=ref1d_bcoc(ridx(is))
+        numcc(is)= apm_bcoc(iapm+ixy)/ &
+                 & radius(is)**3.0d0
+                 !& (densalt*1.0e+12*4.0d0/3.0d0*apm_pi*radius(is)**3.0d0)
+        tmp(is)=numcc(is)*radius(is)**2
+      enddo
+      totalbc=tmp(1)+tmp(5)+tmp(2)+tmp(6)
+      totaloc=tmp(3)+tmp(7)+tmp(4)+tmp(8)
+      do is=1,NBCOCT
+        iapm=ip_bcoc(k,is,ne)
+        if(flagbcoc(is).eq.'bc') then
+          if(totalbc.gt.0) then
+            apm_mbcocsulf(iapm+ixy)=mbcsulf(i03+ixy)*tmp(is)/totalbc
+          else
+            apm_mbcocsulf(iapm+ixy)=0
+          endif
+        elseif(flagbcoc(is).eq.'oc') then
+          if(totaloc.gt.0) then
+            apm_mbcocsulf(iapm+ixy)=mocsulf(i03+ixy)*tmp(is)/totaloc
+          else
+            apm_mbcocsulf(iapm+ixy)=0
+          endif
+        else
+          stop 'erro'
+        endif
+      enddo
+    enddo
+    enddo
+   ENDDO
+   if(allocated(numcc).and.allocated(tmp).and.allocated(radius)) then
+      deallocate(numcc)
+      deallocate(tmp)
+      deallocate(radius)
+   else
+      stop 'deallocate(numcc) erro'
+   endif
+   !!!!!
+
+endif
+
+! ENDIF 
+
+
+!IF(lapm) THEN ! apm flag
+
+ i02=ip2mem(ne)
+
+ DO IT=1,numTGRV
+
+ LOOP_K : DO k=1,nzz  ! k=1(decreasement) has been considered in dry deposition
+
+  IF(K.GT.1)THEN
+    I03_1=IP3MEM(K-1,NE)
+  ELSE
+    I03_1=IP3MEM(1,NE)
+  ENDIF
+
+  I03=IP3MEM(K,NE)
+
+  IF(K.LT.NZZ)THEN
+    I03P1=IP3MEM(K+1,NE)
+  ELSE
+    I03P1=IP3MEM(K,NE)
+  ENDIF
+
+ !> shun : apm sulfate
+
+  if(lfor_sulf) then
+!if(k.eq.1) print*,'sulf gdep'
+   loop_so4 : do is=1,NSO4
+
+     do j = sy(ne),ey(ne)
+     do i = sx(ne),ex(ne)
+        ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+        do kk=1,nzz
+          i03_kk=ip3mem(kk,ne)
+          iapm=ip_sulf(kk,is,ne)
+          wk(i03_kk+ixy)=apm_sulf(iapm+ixy)
+        enddo
+        if(lapm_wetsize) then
+          diam2d(i,j)=rd_sulf(is)*2.0*rgf_sulf(i03+ixy)
+          diam2d_p1(i,j)=rd_sulf(is)*2.0*rgf_sulf(i03p1+ixy)
+        else
+          diam2d(i,j)=rd_sulf(is)*2.0 
+          diam2d_p1(i,j)=rd_sulf(is)*2.0 
+        endif
+        rhop2d(i,j)=densulf*1.0e+6
+        rhop2d_p1(i,j)=densulf*1.0e+6
+     enddo
+     enddo
+ 
+     !diam = rd_sulf(is)*2.0 ! m
+     !rhop = densulf*1.0e+6       ! g/cm3 -> g/m3
+!if(k.eq.1) print*,'sulf size',is
+
+     do j = sy(ne),ey(ne)
+     do i = sx(ne),ex(ne)
+       diam=diam2d(i,j)
+       rhop=rhop2d(i,j)
+       call vg_aer(diam,rhop,gvel)
+       gvel2d(i,j)=gvel
+       diam=diam2d_p1(i,j)
+       rhop=rhop2d_p1(i,j)
+       call vg_aer(diam,rhop,gvel)
+       gvel2d_p1(i,j)=gvel
+!       print*,gvel2d(i,j)
+     enddo
+     enddo
+
+!if(k.eq.1) then
+! print*,'gvel2d=',gvel2d
+! print*,'gvel2d_p1=',gvel2d_p1
+!endif
+
+     !gvel=0.5
+     !print*,'vg=',gvel,diam,rhop,is
+!if(k.eq.1.and.it.eq.1) print*,'vg=',gvel,diam,rhop,is
+!cycle
+
+     call GRA_DEP_APM( MYID,wk(I03),wk(I03P1),gvel2d,gvel2d_p1,K,NZZ &
+                     &,DZ(I03),DZ(I03P1),SX(NE),EX(NE),SY(NE),EY(NE) &
+                     &,DT/FLOAT(numTGRV))
+
+
+
+
+     do j = sy(ne),ey(ne)
+     do i = sx(ne),ex(ne)
+        ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+        do kk=1,nzz
+          i03_kk=ip3mem(kk,ne)
+          iapm=ip_sulf(kk,is,ne)
+          apm_sulf(iapm+ixy)=wk(i03_kk+ixy)
+        enddo
+     enddo
+     enddo
+
+   enddo loop_so4
+  endif
+ !< shun : end of apm sulfate 
+
+!stop
+
+!cycle
+
+ !>==========================================
+ !> shun : apm seasalt and its coated sulfate
+
+  if(lfor_salt) then
+!if(k.eq.1) print*,'salt gdep'
+   loop_salt : do is=1,NSEA
+
+     do j = sy(ne),ey(ne)
+     do i = sx(ne),ex(ne)
+        ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+        do kk=1,nzz
+          i03_kk=ip3mem(kk,ne)
+          iapm=ip_salt(kk,is,ne)
+          wk(i03_kk+ixy)=apm_salt(iapm+ixy)
+          if(lcoated_dyn) wks(i03_kk+ixy)=apm_msltsulf(iapm+ixy)
+        enddo
+        if(lapm_wetsize) then
+          diam2d(i,j)=rd_salt(is)*2.0*rgf_salt(i03+ixy)
+          diam2d_p1(i,j)=rd_salt(is)*2.0*rgf_salt(i03p1+ixy)
+        else
+          diam2d(i,j)=rd_salt(is)*2.0
+          diam2d_p1(i,j)=rd_salt(is)*2.0
+        endif
+        rhop2d(i,j)=densalt*1.0e+6
+        rhop2d_p1(i,j)=densalt*1.0e+6
+     enddo
+     enddo
+
+     !diam = rd_salt(is)*2.0      ! m
+     !rhop = densalt*1.0e+6       ! g/cm3 -> g/m3
+
+!if(k.eq.1) print*,'salt size ',is
+     do j = sy(ne),ey(ne)
+     do i = sx(ne),ex(ne)
+       diam=diam2d(i,j)
+       rhop=rhop2d(i,j)
+       call vg_aer(diam,rhop,gvel)
+       gvel2d(i,j)=gvel
+       diam=diam2d_p1(i,j)
+       rhop=rhop2d_p1(i,j)
+       call vg_aer(diam,rhop,gvel)
+       gvel2d_p1(i,j)=gvel
+       !print*,gvel2d(i,j)
+     enddo
+     enddo
+
+!if(k.eq.1) then
+! print*,'gvel2d=',gvel2d
+! print*,'gvel2d_p1=',gvel2d_p1
+!endif
+
+
+!cycle
+     !call vg_aer(diam,rhop,gvel)
+
+     !gvel=0.5
+
+     CALL GRA_DEP_APM( MYID,wk(I03),wk(I03P1),gvel2d,gvel2d_p1,K,NZZ &
+                     &,DZ(I03),DZ(I03P1),SX(NE),EX(NE),SY(NE),EY(NE) &
+                     &,DT/FLOAT(numTGRV))
+    
+     if(lcoated_dyn) then
+       CALL GRA_DEP_APM( MYID,wks(I03),wks(I03P1),gvel2d,gvel2d_p1,K,NZZ &
+                       &,DZ(I03),DZ(I03P1),SX(NE),EX(NE),SY(NE),EY(NE) &
+                       &,DT/FLOAT(numTGRV))
+     endif
+
+     do j = sy(ne),ey(ne)
+     do i = sx(ne),ex(ne)
+        ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+        do kk=1,nzz
+          i03_kk=ip3mem(kk,ne)
+          iapm=ip_salt(kk,is,ne)
+          apm_salt(iapm+ixy)=wk(i03_kk+ixy)
+          if(lcoated_dyn) apm_msltsulf(iapm+ixy)=wks(i03_kk+ixy)
+        enddo
+     enddo
+     enddo
+
+   enddo loop_salt
+  endif
+
+ !< shun : end of apm seasalt and its coated species
+ !<=================================================
+
+
+!stop 'kksaltnewgra'
+
+ !>=================================================
+ !> shun : apm dust and its coated species
+
+  if(lfor_dust) then
+!if(k.eq.1) print*,'dust gdep'
+   loop_dust : do is=1,NDSTB
+
+     do j = sy(ne),ey(ne)
+     do i = sx(ne),ex(ne)
+        ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+        do kk=1,nzz
+          iapm=ip_dust(kk,is,ne)
+          i03_kk=ip3mem(kk,ne)
+          wk(i03_kk+ixy)=apm_dust(iapm+ixy)
+          if(lcoated_dyn) wks(i03_kk+ixy)=apm_mdstsulf(iapm+ixy)
+        enddo
+        if(lapm_wetsize) then
+          diam2d(i,j)=rd_dust(is)*2.0*rgf_dust(i03+ixy)
+          diam2d_p1(i,j)=rd_dust(is)*2.0*rgf_dust(i03p1+ixy)
+        else
+          diam2d(i,j)=rd_dust(is)*2.0
+          diam2d_p1(i,j)=rd_dust(is)*2.0
+        endif
+        rhop2d(i,j)=dendust*1.0e+6
+        rhop2d_p1(i,j)=dendust*1.0e+6
+     enddo
+     enddo
+
+     !diam = rd_dust(is)*2.0 ! m
+     !rhop = dendust*1.0e+6       ! g/cm3 -> g/m3
+
+!if(k.eq.1) print*,'dust size',is
+
+     do j = sy(ne),ey(ne)
+     do i = sx(ne),ex(ne)
+       diam=diam2d(i,j)
+       rhop=rhop2d(i,j)
+       call vg_aer(diam,rhop,gvel)
+       gvel2d(i,j)=gvel
+       diam=diam2d_p1(i,j)
+       rhop=rhop2d_p1(i,j)
+       call vg_aer(diam,rhop,gvel)
+       gvel2d_p1(i,j)=gvel
+       !print*,gvel2d(i,j)
+     enddo
+     enddo
+!cycle
+
+!if(k.eq.1) then
+! print*,'gvel2d=',gvel2d
+! print*,'gvel2d_p1=',gvel2d_p1
+!endif
+
+     !call vg_aer(diam,rhop,gvel)
+
+     !gvel=0.5
+
+     call GRA_DEP_APM( MYID,wk(I03),wk(I03P1),gvel2d,gvel2d_p1,K,NZZ &
+                     &,DZ(I03),DZ(I03P1),SX(NE),EX(NE),SY(NE),EY(NE) &
+                     &,DT/FLOAT(numTGRV))
+
+     if(lcoated_dyn) then
+        call GRA_DEP_APM( MYID,wks(I03),wks(I03P1),gvel2d,gvel2d_p1,K,NZZ &
+                        &,DZ(I03),DZ(I03P1),SX(NE),EX(NE),SY(NE),EY(NE) &
+                        &,DT/FLOAT(numTGRV))
+     endif
+
+     do j = sy(ne),ey(ne)
+     do i = sx(ne),ex(ne)
+        ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+        do kk=1,nzz
+          i03_kk=ip3mem(kk,ne)
+          iapm=ip_dust(kk,is,ne)
+          apm_dust(iapm+ixy)=wk(i03_kk+ixy)
+          if(lcoated_dyn) apm_mdstsulf(iapm+ixy)=wks(i03_kk+ixy)
+        enddo
+     enddo
+     enddo
+
+   enddo loop_dust
+  endif
+ !< shun : end of apm dust
+
+!stop 'newdustgra'
+
+
+ !> shun : apm bcoc
+  if(lfor_bcoc) then
+!if(k.eq.1) print*,'bcoc gdep'
+   loop_bcoc : do is=1,NBCOCT
+
+     do j = sy(ne),ey(ne)
+     do i = sx(ne),ex(ne)
+        ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+        do kk=1,nzz
+          i03_kk=ip3mem(kk,ne)
+          iapm=ip_bcoc(kk,is,ne)
+          wk(i03_kk+ixy)=apm_bcoc(iapm+ixy)
+          if(lcoated_dyn) wks(i03_kk+ixy)=apm_mbcocsulf(iapm+ixy)
+        enddo
+        if(lapm_wetsize) then
+          if(flagbcoc(is).eq.'bc') then
+            rgf_tmp=rgf_bc(i03+ixy)
+            rgf_tmp_p1=rgf_bc(i03p1+ixy)
+          elseif(flagbcoc(is).eq.'oc') then
+            rgf_tmp=rgf_oc(i03+ixy)
+            rgf_tmp_p1=rgf_oc(i03p1+ixy)
+          endif
+          diam2d(i,j)=ref1d_bcoc(ridx(is))*2.0*rgf_tmp
+          diam2d_p1(i,j)=ref1d_bcoc(ridx(is))*2.0*rgf_tmp_p1
+        else
+          diam2d(i,j)=ref1d_bcoc(ridx(is))*2.0
+          diam2d_p1(i,j)=ref1d_bcoc(ridx(is))*2.0
+        endif
+        rhop2d(i,j)=denbcoc*1.0e+6
+        rhop2d_p1(i,j)=denbcoc*1.0e+6
+     enddo
+     enddo
+
+     !diam = ref1d_bcoc(ridx(is))*2.0 ! m
+     !rhop = denbcoc*1.0e+6       ! g/cm3 -> g/m3
+
+!if(k.eq.1) print*,'bcoc size ',is
+     do j = sy(ne),ey(ne)
+     do i = sx(ne),ex(ne)
+       diam=diam2d(i,j)
+       rhop=rhop2d(i,j)
+       call vg_aer(diam,rhop,gvel)
+       gvel2d(i,j)=gvel
+       diam=diam2d_p1(i,j)
+       rhop=rhop2d_p1(i,j)
+       call vg_aer(diam,rhop,gvel)
+       gvel2d_p1(i,j)=gvel
+!       print*,gvel2d(i,j)
+     enddo
+     enddo
+!cycle
+
+!if(k.eq.1) then
+! print*,'gvel2d=',gvel2d
+! print*,'gvel2d_p1=',gvel2d_p1
+!endif
+
+
+     !call vg_aer(diam,rhop,gvel)
+
+     !gvel=0.5
+
+     call GRA_DEP_APM( MYID,wk(I03),wk(I03P1),gvel2d,gvel2d_p1,K,NZZ &
+                     &,DZ(I03),DZ(I03P1),SX(NE),EX(NE),SY(NE),EY(NE) &
+                     &,DT/FLOAT(numTGRV))
+
+     if(lcoated_dyn) then
+       call GRA_DEP_APM( MYID,wks(I03),wks(I03P1),gvel2d,gvel2d_p1,K,NZZ &
+                       &,DZ(I03),DZ(I03P1),SX(NE),EX(NE),SY(NE),EY(NE) &
+                       &,DT/FLOAT(numTGRV))
+     endif
+
+     do j = sy(ne),ey(ne)
+     do i = sx(ne),ex(ne)
+        ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+        do kk=1,nzz
+          i03_kk=ip3mem(kk,ne)
+          iapm=ip_bcoc(kk,is,ne)
+          apm_bcoc(iapm+ixy)=wk(i03_kk+ixy)
+          if(lcoated_dyn) apm_mbcocsulf(iapm+ixy)=wks(i03_kk+ixy)
+        enddo
+     enddo
+     enddo
+
+   enddo loop_bcoc
+  endif
+ !< shun : end of apm dust
+
+!stop 'newbcocgra'
+
+ ENDDO LOOP_K
+
+ ENDDO ! IT
+
+
+
+
+ !==============!
+ ! bins to bulk !
+ !==============!
+
+if(lcoated_dyn) then
+ !print*,'coated sulfate gdep'
+
+ DO k=1,nzz
+
+ i03=ip3mem(k,ne)
+
+ !-> salt
+ do j = sy(ne),ey(ne)
+ do i = sx(ne),ex(ne)
+    ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+    msltsulf(i03+ixy)=0.0d0
+    do is=1,NSEA
+      iapm=ip_salt(k,is,ne)
+      msltsulf(i03+ixy)=msltsulf(i03+ixy)+apm_msltsulf(iapm+ixy)
+    enddo
+ enddo
+ enddo
+
+ !-> dust
+ do j = sy(ne),ey(ne)
+ do i = sx(ne),ex(ne)
+    ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+    mdstsulf(i03+ixy)=0.0d0
+    do is=1,NDSTB
+      iapm=ip_dust(k,is,ne)
+      mdstsulf(i03+ixy)=mdstsulf(i03+ixy)+apm_mdstsulf(iapm+ixy)
+    enddo
+ enddo
+ enddo
+
+ !-> BCOC 
+ do j = sy(ne),ey(ne)
+ do i = sx(ne),ex(ne)
+    ixy = (ex(ne)-sx(ne)+3)*(j -sy(ne)+1)+i-sx(ne)+1
+    mbcsulf(i03+ixy)=0.0d0
+    mocsulf(i03+ixy)=0.0d0
+    do is=1,NBCOCT
+      iapm=ip_bcoc(k,is,ne)
+      if(flagbcoc(is).eq.'bc') then
+        mbcsulf(i03+ixy)=mbcsulf(i03+ixy)+apm_mbcocsulf(iapm+ixy)
+      elseif(flagbcoc(is).eq.'oc') then
+        mocsulf(i03+ixy)=mocsulf(i03+ixy)+apm_mbcocsulf(iapm+ixy)
+      else
+        stop 'erro'
+      endif
+    enddo
+ enddo
+ enddo
+
+ ENDDO
+
+ if(allocated(apm_msltsulf)) then
+    deallocate(apm_msltsulf)
+ else
+    stop 'deallocate(apm_msltsulf) erro'
+ endif
+
+ if(allocated(apm_mdstsulf)) then
+    deallocate(apm_mdstsulf)
+ else
+    stop 'deallocate(apm_mdstsulf) erro'
+ endif
+
+ if(allocated(apm_mbcocsulf)) then
+    deallocate(apm_mbcocsulf)
+ else
+    stop 'deallocate(apm_mbcocsulf) erro'
+ endif
+
+endif ! lcoated_dyn
+
+!ENDIF ! apm flag
+
+
+!stop 'shun check gradep'
+
+
+end subroutine apm_gra_dep
+
+
+
+
+

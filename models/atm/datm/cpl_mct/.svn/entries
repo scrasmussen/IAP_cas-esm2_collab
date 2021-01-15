@@ -1,0 +1,40 @@
+8
+
+dir
+162
+https://svn-ccsm-release.cgd.ucar.edu/model_versions/cesm1_0_5/models/atm/datm/cpl_mct
+https://svn-ccsm-release.cgd.ucar.edu
+
+
+
+2013-01-31T21:08:01.734368Z
+154
+jshollen
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+6ec7379f-1bbc-4938-b9b9-58fa9e6a5fe1
+
+atm_comp_mct.F90
+file
+
+
+
+
+2013-08-26T15:38:27.000000Z
+49ba38cd2629f6618c3b3ce20e7624be
+2013-01-31T21:08:01.734368Z
+154
+jshollen
+

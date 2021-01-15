@@ -1,0 +1,29 @@
+
+subroutine cal_lv( SOAT,MSPS,MBCS,MOCS,MDSTS,MSALTS &
+                  ,MSULFLV,MBCLV,MOCLV,MDSTLV,MSALTLV &
+                  ,SOAT_to_APM )
+implicit none
+real*8 :: SOAT,MSPS,MBCS,MOCS,MDSTS,MSALTS
+real*8 :: MSULFLV,MBCLV,MOCLV,MDSTLV,MSALTLV
+real*8 :: SOAT_to_APM
+real*8 :: LVT,SULFT
+
+real,parameter :: frac_sv2lv=0.13
+!real,parameter :: frac_sv2lv=0.46
+
+LVT = SOAT*frac_sv2lv
+
+SOAT_to_APM = SOAT*(1.0-frac_sv2lv)
+
+SULFT = MSPS+MBCS+MOCS+MDSTS+MSALTS
+
+SULFT = amax1(SULFT,1.0e-30)
+ 
+MSULFLV=LVT*MSPS/SULFT
+MBCLV  =LVT*MBCS/SULFT
+MOCLV  =LVT*MOCS/SULFT
+MDSTLV =LVT*MDSTS/SULFT
+MSALTLV=LVT*MSALTS/SULFT
+
+
+end

@@ -1,0 +1,30 @@
+ Minghua Zhang made the following changes to the Dycore on 2018-09-25
+ Baodong Wu and Hang Cao made the following changes to the Dycore on 2018-11-19
+
+1 flexib.F90     to set the following flags of time integration and Coriolis force calculations 
+       zmh_nlitti1   for tend_lin
+       zmh_nlitti2   for tend_adv
+       zmh_Coriolis
+       wbd_nlitti1   for tend_lin with leaping format
+       wbd_nlitti2   for tend_adv with leaping format
+
+2. nlitti.F90    to modify time integration scheme and add usingleaping format switch
+3. tend_lin2.F90 modified from tend_lin  zmh
+	add period DU,DV wbd
+4. tend_adv2.F90 modified from tend_adv  zmh
+5. Dyn_const.F90 added leaping format parameter  CH
+	   sine_devide,cos_deglat,k_temp,cos_70,cos_45
+6. Filt.F90 added the adaptive filter function and no fft filter for leaping format  wbd & CH
+	   FILTER_noFFT no fft filter in the high latitude for leaping format
+	   FILTER_9_13 the adaptive filter in the high latitude for 1.4*1.4 resolution
+	   FILTER_all13 the adaptive filter in the high latitude for 0.5*0.5 resolution
+7. FILT2Dadaptive.F90 added the switch to select the different filter methods  wbd & CH
+	   wf  the switch to select filter method
+	   wf=0  FILTER;
+	   wf=1  FILTER_9_13;
+	   wf=2  FILTER_all13;
+	   wf=3  FILTER_noFFT;
+8. tend_lin_leap.F90 added  tend_lin using leaping format  wbd & CH
+9. tend_adv_leap.F90 added  tend_adv using leaping format  wbd & CH
+10. tend_lin2_leap.F90 added  tend_lin2 using leaping format  wbd & CH
+11. tend_adv2_leap.F90 added  tend_adv2 using leaping format  wbd & CH

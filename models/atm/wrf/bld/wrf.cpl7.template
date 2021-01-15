@@ -1,0 +1,166 @@
+#!/bin/csh -f
+
+if !(-d $CASEBUILD        ) mkdir $CASEBUILD
+
+echo " "
+echo "*************************************************"
+echo "You should do the following manually before running the CCSM build script:"
+echo "  setenv NETCDF /usr/local/pkg/netcdf/netcdf-3.6.1.pgi (for midnight)"
+echo "  cd models/atm/wrf"
+echo "  ./clean -a"
+echo "  ./configure"
+echo "  choose 4 (for midnight)"
+echo "  choose 1"
+echo "*************************************************"
+echo " "
+
+#--------------------------------------------------------------------
+# determine start date, initial datasets and grid related variables
+#--------------------------------------------------------------------
+
+#--------------------------------------------------------------------
+# create "ccsm_namelist" file in camconf/ directory
+#--------------------------------------------------------------------
+
+#--------------------------------------------------------------------
+# invoke cam configure and build-namelist utility
+# output will go in buildnml/camconf
+#--------------------------------------------------------------------
+
+#--------------------------------------------------------------------
+# create script to generate namelist
+#--------------------------------------------------------------------
+
+cat >! $CASEBUILD/wrf.buildnml.csh << EOF1
+#! /bin/csh -f 
+EOF1
+
+#--------------------------------------------------------------------
+# create script to generate executable
+#--------------------------------------------------------------------
+
+cat >! $CASEBUILD/wrf.buildexe.csh << EOF2
+#! /bin/csh -f
+
+# enter the code directory
+set objdir = \$OBJROOT/wrf/obj
+cd \$objdir
+cp -p -r \$CODEROOT/atm/wrf .
+cd ./wrf
+
+# for atm_mct_comp compiler
+
+cp configure.wrf.bk configure.wrf
+./compile em_real
+echo \$DEBUG
+
+# for ccsm compiler
+
+cd \$objdir/wrf/external/esmf_time_f90
+ar ru \$objdir/wrf/main/libwrflib.a *.o
+
+cd \$objdir/wrf/external/io_netcdf
+ar ru \$objdir/wrf/main/libwrflib.a *.o
+
+cd \$objdir/wrf/external/fftpack/fftpack5
+ar ru \$objdir/wrf/main/libwrflib.a *.o
+
+cd \$objdir/wrf/external/io_grib_share
+ar ru \$objdir/wrf/main/libwrflib.a *.o
+
+cd \$objdir/wrf/external/io_grib1
+ar ru \$objdir/wrf/main/libwrflib.a *.o
+
+cd \$objdir/wrf/external/io_grib1/grib1_util
+ar ru \$objdir/wrf/main/libwrflib.a *.o
+
+cd \$objdir/wrf/external/io_grib1/MEL_grib1
+ar ru \$objdir/wrf/main/libwrflib.a *.o
+
+cd \$objdir/wrf/external/io_grib1/WGRIB
+ar ru \$objdir/wrf/main/libwrflib.a *.o
+
+cd \$objdir/wrf/external/RSL_LITE
+ar ru \$objdir/wrf/main/libwrflib.a *.o
+
+cd \$objdir/wrf/external/io_int
+ar ru \$objdir/wrf/main/libwrflib.a *.o
+
+cd \$objdir/wrf/frame
+ar ru \$objdir/wrf/main/libwrflib.a module_internal_header_util.o pack_utils.o
+
+cd \$objdir/wrf/main
+ar ru \$objdir/wrf/main/libwrflib.a wrf_comp_mct.o
+
+# esmf_wrf
+cd \$objdir/wrf/external/esmf_time_f90
+cp *.mod \$LIBROOT/include
+
+cd \$objdir/wrf
+
+cp -p main/*.mod  \$LIBROOT/include
+
+cp -p main/libwrflib.a  \$LIBROOT/libwrf.a
+
+# prepare namelist and other parameters
+cd \$RUNDIR
+
+rm  -f ETAMPNEW_DATA
+rm  -f ETAMPNEW_DATA_DBL
+rm  -f RRTM_DATA
+rm  -f RRTM_DATA_DBL
+rm  -f RRTMG_SW_DATA
+rm  -f RRTMG_LW_DATA
+rm  -f RRTMG_SW_DATA_DBL
+rm  -f RRTMG_LW_DATA_DBL
+rm  -f CAM_ABS_DATA
+rm  -f CAM_AEROPT_DATA
+rm  -f ozone.formatted
+rm  -f ozone_lat.formatted
+rm  -f ozone_plev.formatted
+rm  -f GENPARM.TBL
+rm  -f LANDUSE.TBL
+rm  -f SOILPARM.TBL
+rm  -f URBPARM.TBL 
+rm  -f VEGPARM.TBL
+rm  -f tr49t67
+rm  -f tr49t85
+rm  -f tr67t85
+rm  -f gribmap.txt
+rm  -f grib2map.tbl
+rm  -f namelist.input
+rm  -f namelist.wps
+rm  -f GEOGRID.TBL
+
+cp   /work1/jjr/wangty/v32/CAM_ABS_DATA .
+cp   /work1/jjr/wangty/v32/CAM_AEROPT_DATA .
+cp   /work1/jjr/wangty/v32/ETAMPNEW_DATA .
+cp   /work1/jjr/wangty/v32/ETAMPNEW_DATA_DBL .
+cp   /work1/jjr/wangty/v32/RRTM_DATA .
+cp   /work1/jjr/wangty/v32/RRTM_DATA_DBL .
+cp   /work1/jjr/wangty/v32/RRTMG_SW_DATA .
+cp   /work1/jjr/wangty/v32/RRTMG_SW_DATA_DBL .
+cp   /work1/jjr/wangty/v32/RRTMG_LW_DATA .
+cp   /work1/jjr/wangty/v32/RRTMG_LW_DATA_DBL .
+cp   /work1/jjr/wangty/v32/ozone.formatted .
+cp   /work1/jjr/wangty/v32/ozone_lat.formatted .
+cp   /work1/jjr/wangty/v32/ozone_plev.formatted .
+cp   /work1/jjr/wangty/v32/GENPARM.TBL .
+cp   /work1/jjr/wangty/v32/LANDUSE.TBL .
+cp   /work1/jjr/wangty/v32/SOILPARM.TBL .
+cp   /work1/jjr/wangty/v32/URBPARM.TBL .
+cp   /work1/jjr/wangty/v32/VEGPARM.TBL .
+cp   /work1/jjr/wangty/v32/tr49t67 .
+cp   /work1/jjr/wangty/v32/tr49t85 .
+cp   /work1/jjr/wangty/v32/tr67t85 .
+cp   /work1/jjr/wangty/v32/co2_trans .
+cp   /work1/jjr/wangty/v32/gribmap.txt .
+cp   /work1/jjr/wangty/v32/grib2map.tbl .
+cp   /work1/jjr/wangty/v32/namelist.input.iap53 namelist.input
+cp   /work1/jjr/wangty/v32/GEOGRID.TBL .
+cp   /work1/jjr/wangty/v32/METGRID.TBL .
+cp   /work1/jjr/wangty/v32/namelist.wps.iap53 namelist.wps
+
+#chmod u+w *
+
+EOF2

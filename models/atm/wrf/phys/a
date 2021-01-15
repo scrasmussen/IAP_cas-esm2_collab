@@ -1,0 +1,240 @@
+119c119
+<       module rrsw_aer_wrf
+---
+>       module rrsw_aer
+177c177
+<       end module rrsw_aer_wrf
+---
+>       end module rrsw_aer
+179c179
+<       module rrsw_cld_wrf
+---
+>       module rrsw_cld
+220c220
+<       end module rrsw_cld_wrf
+---
+>       end module rrsw_cld
+222c222
+<       module rrsw_con_wrf
+---
+>       module rrsw_con
+262c262
+<       end module rrsw_con_wrf
+---
+>       end module rrsw_con
+264c264
+<       module rrsw_kg16_wrf
+---
+>       module rrsw_kg16
+327c327
+<       end module rrsw_kg16_wrf
+---
+>       end module rrsw_kg16
+329c329
+<       module rrsw_kg17_wrf
+---
+>       module rrsw_kg17
+392c392
+<       end module rrsw_kg17_wrf
+---
+>       end module rrsw_kg17
+394c394
+<       module rrsw_kg18_wrf
+---
+>       module rrsw_kg18
+457c457
+<       end module rrsw_kg18_wrf
+---
+>       end module rrsw_kg18
+459c459
+<       module rrsw_kg19_wrf
+---
+>       module rrsw_kg19
+522c522
+<       end module rrsw_kg19_wrf
+---
+>       end module rrsw_kg19
+524c524
+<       module rrsw_kg20_wrf
+---
+>       module rrsw_kg20
+591c591
+<       end module rrsw_kg20_wrf
+---
+>       end module rrsw_kg20
+593c593
+<       module rrsw_kg21_wrf
+---
+>       module rrsw_kg21
+656c656
+<       end module rrsw_kg21_wrf
+---
+>       end module rrsw_kg21
+658c658
+<       module rrsw_kg22_wrf
+---
+>       module rrsw_kg22
+721c721
+<       end module rrsw_kg22_wrf
+---
+>       end module rrsw_kg22
+723c723
+<       module rrsw_kg23_wrf
+---
+>       module rrsw_kg23
+785c785
+<       end module rrsw_kg23_wrf
+---
+>       end module rrsw_kg23
+787c787
+<       module rrsw_kg24_wrf
+---
+>       module rrsw_kg24
+862c862
+<       end module rrsw_kg24_wrf
+---
+>       end module rrsw_kg24
+864c864
+<       module rrsw_kg25_wrf
+---
+>       module rrsw_kg25
+925c925
+<       end module rrsw_kg25_wrf
+---
+>       end module rrsw_kg25
+927c927
+<       module rrsw_kg26_wrf
+---
+>       module rrsw_kg26
+973c973
+<       end module rrsw_kg26_wrf
+---
+>       end module rrsw_kg26
+975c975
+<       module rrsw_kg27_wrf
+---
+>       module rrsw_kg27
+1036c1036
+<       end module rrsw_kg27_wrf
+---
+>       end module rrsw_kg27
+1038c1038
+<       module rrsw_kg28_wrf
+---
+>       module rrsw_kg28
+1093c1093
+<       end module rrsw_kg28_wrf
+---
+>       end module rrsw_kg28
+1095c1095
+<       module rrsw_kg29_wrf
+---
+>       module rrsw_kg29
+1162c1162
+<       end module rrsw_kg29_wrf
+---
+>       end module rrsw_kg29
+1164c1164
+<       module rrsw_ref_wrf
+---
+>       module rrsw_ref
+1191c1191
+<       end module rrsw_ref_wrf
+---
+>       end module rrsw_ref
+1193c1193
+<       module rrsw_tbl_wrf
+---
+>       module rrsw_tbl
+1232c1232
+<       end module rrsw_tbl_wrf
+---
+>       end module rrsw_tbl
+1234c1234
+<       module rrsw_vsn_wrf
+---
+>       module rrsw_vsn
+1288c1288
+<       end module rrsw_vsn_wrf
+---
+>       end module rrsw_vsn
+1290c1290
+<       module rrsw_wvn_wrf
+---
+>       module rrsw_wvn
+1345c1345
+<       end module rrsw_wvn_wrf
+---
+>       end module rrsw_wvn
+1352c1352
+<       module mcica_subcol_gen_sw_wrf
+---
+>       module mcica_subcol_gen_sw
+1919c1919
+<       end module mcica_subcol_gen_sw_wrf
+---
+>       end module mcica_subcol_gen_sw
+1926c1926
+<       module rrtmg_sw_cldprmc_wrf
+---
+>       module rrtmg_sw_cldprmc
+2249c2249
+<       end module rrtmg_sw_cldprmc_wrf
+---
+>       end module rrtmg_sw_cldprmc
+2256c2256
+<       module rrtmg_sw_reftra_wrf
+---
+>       module rrtmg_sw_reftra
+2558c2558
+<       end module rrtmg_sw_reftra_wrf
+---
+>       end module rrtmg_sw_reftra
+2565c2565
+<       module rrtmg_sw_setcoef_wrf
+---
+>       module rrtmg_sw_setcoef
+2904c2904
+<       end module rrtmg_sw_setcoef_wrf
+---
+>       end module rrtmg_sw_setcoef
+2911c2911
+<       module rrtmg_sw_taumol_wrf
+---
+>       module rrtmg_sw_taumol
+4397c4397
+<       end module rrtmg_sw_taumol_wrf
+---
+>       end module rrtmg_sw_taumol
+4404c4404
+<       module rrtmg_sw_init_wrf
+---
+>       module rrtmg_sw_init
+7701c7701
+<       end module rrtmg_sw_init_wrf
+---
+>       end module rrtmg_sw_init
+7708c7708
+<       module rrtmg_sw_vrtqdr_wrf
+---
+>       module rrtmg_sw_vrtqdr
+7856c7856
+<       end module rrtmg_sw_vrtqdr_wrf
+---
+>       end module rrtmg_sw_vrtqdr
+7863c7863
+<       module rrtmg_sw_spcvmc_wrf
+---
+>       module rrtmg_sw_spcvmc
+8457c8457
+<       end module rrtmg_sw_spcvmc_wrf
+---
+>       end module rrtmg_sw_spcvmc
+8464c8464
+<        module rrtmg_sw_rad_wrf
+---
+>        module rrtmg_sw_rad
+9543c9543
+<       end module rrtmg_sw_rad_wrf
+---
+>       end module rrtmg_sw_rad

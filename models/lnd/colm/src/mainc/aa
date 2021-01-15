@@ -1,0 +1,136 @@
+*** paramodel.F90	2018-11-20 22:38:20.001755322 -0500
+--- /R1/zjw/github_CAS_ESM/IAPDGVM_CoLM/paramodel.F90	2018-11-20 22:37:32.775573691 -0500
+***************
+*** 10,17 ****
+--- 10,22 ----
+        integer nl_lake       ! number of lake layers
+        integer nl_csoil      ! number of soil layers for solving carbon
+        integer maxsnl        ! max number of snow layers
++       integer nfcon_col     ! number of time constant variables
++       integer nfcon_pft     ! number of time constant variables
+        integer nftune        ! number of clm tunable constants
++       integer nfvar_col     ! number of time varying variables
++       integer nfvar_pft     ! number of time varying variables
+        integer nforc         ! number of forcing variables
++       integer nflai         ! number of leaf time varying variables
+        integer maxpatch      ! maximum number of patches in model grid
+        integer nsoilcateg    ! number of soil texture categories
+        integer nsoilcolor    ! number of soil color categories
+***************
+*** 28,34 ****
+--- 33,44 ----
+        integer npftpara      ! number of parameters for each PFT
+        integer numlandc
+  
++ #ifdef BNUDGVM
+        parameter(npftpara   = 32)
++ #endif
++ #ifdef IAPDGVM
++       parameter(npftpara   = 49)  
++ #endif
+        parameter(numlandc   = 21)
+  
+  #ifdef DGVM
+***************
+*** 47,57 ****
+--- 57,156 ----
+  
+        parameter(nl_csoil   = 10)
+  
++ #ifdef SOIL10
++       parameter(nfcon_col  = 87)   !10L
++ #endif
++ #ifdef SOIL15
++       parameter(nfcon_col  = 127)  !15L
++ #endif
++ !=====================================
++ #ifndef DGVM
++ !=====================================
++ #ifdef SOIL10
++       parameter(nfvar_col  = 81)   !10L
++       parameter(nfcon_pft  = 35+8) !10L
++ #endif
++ #ifdef SOIL15
++       parameter(nfvar_col  = 106)  !15L
++       parameter(nfcon_pft  = 40+8) !15L
++ #endif
++       parameter(nfvar_pft  = 45)
++ !====================================
++ #else
++ !====================================
+        parameter(numpft     = 16)
+        parameter(numpft_nat = 14)
++ !=====================
++ #ifndef DyN
++ !=====================
++ #ifdef BNUDGVM  
++ #ifdef SOIL10
++       parameter(nfcon_pft  = 34+40+8)    ! BNUDGVM jidy@09/Sep/2014
++       parameter(nfvar_col  = 81+3) !10L
++ #endif
++ #ifdef SOIL15
++       parameter(nfcon_pft  = 39+40+8)    ! BNUDGVM jidy@09/Sep/2014
++       parameter(nfvar_col  = 106+3)!15L
++ #endif
++       parameter(nfvar_pft  = 45+96)
++ 
++ #else
++ 
++ #ifdef SOIL10
++       parameter(nfcon_pft  = 34+40+17+8) ! IAPDGVM jidy@09/Sep/2014
++       parameter(nfvar_col  = 81+3+1)     !10L IAPDGVM wliq6mon zhujw 11/18/2018
++ #endif
++ #ifdef SOIL15
++       parameter(nfcon_pft  = 39+40+17+8) ! IAPDGVM jidy@09/Sep/2014
++       parameter(nfvar_col  = 106+3+1)    !15L IAPDGVM wliq6mon zhujw 11/18/2018
++ #endif
++       parameter(nfvar_pft  = 45+96+2)    ! IAPDGVM afirefrac1 and nfireg1  zhujw 11/18/2018
++ #endif
++ !===================
++ !end of choice at DGVM level
++ !===================
++ #else 
++ !====================
++ ! DyN level
++ !===================
++ #ifdef BNUDGVM
++ #ifdef SOIL10
++       parameter(nfcon_pft  = 34+40+2+8)    ! BNUDGVM jidy@09/Sep/2014
++       parameter(nfvar_col  = 81+3+6) !10L
++ #endif
++ #ifdef SOIL15
++       parameter(nfcon_pft  = 39+40+2+8)    ! BNUDGVM jidy@09/Sep/2014
++       parameter(nfvar_col  = 106+3+6)!15L
++ #endif
++       parameter(nfvar_pft  = 45+96+17)
++ 
++ #else
+  
++ #ifdef SOIL10
++       parameter(nfcon_pft  = 34+40+2+17+8) ! IAPDGVM jidy@09/Sep/2014
++       parameter(nfvar_col  = 81+3+6+1)     !10L !10L IAPDGVM wliq6mon zhujw 11/18/2018
++ #endif
++ #ifdef SOIL15
++       parameter(nfcon_pft  = 39+40+2+17+8) ! IAPDGVM jidy@09/Sep/2014
++       parameter(nfvar_col  = 106+3+6+1)    !15L !10L IAPDGVM wliq6mon zhujw 11/18/2018
++ #endif
++       parameter(nfvar_pft  = 45+96+17+2)   ! IAPDGVM afirefrac1 and nfireg1 zhujw 11/18/2018
++ #endif
++ !==========
++ !end of choice at DGVM level
++ !==========
++ 
++ #endif
++ !==================
++ !end of DyN 
++ !==================
++ #endif
++ !=================================
++ !end of turn on or off DGVM level
++ !================================
+        parameter(nftune     = 14)
+        parameter(nforc      = 18)
++       parameter(nflai      =  4)
+  
+        parameter(grasscateg    = 13)
+        parameter(baresoilcateg = 17)
