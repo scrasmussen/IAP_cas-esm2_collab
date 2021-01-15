@@ -81,12 +81,12 @@ endif
 
 ifeq ($(USE_MPISERIAL),TRUE)
    FC            := ifort 
-   CC            := mpiicc 
+   CC            := icc 
 else
 #   FC            := mpif90
-   FC            := mpiifort
+   FC            := ifort
 #   CC            := mpicc
-   CC            := mpiicc 
+   CC            := icc 
 endif
 
 #=====================================================
@@ -102,14 +102,14 @@ endif
 
 ifeq ($(strip $(NETCDF_PATH)),)
 # NETCDF_PATH   := /glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/17.0.1
- NETCDF_PATH   := /glade/u/apps/ch/opt/netcdf/4.6.1/intel/18.0.1
+ NETCDF_PATH   := /glade/u/apps/ch/opt/netcdf/4.7.4/intel/19.0.5/
 endif
 INC_NETCDF    := $(NETCDF_PATH)/include
 LIB_NETCDF    := $(NETCDF_PATH)/lib -lnetcdff -lnetcdf
 MOD_NETCDF    := $(NETCDF_PATH)/include
 ifeq ($(strip $(MPICH_PATH)),)
 #MPICH_PATH := /opt/sgi/mpt/mpt-2.15
-MPICH_PATH := /glade/u/apps/opt/intel/2018u1/impi/2018.1.163/intel64
+MPICH_PATH := /glade/u/apps/ch/opt/mpt/2.22
 endif
 ifeq ($(USE_MPISERIAL),TRUE)
    INC_MPI    := $(CODEROOT)/utils/mct/mpi-serial

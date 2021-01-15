@@ -8,8 +8,8 @@ if ($PHASE == set_batch) then
 
 source ./Tools/ccsm_getenv || exit -1
 
-set ntasks  = `${UTILROOT}/Tools/taskmaker_cheyenne.pl -sumonly`
-set maxthrds = `${UTILROOT}/Tools/taskmaker_cheyenne.pl -maxthrds`
+set ntasks  = `${UTILROOT}/Tools/taskmaker.pl -sumonly`
+set maxthrds = `${UTILROOT}/Tools/taskmaker.pl -maxthrds`
 @ nodes = $ntasks / ${MAX_TASKS_PER_NODE}
 if ( $ntasks % ${MAX_TASKS_PER_NODE} > 0) then
   @ nodes = $nodes + 1
