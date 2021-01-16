@@ -1,6 +1,6 @@
 #!/bin/csh
 #PBS -N test 
-#PBS -A P48500053
+#PBS -A P48503002
 #PBS -l walltime=00:20:00
 #PBS -q regular    
 #PBS -j oe
