@@ -1,0 +1,6 @@
+[submodule "models/atm/iap/ccpp/framework"]
+	path = models/atm/iap/ccpp/framework
+	url = https://github.com/NCAR/ccpp-framework
+[submodule "models/atm/iap/ccpp/physics"]
+	path = models/atm/iap/ccpp/physics
+	url = https://github.com/NCAR/ccpp-physics
