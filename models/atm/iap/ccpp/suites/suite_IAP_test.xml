@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<suite name="IAP_test" version="1">
+  <!-- <init></init> -->
+  <group name="test1">
+    <subcycle loop="1">
+    </subcycle>
+  </group>
+  <!-- <finalize></finalize> -->
+</suite>
