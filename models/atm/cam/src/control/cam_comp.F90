@@ -1,4 +1,9 @@
 module cam_comp
+
+!! \section arg_table_cam_comp Argument Table
+!! \htmlinclude cam_comp.html
+!!
+
 !-----------------------------------------------------------------------
 !
 ! Purpose:  The CAM Community Atmosphere Model component. Interfaces with 
@@ -14,7 +19,11 @@ module cam_comp
    use camsrfexch_types,  only: cam_out_t, cam_in_t     
    use shr_sys_mod,       only: shr_sys_flush
    use infnan,            only: nan
+#ifdef CCPP
+   use physics_types,     only: physics_state, physics_tend, physics_int_ephem, physics_int_pers, physics_global
+#else
    use physics_types,     only: physics_state, physics_tend
+#endif
    use cam_control_mod,   only: nsrest, print_step_cost, obliqr, lambm0, mvelpp, eccen
    use dyn_comp,          only: dyn_import_t, dyn_export_t
 !wangty modify
@@ -60,6 +69,11 @@ module cam_comp
 
   type(physics_state), pointer :: phys_state(:)
   type(physics_tend ), pointer :: phys_tend(:)
+#ifdef CCPP
+  type(physics_int_ephem), pointer :: phys_int_ephem(:)
+  type(physics_int_pers),  pointer :: phys_int_pers(:)
+  type(physics_global),    pointer :: phys_global
+#endif
   real(r8) :: wcstart, wcend     ! wallclock timestamp at start, end of timestep
   real(r8) :: usrstart, usrend   ! user timestamp at start, end of timestep
   real(r8) :: sysstart, sysend   ! sys timestamp at start, end of timestep
@@ -197,7 +211,11 @@ subroutine cam_init( cam_out, cam_in, mpicom_atm, &
 #endif
    end if
 
+#ifdef CCPP
+   call phys_init( phys_state, phys_tend, pbuf, cam_out, phys_int_ephem, phys_int_pers, phys_global)
+#else
    call phys_init( phys_state, phys_tend, pbuf, cam_out )
+#endif
 
    call bldfld ()       ! master field list (if branch, only does hash tables)
 

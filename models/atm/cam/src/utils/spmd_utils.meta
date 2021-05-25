@@ -1,0 +1,15 @@
+[ccpp-table-properties]
+  name = spmd_utils
+  type = module
+  relative_path = 
+  dependencies = 
+ 
+[ccpp-arg-table]
+  name = spmd_utils
+  type = module
+[masterproc]
+  name = flag_for_master_processor
+  long_name = flag for master processor
+  units = flag
+  dimensions = ()
+  type = logical

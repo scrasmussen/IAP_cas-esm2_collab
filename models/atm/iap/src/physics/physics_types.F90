@@ -8,26 +8,46 @@ module physics_types
   use shr_kind_mod, only: r8 => shr_kind_r8
 !====Jinbo Xie====
   !use ppgrid,       only: pcols, pver
-   use ppgrid,       only: pcols, pver,nvar_dirOA,nvar_dirOL,indexb
+   use ppgrid,       only: pcols, pver,pverp,nvar_dirOA,nvar_dirOL,indexb
 !====Jinbo Xie====
+#ifdef CCPP
+  use constituents, only: pcnst, qmin, cnst_name, cnst_get_id
+#else
   use constituents, only: pcnst, qmin, cnst_name
+#endif
   use geopotential, only: geopotential_dse
   use physconst,    only: zvir, gravit, cpair, rair
   use dycore,       only: dycore_is
   use phys_grid,    only: get_ncols_p, get_rlon_all_p, get_rlat_all_p, get_gcol_all_p
   use cam_logfile,  only: iulog
   use abortutils,   only: endrun
+#ifdef CCPP
+  use time_manager,   only: get_step_size
+  use phys_control,   only: phys_deepconv_pbl, cam_physpkg_is, phys_getopts
+  use error_messages, only: alloc_err
+#endif
 
   implicit none
   private          ! Make default type private to the module
 
   logical, parameter :: adjust_te = .FALSE.
+  real(kind=r8), parameter :: zero      = 0.0_r8
+  real(kind=r8), parameter :: clear_val = zero
+
+!> \section arg_table_physics_types
+!! \htmlinclude physics_types.html
+!!
 
 ! Public types:
 
   public physics_state
   public physics_tend
   public physics_ptend
+#ifdef CCPP
+  public physics_int_ephem
+  public physics_int_pers
+  public physics_global
+#endif
   
 ! Public interfaces
 
@@ -46,6 +66,10 @@ module physics_types
   public set_dry_to_wet
   public physics_type_alloc
 !-------------------------------------------------------------------------------
+!! \section arg_table_physics_state
+!! \htmlinclude physics_state.html
+!!
+  
   type physics_state
      ! yhy
     integer   ::   psetcols=0 ! max number of columns set- if subcols = pcols*psubcols, else =  pcols
@@ -231,13 +255,20 @@ module physics_types
 !===============================================================================
 contains
 !===============================================================================
+#ifdef CCPP
+  subroutine physics_type_alloc(phys_state, phys_tend, phys_int_ephem, phys_int_pers, begchunk, endchunk)
+#else
   subroutine physics_type_alloc(phys_state, phys_tend, begchunk, endchunk)
+#endif
     use infnan, only : inf
     implicit none
     type(physics_state), pointer :: phys_state(:)
     type(physics_tend), pointer :: phys_tend(:)
     integer, intent(in) :: begchunk, endchunk
-    
+#ifdef CCPP
+    type(physics_int_ephem), pointer :: phys_int_ephem(:)
+    type(physics_int_pers), pointer :: phys_int_pers(:)
+#endif
     integer :: ierr, lchnk
     type(physics_state), pointer :: state
     type(physics_tend), pointer :: tend
@@ -253,6 +284,20 @@ contains
        write(iulog,*) 'physics_types: phys_tend allocation error = ',ierr
        call endrun('physics_types: failed to allocate physics_tend array')
     end if
+    
+#ifdef CCPP
+    allocate(phys_int_ephem(begchunk:endchunk), stat=ierr)
+    if( ierr /= 0 ) then
+       write(iulog,*) 'physics_types: phys_int_ephem allocation error = ',ierr
+       call endrun('physics_types: failed to allocate physics_int_ephem array')
+    end if
+    
+    allocate(phys_int_pers(begchunk:endchunk), stat=ierr)
+    if( ierr /= 0 ) then
+       write(iulog,*) 'physics_types: phys_int_pers allocation error = ',ierr
+       call endrun('physics_types: failed to allocate physics_int_pers array')
+    end if
+#endif
 
    ! Set chunk id, number of columns, and coordinates
     do lchnk = begchunk,endchunk
@@ -339,7 +384,12 @@ state%terrout=inf
 !------------------------------------------------------------------------
 ! Juanxiong He
 !------------------------------------------------------------------------
-#endif   
+#endif  
+#ifdef CCPP
+      !call create for each block
+      phys_int_ephem(lchnk)%create(pcols, pver, pverp, pcnst)
+      phys_int_pers (lchnk)%create(pcols, pver)
+#endif 
     end do
 
   end subroutine physics_type_alloc
@@ -1093,5 +1143,325 @@ subroutine set_dry_to_wet (state)
 
 end subroutine set_dry_to_wet
 
+#ifdef CCPP
+type physics_int_ephem
+  
+  !variables previously internal to tphysbc; there need to be n_threads of this type
+  real(kind=r8), pointer :: prec(:) => null()
+  
+  real(kind=r8), pointer              :: prec(:)  => null()  !<
+  real(kind=r8), pointer              :: snow(:)  => null()  !<
+  type(physics_ptend),   pointer      :: ptend_deep_conv => null()
+  type(physics_ptend),   pointer      :: ptend_deep_conv_evap => null()
+  type(physics_ptend),   pointer      :: ptend_deep_conv_momtran => null()
+  type(physics_ptend),   pointer      :: ptend_deep_conv_convtran => null()
+  type(physics_ptend),   pointer      :: ptend_deep_conv_tot => null()
+  real(kind=r8), pointer              :: cmfmc(:,:) => null()       !< Convective mass flux--m sub c
+  real(kind=r8), pointer              :: cmfcme(:,:)=> null()           !< cmf condensation - evaporation
+  real(kind=r8), pointer              :: dlf(:,:)   => null()           !< Detraining cld H20 from shallow + deep convections
+  real(kind=r8), pointer              :: pflx(:,:)  => null()           !< Conv rain flux thru out btm of lev
+  real(kind=r8), pointer              :: zdu(:,:)   => null()           !< detraining mass flux from deep convection
+  real(kind=r8), pointer              :: rliq(:)    => null()         !< vertical integral of liquid not yet in q(ixcldliq)
+  
+  !variables previously internal to zm_conv_intr
+  real(kind=r8), pointer              :: cape(:) => null() ! convective available potential energy.
+  real(kind=r8), pointer              :: pcont(:) => null()
+  real(kind=r8), pointer              :: pconb(:) => null()
+  real(kind=r8), pointer              :: temp_state_u(:,:) => null()
+  real(kind=r8), pointer              :: temp_state_v(:,:) => null()
+  real(kind=r8), pointer              :: temp_state_s(:,:) => null()
+  real(kind=r8), pointer              :: temp_state_q(:,:,:) => null()
+  real(kind=r8), pointer              :: tend_s_snwprd  (:,:) ! Heating rate of snow production
+  real(kind=r8), pointer              :: tend_s_snwevmlt(:,:) ! Heating rate of evap/melting of snow
+  real(kind=r8), pointer              :: ntprprd(:,:) !net precip production in layer
+  real(kind=r8), pointer              :: ntsnprd(:,:) !net snow production in layer
+  
+  contains
+    procedure :: create      => interstitial_ephemeral_create     !<   allocate array data
+    procedure :: reset       => interstitial_ephemeral_reset      !<   reset array data
+end type physics_int_ephem
 
+subroutine interstitial_ephemeral_create (int_ephem, ncol, pver, pverp)
+  implicit none
+  
+  class(physics_int_ephem)       :: int_ephem
+  integer,                intent(in) :: ncol, pver, pverp, pcnst
+  
+  allocate (int_ephem%prec  (ncol))
+  allocate (int_ephem%snow  (ncol))
+  allocate (int_ephem%cmfmc (ncol, pverp))
+  allocate (int_ephem%cmfcme(ncol, pver))
+  allocate (int_ephem%cape  (ncol))
+  allocate (int_ephem%dlf   (ncol, pver))
+  allocate (int_ephem%pflx  (ncol, pverp))
+  allocate (int_ephem%zdu   (ncol, pver))
+  allocate (int_ephem%rliq  (ncol))
+  allocate (int_ephem%pcont (ncol))
+  allocate (int_ephem%pconb (ncol))
+  allocate (int_ephem%temp_state_u(ncol,pver))
+  allocate (int_ephem%temp_state_v(ncol,pver))
+  allocate (int_ephem%temp_state_s(ncol,pver))
+  allocate (int_ephem%temp_state_q(ncol,pver,pcnst))
+  allocate (int_ephem%tend_s_snwprd(ncol,pver))
+  allocate (int_ephem%tend_s_snwevmlt(ncol,pver))
+  allocate (int_ephem%ntprprd(ncol,pver))
+  allocate (int_ephem%ntsnprd(ncol,pver))
+  
+  call physics_ptend_init(int_ephem%ptend_deep_conv)
+  call physics_ptend_init(int_ephem%ptend_deep_conv_evap)
+  call physics_ptend_init(int_ephem%ptend_deep_conv_momtran)
+  call physics_ptend_init(int_ephem%ptend_deep_conv_convtran)
+  call physics_ptend_init(int_ephem%ptend_deep_conv_tot)
+  
+end subroutine interstitial_ephemeral_create
+
+subroutine interstitial_ephemeral_reset(int_ephem)
+  implicit none
+  
+  class(physics_int_ephem)       :: int_ephem
+  
+  int_ephem%prec            = clear_val
+  int_ephem%snow            = clear_val
+  int_ephem%cmfmc           = clear_val
+  int_ephem%cmfcme          = clear_val
+  int_ephem%cape            = clear_val
+  int_ephem%dlf             = clear_val
+  int_ephem%pflx            = clear_val
+  int_ephem%zdu             = clear_val
+  int_ephem%rliq            = clear_val
+  int_ephem%pcont           = clear_val
+  int_ephem%pconb           = clear_val
+  int_ephem%temp_state_u    = clear_val
+  int_ephem%temp_state_v    = clear_val
+  int_ephem%temp_state_s    = clear_val
+  int_ephem%temp_state_q    = clear_val
+  int_ephem%tend_s_snwprd   = clear_val
+  int_ephem%tend_s_snwevmlt = clear_val
+  int_ephem%ntprprd         = clear_val
+  int_ephem%ntsnprd         = clear_val
+  
+  call physics_ptend_reset(int_ephem%ptend_deep_conv)
+  call physics_ptend_reset(int_ephem%ptend_deep_conv_evap)
+  call physics_ptend_reset(int_ephem%ptend_deep_conv_momtran)
+  call physics_ptend_reset(int_ephem%ptend_deep_conv_convtran)
+  call physics_ptend_reset(int_ephem%ptend_deep_conv_tot)
+  
+end subroutine interstitial_ephemeral_reset
+
+type physics_int_pers
+ 
+ !variables from the physics buffer; memory for these should already allocated as part of pbuf, but
+ !associating the memory in this DDT will make metadata easier
+ 
+ !needs to have an array of nchunks of these DDTs and loop through chunks to associate pointers with the right memory
+ 
+ 
+ !added from convect_deep.F90/convect_deep_register
+ real(kind=r8), pointer :: jctop(:) => null()
+ real(kind=r8), pointer :: jcbot(:) => null()
+ real(kind=r8), pointer :: rprd(:,:) => null()
+ real(kind=r8), pointer :: ql(:,:) => null()
+ real(kind=r8), pointer :: slflx(:,:) => null()
+ real(kind=r8), pointer :: qtflx(:,:) => null()
+ real(kind=r8), pointer :: evapcdp(:,:) => null()
+ 
+ !accessed from zm_conv_intr.F90
+ real(kind=r8), pointer :: cld_old(:,:) => null()
+ 
+ !added from aerosol_intr.F90; accessed by zm_conv_intr.F90
+ real(kind=r8), pointer :: fracis(:,:,:) => null()
+ 
+ !added in zm_conv_intr.F90/zm_conv_register; access in zm_conv_tend
+ real(kind=r8), pointer :: flxprec(:,:) => null()
+ real(kind=r8), pointer :: flxsnow(:,:) => null()
+ real(kind=r8), pointer :: dp_cldliq(:,:) => null()
+ real(kind=r8), pointer :: dp_cldice(:,:) => null()
+ 
+ !added from zm_conv_intr.F90 module variables
+ real(kind=r8), pointer :: mu(:,:) => null()
+ real(kind=r8), pointer :: md(:,:) => null()
+ real(kind=r8), pointer :: du(:,:) => null()
+ real(kind=r8), pointer :: eu(:,:) => null()
+ real(kind=r8), pointer :: ed(:,:) => null()
+ real(kind=r8), pointer :: dp(:,:) => null()
+ real(kind=r8), pointer :: dsubcld(:) => null()
+ integer      , pointer :: jt(:) => null()
+ integer      , pointer :: maxg(:) => null()
+ integer      , pointer :: ideep(:) => null()
+ integer                :: lengath
+ 
+ contains
+   procedure :: associate       => interstitial_persistent_associate
+   procedure :: create          => interstitial_persistent_create
+   procedure :: init            => interstitial_persistent_init
+end type physics_int_pers
+
+subroutine interstitial_persistent_associate(int_pers, pcols, pver, pverp, pcnst, lchnk)
+  !should be called once per block before physics init stage
+  
+  use phys_buffer,   only: pbuf, pbuf_get_fld_idx, pbuf_old_tim_idx
+  implicit none
+  
+  class(physics_int_pers)       :: int_pers
+  
+  integer, intent(in) :: pcols, pver, pverp, lchnk
+  
+  integer :: var_idx, itim
+  
+  !from convect_deep.F90/convect_deep_init,convect_deep_tend
+  var_idx = pbuf_get_fld_idx('CLDTOP')
+  int_pers%jctop => pbuf(var_idx)%fld_ptr(1,1:pcols,1,lchnk,1)
+  var_idx = pbuf_get_fld_idx('CLDBOT')
+  int_pers%jcbot => pbuf(var_idx)%fld_ptr(1,1:pcols,1,lchnk,1)
+  var_idx = pbuf_get_fld_idx('RPRDDP')
+  int_pers%rprd => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1)
+  var_idx = pbuf_get_fld_idx('ICWMRDP')
+  int_pers%ql => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1)
+  var_idx = pbuf_get_fld_idx('slflxdp')
+  int_pers%slflx => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pverp,lchnk,1)
+  var_idx = pbuf_get_fld_idx('qtflxdp')
+  int_pers%qtflx => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pverp,lchnk,1)
+  var_idx = pbuf_get_fld_idx('NEVAPR_DPCU')
+  int_pers%evapcdp => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1)
+  
+  !from zm_conv_intr.F90/zm_conv_init/tend
+  var_idx = pbuf_get_fld_idx('CLD')
+  itim    = pbuf_old_tim_idx()
+  int_pers%cld_old => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,itim)
+  var_idx = pbuf_get_fld_idx('FRACIS')
+  int_pers%fracis  => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1:pcnst)
+  
+  var_idx = pbuf_get_fld_idx('DP_FLXPRC')
+  int_pers%flxprec => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pverp,lchnk,1)
+  var_idx = pbuf_get_fld_idx('DP_FLXSNW')
+  int_pers%flxsnow => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pverp,lchnk,1)
+  var_idx = pbuf_get_fld_idx('DP_CLDLIQ')
+  int_pers%dp_cldliq => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1)
+  var_idx = pbuf_get_fld_idx('DP_CLDICE')
+  int_pers%dp_cldice => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1)  
+  
+end subroutine interstitial_persistent_associate
+
+subroutine interstitial_persistent_create(int_pers, pcols, pver)
+  implicit none
+  
+  class(physics_int_pers)       :: int_pers
+  
+  integer, intent(in) :: pcols, pver
+  
+  integer :: istat
+  
+  allocate (int_pers%mu(pcols, pver), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'mu', pcols*pver)
+  allocate (int_pers%md(pcols, pver), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'md', pcols*pver)
+  allocate (int_pers%du(pcols, pver), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'du', pcols*pver)
+  allocate (int_pers%eu(pcols, pver), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'eu', pcols*pver)
+  allocate (int_pers%ed(pcols, pver), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'ed', pcols*pver)
+  allocate (int_pers%dp(pcols, pver), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'dp', pcols*pver)
+  allocate (int_pers%dsubcld(pcols), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'dsubcld', pcols)
+  allocate (int_pers%jt(pcols), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'jt', pcols)
+  allocate (int_pers%maxg(pcols), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'maxg', pcols)
+  allocate (int_pers%ideep(pcols), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'ideep', pcols)
+  
+end subroutine interstitial_persistent_create
+
+subroutine interstitial_persistent_init(int_pers)
+  implicit none
+  
+  class(physics_int_pers)       :: int_pers
+  
+  int_pers%mu = clear_val
+  int_pers%md = clear_val
+  int_pers%du = clear_val
+  int_pers%eu = clear_val
+  int_pers%ed = clear_val
+  int_pers%dp = clear_val
+  int_pers%dsubcld = clear_val
+  int_pers%jt = clear_val
+  int_pers%maxg = clear_val
+  int_pers%ideep = clear_val
+  int_pers%lengath = 0
+  
+end subroutine interstitial_persistent_init
+
+type physics_global
+  
+  character(len=16) :: cam_physpkg
+  character(len=16) :: cam_physpkg_cam3
+  character(len=16) :: cam_physpkg_cam4
+  character(len=16) :: cam_physpkg_cam5
+  character(len=16) :: cam_physpkg_ideal
+  character(len=16) :: cam_physpkg_adiabatic
+  character(len=16) :: microp_scheme
+  logical           :: non_dilute_buoy
+  logical           :: no_deep_pbl
+  logical           :: fv_dycore
+  integer           :: ixcldice
+  integer           :: ixcldliq
+  integer           :: ixnumice
+  integer           :: ixnumliq
+  real(kind=r8)     :: half_ztodt
+    
+  contains
+    procedure :: init      => physics_global_init 
+end type physics_global
+
+subroutine physics_global_init(pglob)
+  implicit none
+  
+  class(physics_global)       :: pglob
+  
+  real(kind=r8) :: ztodt
+  
+  pglob%cam_physpkg_cam3 = 'cam3'
+  pglob%cam_physpkg_cam3 = 'cam4'
+  pglob%cam_physpkg_cam3 = 'cam5'
+  pglob%cam_physpkg_ideal = 'ideal'
+  pglob%cam_physpkg_adiabatic = 'adiabatic'
+  
+  if (cam_physpkg_is(pglob%cam_physpkg_cam3)) then
+    pglob%cam_physpkg = pglob%cam_physpkg_cam3
+  else if (cam_physpkg_is(pglob%cam_physpkg_cam4)) then
+    pglob%cam_physpkg = pglob%cam_physpkg_cam4
+  else if (cam_physpkg_is(pglob%cam_physpkg_cam5)) then
+    pglob%cam_physpkg = pglob%cam_physpkg_cam5
+  else if (cam_physpkg_is(pglob%cam_physpkg_ideal)) then
+    pglob%cam_physpkg = pglob%cam_physpkg_ideal
+  else if (cam_physpkg_is(pglob%cam_physpkg_adiabatic)) then
+    pglob%cam_physpkg = pglob%cam_physpkg_adiabatic
+  else
+    pglob%cam_physpkg = 'UNSET'
+  end if
+  
+  call phys_getopts(microp_scheme_out=pglob%microp_scheme)
+  
+  if (trim(pglob%cam_physpkg) == trim(pglob%cam_physpkg_cam3)) then
+    pglob%non_dilute_buoy = .true.
+  else
+    pglob%non_dilute_buoy = .false.
+  end if
+  
+  pglob%no_deep_pbl = phys_deepconv_pbl()
+  pglob%fv_dycore = dycore_is ('LR')
+  
+  call cnst_get_ind('CLDICE', pglob%ixcldice, abort=.false.)
+  call cnst_get_ind('CLDLIQ', pglob%ixcldliq, abort=.false.)
+  ! Check for number concentration of cloud liquid and cloud ice (if not present
+  ! the indices will be set to -1)
+  call cnst_get_ind('NUMICE', pglob%ixnumice, abort=.false.)
+  call cnst_get_ind('NUMLIQ', pglob%ixnumliq, abort=.false.)
+  
+  ztodt = get_step_size()
+  pglob%half_ztodt = 0.5_r8*ztodt
+end subroutine physics_global_init
+#endif
 end module physics_types

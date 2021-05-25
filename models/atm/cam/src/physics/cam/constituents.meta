@@ -1,0 +1,22 @@
+[ccpp-table-properties]
+  name = constituents
+  type = module
+  relative_path = 
+  dependencies = 
+ 
+[ccpp-arg-table]
+  name = constituents
+  type = module
+[pcnst]
+  standard_name = number_of_tracers
+  long_name = number of tracers
+  units = count
+  dimensions = ()
+  type = integer
+[qmin]
+  standard_name = 
+  long_name = 
+  units =
+  dimensions = (number_of_tracers)
+  type = real
+  kind = kind_r8

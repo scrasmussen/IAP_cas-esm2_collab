@@ -1,0 +1,16 @@
+[ccpp-table-properties]
+  name = hycoef
+  type = module
+  relative_path = 
+  dependencies = shr_kind_mod.F90
+
+[ccpp-arg-table]
+  name = hycoef
+  type = module
+[hypi]
+  standard_name = reference_air_pressure_at_interface
+  long_name = refernce air pressure at interface
+  units = Pa
+  dimensions = (vertical_dimension_of_dycore_plus_one)
+  type = real
+  kind = kind_r8

@@ -16,7 +16,11 @@ use chemistry,     only: chem_is
 use abortutils,    only: endrun
 use scamMod,       only: single_column,wfld
 use dycore,        only: dycore_is
+#ifdef CCPP
+use phys_control,  only: phys_getopts, cam_physpkg_is
+#else
 use phys_control,  only: phys_getopts
+#endif
 use wv_saturation, only: aqsat, aqsat_water, polysvp
 
 implicit none
@@ -37,6 +41,9 @@ public :: &
    diag_phys_tend_writeout, & ! output physics tendencies
    diag_state_b4_phys_write,& ! output state before physics execution
    diag_conv,          &! output diagnostics of convective processes
+#ifdef CCPP
+   diag_tphysbc,       &
+#endif
    diag_surf,          &! output diagnostics of the surface
    diag_export,        &! output export state
    diag_physvar_ic,    &
@@ -138,6 +145,10 @@ subroutine diag_init
    integer, parameter :: plevmx = 4       ! number of subsurface levels
    character(len=8), parameter :: tsnam(plevmx) = (/ 'TS1', 'TS2', 'TS3', 'TS4' /)
    integer :: ixcldice, ixcldliq ! constituent indices for cloud liquid and ice water.
+
+#ifdef CCPP
+   character(len=16) :: deep_scheme    ! default set in phys_control.F90, use namelist to change
+#endif
 
    ! outfld calls in diag_phys_writeout
 
@@ -580,7 +591,86 @@ subroutine diag_init
       kvm_idx    = pbuf_get_fld_idx('kvm')
       kvh_idx    = pbuf_get_fld_idx('kvh')
       cush_idx   = pbuf_get_fld_idx('cush')
-  
+
+#ifdef CCPP
+   ! get deep_scheme setting from phys_control
+   call phys_getopts(deep_scheme_out = deep_scheme)
+   
+   select case ( deep_scheme )
+   !case('off') !     ==> no deep convection
+   
+   case('ZM') !    1 ==> Zhang-McFarlane (default)
+      call addfld ('PRECZ   ','m/s     ',1,    'A','total precipitation from ZM convection',        phys_decomp)
+      call addfld ('ZMDT    ','K/s     ',pver, 'A','T tendency - Zhang-McFarlane moist convection', phys_decomp)
+      call addfld ('ZMDQ    ','kg/kg/s ',pver, 'A','Q tendency - Zhang-McFarlane moist convection', phys_decomp)
+      call addfld ('ZMDICE ','kg/kg/s ',pver, 'A','Cloud ice tendency - Zhang-McFarlane convection',phys_decomp)
+      call addfld ('ZMDLIQ ','kg/kg/s ',pver, 'A','Cloud liq tendency - Zhang-McFarlane convection',phys_decomp)
+      call addfld ('EVAPTZM ','K/s     ',pver, 'A','T tendency - Evaporation/snow prod from Zhang convection',phys_decomp)
+      call addfld ('FZSNTZM ','K/s     ',pver, 'A','T tendency - Rain to snow conversion from Zhang convection',phys_decomp)
+      call addfld ('EVSNTZM ','K/s     ',pver, 'A','T tendency - Snow to rain prod from Zhang convection',phys_decomp)
+      call addfld ('EVAPQZM ','kg/kg/s ',pver, 'A','Q tendency - Evaporation from Zhang-McFarlane moist convection',phys_decomp)
+      
+      call addfld ('ZMFLXPRC','kg/m2/s ',pverp, 'A','Flux of precipitation from ZM convection'       ,phys_decomp)
+      call addfld ('ZMFLXSNW','kg/m2/s ',pverp, 'A','Flux of snow from ZM convection'                ,phys_decomp)
+      call addfld ('ZMNTPRPD','kg/kg/s ',pver , 'A','Net precipitation production from ZM convection',phys_decomp)
+      call addfld ('ZMNTSNPD','kg/kg/s ',pver , 'A','Net snow production from ZM convection'         ,phys_decomp)
+      call addfld ('ZMEIHEAT','W/kg'    ,pver , 'A','Heating by ice and evaporation in ZM convection',phys_decomp)
+      
+      call addfld ('CMFMCDZM','kg/m2/s ',pverp,'A','Convection mass flux from ZM deep ',phys_decomp)
+      call addfld ('PRECCDZM','m/s     ',1,    'A','Convective precipitation rate from ZM deep',phys_decomp)
+      call add_default ('CMFMCDZM', 1, ' ')
+      call add_default ('PRECCDZM', 1, ' ')
+
+      call addfld ('PCONVB','Pa'    ,1 , 'A','convection base pressure',phys_decomp)
+      call addfld ('PCONVT','Pa'    ,1 , 'A','convection top  pressure',phys_decomp)
+      call add_default ('PCONVB', 1, ' ')
+      call add_default ('PCONVT', 1, ' ')
+      
+
+      call addfld ('CAPE',   'J/kg',       1, 'A', 'Convectively available potential energy', phys_decomp)
+      call addfld ('FREQZM ','fraction  ',1  ,'A', 'Fractional occurance of ZM convection',phys_decomp) 
+      call add_default ('FREQZM', 1, ' ')
+
+      call addfld ('ZMMTT ', 'K/s',     pver, 'A', 'T tendency - ZM convective momentum transport',phys_decomp)
+      call addfld ('ZMMTU',  'm/s2',    pver, 'A', 'U tendency - ZM convective momentum transport',  phys_decomp)
+      call addfld ('ZMMTV',  'm/s2',    pver, 'A', 'V tendency - ZM convective momentum transport',  phys_decomp)
+
+      call addfld ('ZMMU',   'kg/m2/s', pver, 'A', 'ZM convection updraft mass flux',   phys_decomp)
+      call addfld ('ZMMD',   'kg/m2/s', pver, 'A', 'ZM convection downdraft mass flux', phys_decomp)
+
+      call addfld ('ZMUPGU', 'm/s2',    pver, 'A', 'zonal force from ZM updraft pressure gradient term',       phys_decomp)
+      call addfld ('ZMUPGD', 'm/s2',    pver, 'A', 'zonal force from ZM downdraft pressure gradient term',     phys_decomp)
+      call addfld ('ZMVPGU', 'm/s2',    pver, 'A', 'meridional force from ZM updraft pressure gradient term',  phys_decomp)
+      call addfld ('ZMVPGD', 'm/s2',    pver, 'A', 'merdional force from ZM downdraft pressure gradient term', phys_decomp)
+
+      call addfld ('ZMICUU', 'm/s',     pver, 'A', 'ZM in-cloud U updrafts',      phys_decomp)
+      call addfld ('ZMICUD', 'm/s',     pver, 'A', 'ZM in-cloud U downdrafts',    phys_decomp)
+      call addfld ('ZMICVU', 'm/s',     pver, 'A', 'ZM in-cloud V updrafts',      phys_decomp)
+      call addfld ('ZMICVD', 'm/s',     pver, 'A', 'ZM in-cloud V downdrafts',    phys_decomp)
+      
+      !call phys_getopts(history_budget_out = history_budget, history_budget_histfile_num_out = history_budget_histfile_num)
+      if ( history_budget ) then
+         call add_default('EVAPTZM  ', history_budget_histfile_num, ' ')
+         call add_default('EVAPQZM  ', history_budget_histfile_num, ' ')
+         call add_default('ZMDT     ', history_budget_histfile_num, ' ')
+         call add_default('ZMDQ     ', history_budget_histfile_num, ' ')
+         call add_default('ZMDLIQ   ', history_budget_histfile_num, ' ')
+         call add_default('ZMDICE   ', history_budget_histfile_num, ' ')
+
+         if( cam_physpkg_is('cam4') .or. cam_physpkg_is('cam5') ) then
+            call add_default('ZMMTT    ', history_budget_histfile_num, ' ')
+         end if
+
+      end if
+
+   !case('ZYX1') 
+   
+
+   !case('ZYX2') 
+   
+   case default
+   end select
+#endif
 
 end subroutine diag_init
 
@@ -1535,6 +1625,80 @@ end subroutine diag_export
 
    end subroutine diag_physvar_ic
 
+#ifdef CCPP
+   subroutine diag_tphysbc (lchnk, phys_int_ephem, phys_int_pers, phys_global)
+!
+!---------------------------------------------
+!
+! Purpose: record physics variables that had been output within tphysbc internal physics drivers
+!
+!---------------------------------------------
+!  
+   use phys_control,      only: phys_getopts
+   use physics_types,     only: physics_int_ephem, physics_int_pers, physics_global
+   use physconst,         only: gravit, cpair
+!
+! Arguments
+!
+   integer       , intent(in) :: lchnk  ! chunk identifier
+   type(physics_int_ephem), intent(in) :: phys_int_ephem
+   type(physics_int_pers), intent(in) :: phys_int_pers
+   type(physics_global), intent(in) :: phys_global 
+!
+!---------------------------Local workspace-----------------------------
+!
+   integer :: i,ii,k
+   character(len=16) :: deep_scheme
+   real(kind=r8)     :: pcont(pcols), pconb(pcols), freqzm(pcols)
+   real(kind=r8)     :: mu_out(pcols,pver), md_out(pcols,pver)
+   real(kind=r8)     :: ftem(pcols,pver)
+!
+!-----------------------------------------------------------------------
+!
+   call phys_getopts(deep_scheme_out = deep_scheme)
+   
+   select case ( deep_scheme )
+   case('ZM') !    Zhang-McFarlane (default)
+     call outfld('CAPE', phys_int_ephem%cape, pcols, lchnk)
+     
+     freqzm(:) = 0._r8
+     do i = 1,phys_int_pers%lengath
+        freqzm(phys_int_pers%ideep(i)) = 1.0
+     end do
+     call outfld('FREQZM  ',freqzm          ,pcols   ,lchnk   )
+     
+     mu_out(:,:) = 0._r8
+     md_out(:,:) = 0._r8
+     ! Store upward and downward mass fluxes in un-gathered arrays
+     ! + convert from mb/s to kg/m^2/s
+     do i=1,phys_int_pers%lengath 
+        do k=1,pver
+           ii = phys_int_pers%ideep(i)
+           mu_out(ii,k) = phys_int_pers%mu(i,k) * 100._r8/gravit
+           md_out(ii,k) = phys_int_pers%md(i,k) * 100._r8/gravit
+        end do
+     end do
+
+     call outfld('ZMMU', mu_out(1,1), pcols, lchnk)
+     call outfld('ZMMD', md_out(1,1), pcols, lchnk)
+     
+     ftem = 0._r8
+     ftem(:ncol,:pver) = phys_int_ephem%ptend_deep_conv%s(:ncol,:pver)/cpair
+     call outfld('ZMDT    ',ftem           ,pcols   ,lchnk   )
+     call outfld('ZMDQ    ',phys_int_ephem%ptend_deep_conv%q(1,1,1) ,pcols   ,lchnk   )
+
+     
+     call outfld('PCONVT  ',phys_int_ephem%pcont          ,pcols   ,lchnk   )
+     call outfld('PCONVB  ',phys_int_ephem%pconb          ,pcols   ,lchnk   )
+     
+   case('ZYX1')
+
+   case('ZYX2')
+
+   end select
+   
+   end subroutine diag_tphysbc
+#endif
 
 !#######################################################################
 

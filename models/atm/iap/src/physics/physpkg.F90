@@ -14,9 +14,16 @@ module physpkg
 !-----------------------------------------------------------------------
   use shr_kind_mod,     only: r8 => shr_kind_r8
   use spmd_utils,       only: masterproc
+#ifdef CCPP
+  use physics_types,    only: physics_state, physics_tend, physics_state_set_grid, &
+                              physics_ptend, physics_tend_init, physics_update,    &
+                              physics_ptend_init, physics_type_alloc,              &
+                              physics_int_ephem, physics_int_pers, physics_global
+#else
   use physics_types,    only: physics_state, physics_tend, physics_state_set_grid, &
                               physics_ptend, physics_tend_init, physics_update,    &
                               physics_ptend_init, physics_type_alloc
+#endif
   use phys_grid,        only: get_ncols_p
   use phys_gmean,       only: gmean_mass
   !use ppgrid,           only: begchunk, endchunk, pcols
@@ -432,8 +439,11 @@ subroutine phys_inidat( cam_out )
   call initialize_short_lived_species(ncid_ini)
 end subroutine phys_inidat
 
-
+#ifdef CCPP
+subroutine phys_init( phys_state, phys_tend, pbuf, cam_out, phys_int_ephem, phys_int_pers, phys_global )
+#else
 subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
+#endif
 !-----------------------------------------------------------------------
 !
 ! Purpose:
@@ -476,7 +486,12 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    use radiation,          only: radiation_init
    use cloud_diagnostics,  only: cloud_diagnostics_init
    use stratiform,         only: stratiform_init
+#ifdef CCPP
+   use phys_control,       only: phys_getopts, phys_deepconv_pbl
+   use ppgrid,             only: pver, pverp
+#else
    use phys_control,       only: phys_getopts
+#endif
    use microp_driver,      only: microp_driver_init
    use macrop_driver,      only: macrop_driver_init
    use conv_water,         only: conv_water_init
@@ -506,6 +521,12 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    type(physics_tend ), pointer :: phys_tend(:)
    type(pbuf_fld), intent(in), dimension(pbuf_size_max) :: pbuf  ! physics buffer
    type(cam_out_t),intent(inout)                        :: cam_out(begchunk:endchunk)
+#ifdef CCPP
+   type(physics_int_ephem), intent(inout), pointer :: phys_int_ephem(:)
+   type(physics_int_pers),  intent(inout), pointer :: phys_int_pers(:)
+   type(physics_global),    intent(inout), pointer :: phys_global
+   real(r8) :: dtime              ! Time step for either physics or dynamics (set in dynamics init)
+#endif
 
    ! local variables
    integer :: lchnk
@@ -524,8 +545,12 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    call phys_getopts( macrop_scheme_out = macrop_scheme )
 
    !-----------------------------------------------------------------------
-
+#ifdef CCPP
+   call physics_type_alloc(phys_state, phys_tend, phys_int_ephem, phys_int_pers, begchunk, endchunk)
+#else
    call physics_type_alloc(phys_state, phys_tend, begchunk, endchunk)
+#endif
+
 !---------------------------- test zhh ------------------------
 !!   if (masterproc) print*, 'success physics_type_alloc'
 !---------------------------- test zhh ------------------------
@@ -576,6 +601,15 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
 
    ! CAM3 prescribed aerosols
    if (cam3_aero_data_on) call cam3_aero_data_init(phys_state(begchunk:endchunk))
+
+#ifdef CCPP
+   do lchnk = begchunk,endchunk
+      call phys_int_ephem(lchnk)%reset()
+      call phys_int_pers(lchnk)%init()
+   end do
+   
+   call phys_global%init()
+#endif
 
    ! Initialize rad constituents and their properties
    call rad_cnst_init(pbuf, phys_state)
@@ -641,7 +675,6 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
 
    call cldfrc_init
 
-
    call convect_deep_init(hypi)
 
    call cldinti ()
@@ -666,6 +699,13 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    call sslt_rebin_init
    call tropopause_init()
 
+#ifdef CCPP
+! Assume that all physics buffer variables have been added at this point, so associate pointers
+   do lchnk = begchunk,endchunk
+      call phys_int_pers(lchnk)%associate(pcols, pver, pverp, pcnst, lchnk)
+   end do
+#endif
+
 end subroutine phys_init
 
 !
@@ -675,7 +715,11 @@ end subroutine phys_init
 #ifdef wrf
 subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out, cam_state, cam_tend)
 #else
+#ifdef CCPP
+subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out, phys_int_ephem)
+#else
 subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
+#endif
 #endif
 !-----------------------------------------------------------------------
 !
@@ -710,6 +754,9 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 #ifdef wrf 
    type(physics_state), intent(inout), dimension(begchunk:endchunk) :: cam_state ! juanxiong he
    type(physics_tend ), intent(inout), dimension(begchunk:endchunk) :: cam_tend ! juanxiong he
+#endif
+#ifdef CCPP
+   type(physics_int_ephem), intent(inout), dimension(:) :: phys_int_ephem
 #endif
 !-----------------------------------------------------------------------
 !
@@ -799,6 +846,14 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
                        cam_out(c), cam_in(c) )
 #endif
       end do
+
+#ifdef CCPP
+!$OMP PARALLEL DO PRIVATE (C)
+      do c=begchunk, endchunk
+        !call new physics variable output setup routine
+        call diag_tphysbc(c, phys_int_ephem(c), phys_int_pers(c))
+      end do
+#endif
 
       call t_adj_detailf(-1)
       call t_stopf ('bc_physics')

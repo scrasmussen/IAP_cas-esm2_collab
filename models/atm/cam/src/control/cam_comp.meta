@@ -1,0 +1,57 @@
+[ccpp-table-properties]
+  name = cam_comp
+  type = module
+  dependencies =
+  
+[ccpp-arg-table]
+  name = cam_comp
+  type = module
+[phys_state(ccpp_block_number)]
+  standard_name = IAP_physics_state_instance
+  long_name = instance of derived type physics_state
+  units = DDT
+  dimensions = ()
+  type = physics_state
+[phys_state]
+  standard_name = IAP_physics_state_instance_all_blocks
+  long_name = instance of derived type physics_state
+  units = DDT
+  dimensions = (ccpp_block_count)
+  type = physics_state
+[phys_tend(ccpp_block_number)]
+  standard_name = IAP_physics_tend_instance
+  long_name = instance of derived type physics_tend
+  units = DDT
+  dimensions = ()
+  type = physics_tend
+[phys_tend]
+  standard_name = IAP_physics_tend_instance_all_blocks
+  long_name = instance of derived type physics_tend
+  units = DDT
+  dimensions = (ccpp_block_count)
+  type = physics_tend
+[phys_int_ephem]
+  standard_name = IAP_physics_ephemeral_interstitial_instance_all_blocks
+  long_name = instance of derived type physics_int_ephem
+  units = DDT
+  dimensions = (ccpp_block_count)
+  type = physics_int_ephem
+[phys_int_pers]
+  standard_name = IAP_physics_persistent_interstitial_instance_all_blocks
+  long_name = instance of derived type physics_int_pers
+  units = DDT
+  dimensions = (ccpp_block_count)
+  type = physics_int_pers
+[phys_global]
+  standard_name = IAP_physics_global_instance
+  long_name = instance of derived type physics_global
+  units = DDT
+  dimensions = ()
+  type = physics_global
+[dtime]
+  standard_name = timestep_for_physics
+  long_name = physics timestep
+  units = s
+  dimensions = ()
+  type = real
+  kind = kind_r8

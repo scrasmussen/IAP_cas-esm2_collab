@@ -1,0 +1,38 @@
+[ccpp-table-properties]
+  name = camsrfexch_types
+  type = module
+  relative_path = 
+  dependencies = shr_kind_mod.F90,ppgrid.F90,constituents.F90
+
+[ccpp-arg-table]
+  name = camsrfexch_types
+  type = module
+[cam_in_t]
+  standard_name = cam_in_type
+  long_name = definition of type cam_in
+  units = DDT
+  dimensions = ()
+  type = cam_in_t
+[cam_out_t]
+  standard_name = cam_out_type
+  long_name = definition of type cam_out
+  units = DDT
+  dimensions = ()
+  type = cam_out_t
+  
+!###################################################################
+[ccpp-table-properties]
+  name = cam_in_t
+  type = ddt
+  dependencies =
+
+[ccpp-arg-table]
+  name = cam_in_t
+  type = ddt
+[landfrac]
+  standard_name = land_area_fraction
+  long_name = land area fraction
+  units = frac
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_r8

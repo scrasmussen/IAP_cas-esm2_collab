@@ -405,7 +405,9 @@ contains
    use cam3_ozone_data,     only: cam3_ozone_data_readnl
    use cloud_fraction,      only: cldfrc_readnl
    use cldwat,              only: cldwat_readnl
+#ifndef CCPP
    use zm_conv,             only: zmconv_readnl
+#endif
 !zmh
    use zyx1_conv,           only: zyx1_conv_readnl
    use hk_conv,             only: hkconv_readnl
@@ -1243,5 +1245,53 @@ subroutine preset
 !
    return
 end subroutine preset
+
+#ifdef CCPP
+subroutine zmconv_readnl(nlfile)
+
+   use namelist_utils,  only: find_group_name
+   use units,           only: getunit, freeunit
+   use mpishorthand
+   use zm_conv_common,  only: zmconv_c0_lnd, zmconv_c0_ocn, zmconv_ke, zmconv_dmpdz, c0_lnd, c0_ocn, ke
+
+   character(len=*), intent(in) :: nlfile  ! filepath for file containing namelist input
+
+   ! Local variables
+   integer :: unitn, ierr
+   character(len=*), parameter :: subname = 'zmconv_readnl'
+
+   namelist /zmconv_nl/ zmconv_c0_lnd, zmconv_c0_ocn, zmconv_ke, zmconv_dmpdz    !zhh
+   !-----------------------------------------------------------------------------
+
+   if (masterproc) then
+      unitn = getunit()
+      open( unitn, file=trim(nlfile), status='old' )
+      call find_group_name(unitn, 'zmconv_nl', status=ierr)
+      if (ierr == 0) then
+         read(unitn, zmconv_nl, iostat=ierr)
+         if (ierr /= 0) then
+            call endrun(subname // ':: ERROR reading namelist')
+         end if
+      end if
+      close(unitn)
+      call freeunit(unitn)
+
+      ! set local variables
+      c0_lnd = zmconv_c0_lnd
+      c0_ocn = zmconv_c0_ocn
+      ke = zmconv_ke
+
+   end if
+
+#ifdef SPMD
+   ! Broadcast namelist variables
+   call mpibcast(c0_lnd,            1, mpir8,  0, mpicom)
+   call mpibcast(c0_ocn,            1, mpir8,  0, mpicom)
+   call mpibcast(ke,                1, mpir8,  0, mpicom)
+   call mpibcast(zmconv_dmpdz,      1, mpir8,  0, mpicom)   !zhh
+#endif
+
+end subroutine zmconv_readnl
+#endif
 
 end module runtime_opts
