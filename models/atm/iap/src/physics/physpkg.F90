@@ -38,7 +38,11 @@ module physpkg
   use phys_control,     only: phys_do_flux_avg
   use scamMod,          only: single_column, scm_crm_mode
   use flux_avg,         only: flux_avg_init
+#ifdef CCPP
   use cldwat,           only: inimc
+#else
+  use cldwat_ccpp,      only: inimc
+#endif
 #ifdef SPMD
   use mpishorthand
 #endif
@@ -686,7 +690,12 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
       call microp_driver_init
       call conv_water_init
    end if
+
+#ifdef CCPP
+   call inimc(tmelt, rhodair/1000.0_r8, gravit, rh2o, hypm, microp_scheme, iulog, masterproc)
+#else
    call inimc(tmelt, rhodair/1000.0_r8, gravit, rh2o)
+#endif
 
 #if ( defined WACCM_PHYS )
    call iondrag_init( hypm )

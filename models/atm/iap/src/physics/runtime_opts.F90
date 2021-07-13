@@ -404,9 +404,9 @@ contains
    use cam3_aero_data,      only: cam3_aero_data_readnl
    use cam3_ozone_data,     only: cam3_ozone_data_readnl
    use cloud_fraction,      only: cldfrc_readnl
-   use cldwat,              only: cldwat_readnl
 #ifndef CCPP
    use zm_conv,             only: zmconv_readnl
+   use cldwat,              only: cldwat_readnl
 #endif
 !zmh
    use zyx1_conv,           only: zyx1_conv_readnl
@@ -1292,6 +1292,62 @@ subroutine zmconv_readnl(nlfile)
 #endif
 
 end subroutine zmconv_readnl
+
+subroutine cldwat_readnl(nlfile)
+
+ use namelist_utils,  only: find_group_name
+ use units,           only: getunit, freeunit
+ use mpishorthand
+ use cldwat_ccpp,  only: icritw, icrtic, conke, r3lcrit
+ 
+ character(len=*), intent(in) :: nlfile  ! filepath for file containing namelist input
+
+ ! Namelist variables
+ real(r8) :: cldwat_icritw  = unset_r8    !   icritw  = threshold for autoconversion of warm ice  
+ real(r8) :: cldwat_icritc  = unset_r8    !   icritc  = threshold for autoconversion of cold ice  
+ real(r8) :: cldwat_conke   = unset_r8    !   conke   = tunable constant for evaporation of precip
+ real(r8) :: cldwat_r3lcrit = unset_r8    !   r3lcrit = critical radius where liq conversion begins
+
+ ! Local variables
+ integer :: unitn, ierr
+ character(len=*), parameter :: subname = 'cldwat_readnl'
+
+ namelist /cldwat_nl/ cldwat_icritw, cldwat_icritc, cldwat_conke, cldwat_r3lcrit
+
+ !-----------------------------------------------------------------------------
+
+ if (masterproc) then
+    unitn = getunit()
+    open( unitn, file=trim(nlfile), status='old' )
+    call find_group_name(unitn, 'cldwat_nl', status=ierr)
+    if (ierr == 0) then
+       read(unitn, cldwat_nl, iostat=ierr)
+       if (ierr /= 0) then
+          call endrun(subname // ':: ERROR reading namelist')
+       end if
+    end if
+    close(unitn)
+    call freeunit(unitn)
+
+    ! set local variables
+    icritw  = cldwat_icritw 
+    icritc  = cldwat_icritc
+    conke   = cldwat_conke
+    r3lcrit = cldwat_r3lcrit
+
+ end if
+
+
+
+#ifdef SPMD
+ ! Broadcast namelist variables
+ call mpibcast(icritw,            1, mpir8,  0, mpicom)
+ call mpibcast(icritc,            1, mpir8,  0, mpicom)
+ call mpibcast(conke,             1, mpir8,  0, mpicom)
+ call mpibcast(r3lcrit,           1, mpir8,  0, mpicom)
+#endif
+
+end subroutine cldwat_readnl
 #endif
 
 end module runtime_opts

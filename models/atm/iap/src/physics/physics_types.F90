@@ -1175,6 +1175,10 @@ type physics_int_ephem
   real(kind=r8), pointer              :: tend_s_snwevmlt(:,:) ! Heating rate of evap/melting of snow
   real(kind=r8), pointer              :: ntprprd(:,:) !net precip production in layer
   real(kind=r8), pointer              :: ntsnprd(:,:) !net snow production in layer
+  real(kind=r8), pointer              :: pguall(:,:,:)
+  real(kind=r8), pointer              :: pgdall(:,:,:)
+  real(kind=r8), pointer              :: icwu(:,:,:)
+  real(kind=r8), pointer              :: icwd(:,:,:)
   
   contains
     procedure :: create      => interstitial_ephemeral_create     !<   allocate array data
@@ -1206,6 +1210,10 @@ subroutine interstitial_ephemeral_create (int_ephem, ncol, pver, pverp)
   allocate (int_ephem%tend_s_snwevmlt(ncol,pver))
   allocate (int_ephem%ntprprd(ncol,pver))
   allocate (int_ephem%ntsnprd(ncol,pver))
+  allocate (int_ephem%pguall(ncol,pver,2))
+  allocate (int_ephem%pgdall(ncol,pver,2))
+  allocate (int_ephem%icwu(ncol,pver,2))
+  allocate (int_ephem%icwd(ncol,pver,2))
   
   call physics_ptend_init(int_ephem%ptend_deep_conv)
   call physics_ptend_init(int_ephem%ptend_deep_conv_evap)
@@ -1239,6 +1247,10 @@ subroutine interstitial_ephemeral_reset(int_ephem)
   int_ephem%tend_s_snwevmlt = clear_val
   int_ephem%ntprprd         = clear_val
   int_ephem%ntsnprd         = clear_val
+  int_ephem%pguall          = clear_val
+  int_ephem%pgdall          = clear_val
+  int_ephem%icwu            = clear_val
+  int_ephem%icwd            = clear_val
   
   call physics_ptend_reset(int_ephem%ptend_deep_conv)
   call physics_ptend_reset(int_ephem%ptend_deep_conv_evap)
@@ -1395,21 +1407,22 @@ end subroutine interstitial_persistent_init
 
 type physics_global
   
-  character(len=16) :: cam_physpkg
-  character(len=16) :: cam_physpkg_cam3
-  character(len=16) :: cam_physpkg_cam4
-  character(len=16) :: cam_physpkg_cam5
-  character(len=16) :: cam_physpkg_ideal
-  character(len=16) :: cam_physpkg_adiabatic
-  character(len=16) :: microp_scheme
-  logical           :: non_dilute_buoy
-  logical           :: no_deep_pbl
-  logical           :: fv_dycore
-  integer           :: ixcldice
-  integer           :: ixcldliq
-  integer           :: ixnumice
-  integer           :: ixnumliq
-  real(kind=r8)     :: half_ztodt
+  character(len=16)     :: cam_physpkg
+  character(len=16)     :: cam_physpkg_cam3
+  character(len=16)     :: cam_physpkg_cam4
+  character(len=16)     :: cam_physpkg_cam5
+  character(len=16)     :: cam_physpkg_ideal
+  character(len=16)     :: cam_physpkg_adiabatic
+  character(len=16)     :: microp_scheme
+  logical               :: non_dilute_buoy
+  logical               :: no_deep_pbl
+  logical               :: fv_dycore
+  logical, dimension(2) :: l_windt
+  integer               :: ixcldice
+  integer               :: ixcldliq
+  integer               :: ixnumice
+  integer               :: ixnumliq
+  real(kind=r8)         :: half_ztodt
     
   contains
     procedure :: init      => physics_global_init 
@@ -1421,6 +1434,7 @@ subroutine physics_global_init(pglob)
   class(physics_global)       :: pglob
   
   real(kind=r8) :: ztodt
+  character(len=16) :: deep_conv_scheme
   
   pglob%cam_physpkg_cam3 = 'cam3'
   pglob%cam_physpkg_cam3 = 'cam4'
@@ -1462,6 +1476,13 @@ subroutine physics_global_init(pglob)
   
   ztodt = get_step_size()
   pglob%half_ztodt = 0.5_r8*ztodt
+  
+  call phys_getopts(deep_scheme_out=deep_conv_scheme)
+  pglob%l_windt(:) = .false.
+  if ((pglob%cam_physpkg /= pglob%cam_physpkg_cam3) .and. (deep_conv_scheme == 'ZM')) then
+    pglob%l_windt(:) = .true.
+  end if
+  
 end subroutine physics_global_init
 #endif
 end module physics_types

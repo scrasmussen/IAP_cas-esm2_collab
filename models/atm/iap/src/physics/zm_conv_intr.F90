@@ -10,8 +10,10 @@ module zm_conv_intr
 ! January 2010 modified by J. Kay to add COSP simulator fields to physics buffer
 !---------------------------------------------------------------------------------
    use shr_kind_mod, only: r8=>shr_kind_r8
+!<GJF>: These will come through the CCPP interface
    use physconst,    only: cpair                              
    use ppgrid,       only: pver, pcols, pverp, begchunk, endchunk
+!</GJF>
    use zm_conv,      only: zm_conv_evap, zm_convr, convtran, momtran
    use cam_history,  only: outfld, addfld, add_default, phys_decomp
    use perf_mod
@@ -24,13 +26,14 @@ module zm_conv_intr
    ! Public methods
 
    public ::&
-      zm_conv_register,           &! register fields in physics buffer
-      zm_conv_init,               &! initialize donner_deep module
-      zm_conv_tend,               &! return tendencies
+      zm_conv_register,           &! register fields in physics buffer <GJF>moved to new physics_register.F90 module</GJF>
+      zm_conv_init,               &! initialize donner_deep module <GJF>mostly moved to init stage of zm_conv</GJF>
+      zm_conv_tend,               &! return tendencies <GJF>moved to run phase of several individual schemes</GJF>
       zm_conv_tend_2               ! return tendencies
 
    ! Private module data
 
+!<GJF>moved to physics_types.F90/phys_int_pers since this data is expected to persist in memory
    real(r8), allocatable, dimension(:,:,:) :: mu  !(pcols,pver,begchunk:endchunk)
    real(r8), allocatable, dimension(:,:,:) :: eu  !(pcols,pver,begchunk:endchunk)
    real(r8), allocatable, dimension(:,:,:) :: du  !(pcols,pver,begchunk:endchunk)
@@ -49,7 +52,9 @@ module zm_conv_intr
 	! w holds position of gathered points vs longitude index
 
    integer, allocatable, dimension(:) :: lengath !(begchunk:endchunk)
+!</GJF>
 
+!<GJF>these are not needed to interact with the physics buffer anymore; they are replaced by pointers to the physics_buffer data in the new physics_int_pers DDT
    integer ::& ! indices for fields in the physics buffer
       dp_flxprc_idx, &
       dp_flxsnw_idx, &
@@ -66,12 +71,12 @@ module zm_conv_intr
 !wxc zmh
    integer  ::    slflxdp_idx      = 0
    integer  ::    qtflxdp_idx      = 0
-
+!</GJF>
 
 !=========================================================================================
 contains
 !=========================================================================================
-
+!<GJF> functionality moved to new physics_register.F90 module
 subroutine zm_conv_register
 
 !----------------------------------------
@@ -89,9 +94,11 @@ subroutine zm_conv_register
    call pbuf_add('DP_CLDICE', 'global', 1, pver,  1, dp_cldice_idx) ! deep gbm cloud liquid water (kg/kg)    
 
 end subroutine zm_conv_register
+!</GJF>
 
 !=========================================================================================
 
+!<GJF>Some functionality is now part of init stage of zm_convr; some moved other places as indicated
 subroutine zm_conv_init(hypi)
 
 !----------------------------------------
@@ -123,6 +130,7 @@ subroutine zm_conv_init(hypi)
 !
 ! Allocate space for arrays private to this module
 !
+!<GJF>allocation of these variables is now part of the new physics_types.F90/physics_int_pers%create subroutine
      allocate( mu(pcols,pver,begchunk:endchunk), stat=istat )
       call alloc_err( istat, 'zm_conv_tend', 'mu', &
                       pcols*pver*((endchunk-begchunk)+1) )
@@ -156,13 +164,13 @@ subroutine zm_conv_init(hypi)
      allocate( lengath(begchunk:endchunk), stat=istat )
       call alloc_err( istat, 'zm_conv_tend', 'lengath', &
                       ((endchunk-begchunk)+1) )
-
+!</GJF>
 
 ! 
 ! Register fields with the output buffer
 !
 
-
+!<GJF>added to cam_diagnostics.F90/diag_init
     call addfld ('PRECZ   ','m/s     ',1,    'A','total precipitation from ZM convection',        phys_decomp)
     call addfld ('ZMDT    ','K/s     ',pver, 'A','T tendency - Zhang-McFarlane moist convection', phys_decomp)
     call addfld ('ZMDQ    ','kg/kg/s ',pver, 'A','Q tendency - Zhang-McFarlane moist convection', phys_decomp)
@@ -225,10 +233,12 @@ subroutine zm_conv_init(hypi)
        end if
 
     end if
+!</GJF>
 !
 ! Limit deep convection to regions below 40 mb
 ! Note this calculation is repeated in the shallow convection interface
 !
+!<GJF>added to init phase of zm_convr scheme
     limcnv = 0   ! null value to check against below
     if (hypi(1) >= 4.e3_r8) then
        limcnv = 1
@@ -249,7 +259,9 @@ subroutine zm_conv_init(hypi)
         
     no_deep_pbl = phys_deepconv_pbl()
     call zm_convi(limcnv,no_deep_pbl_in = no_deep_pbl)
+!</GJF>
 
+!<GJF>handled as part of physics_types/physics_int_pers%associate
     cld_idx          = pbuf_get_fld_idx('CLD')
     icwmrdp_idx      = pbuf_get_fld_idx('ICWMRDP')
     rprddp_idx       = pbuf_get_fld_idx('RPRDDP')
@@ -258,9 +270,10 @@ subroutine zm_conv_init(hypi)
 !wxc zmh
     slflxdp_idx      = pbuf_get_fld_idx('slflxdp')
     qtflxdp_idx      = pbuf_get_fld_idx('qtflxdp')
-
+!</GJF>
 
 end subroutine zm_conv_init
+!</GJF>
 !=========================================================================================
 !subroutine zm_conv_tend(state, ptend, tdt, pbuf)
 

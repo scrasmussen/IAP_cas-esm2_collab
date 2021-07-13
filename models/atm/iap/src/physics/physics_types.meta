@@ -117,15 +117,15 @@
   type = real
   kind = kind_r8
 [u]
-  standard_name = zonal_wind
-  long_name = zonal wind
+  standard_name = x_wind
+  long_name = x wind
   units = m s-1
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
   kind = kind_r8
 [v]
   standard_name = y_wind
-  long_name = meridional wind
+  long_name = y wind
   units = m s-1
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
@@ -215,8 +215,8 @@
   type = real
   kind = kind_r8
 [uzm]
-  standard_name = zonal_wind_for_qbo
-  long_name = zonal wind for qbo
+  standard_name = x_wind_for_qbo
+  long_name = x wind for qbo
   units = m s-1
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
@@ -400,6 +400,74 @@
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_r8
+[ptend_deep_conv_momtran]
+  standard_name = tendency_ddt_instance_for_deep_convection_momentum_transport
+  long_name = tendency ddt instance for deep convection momentum transport
+  units = DDT
+  dimensions = ()
+  type = physics_ptend
+[ptend_deep_conv_momtran%s]
+  standard_name = tendency_of_dry_static_energy_due_to_deep_convection_momentum_transport
+  long_name = tendency of dry static energy due to deep convection momentum transport
+  units = J kg-1 s-1
+  dimensions = (horizontal_loop_extent, vertical_dimension)
+  type = real
+  kind = kind_r8
+[ptend_deep_conv_momtran%u]
+  standard_name = tendency_of_x_wind_due_to_deep_convection_momentum_transport
+  long_name = tendency of x wind due to deep convection momentum transport
+  units = m s-2
+  dimensions = (horizontal_loop_extent, vertical_dimension)
+  type = real
+  kind = kind_r8
+[ptend_deep_conv_momtran%v]
+  standard_name = tendency_of_y_wind_due_to_deep_convection_momentum_transport
+  long_name = tendency of y wind due to deep convection momentum transport
+  units = m s-2
+  dimensions = (horizontal_loop_extent, vertical_dimension)
+  type = real
+  kind = kind_r8
+[ptend_deep_conv_convtran]
+  standard_name = tendency_ddt_instance_for_deep_convection_transport
+  long_name = tendency ddt instance for deep convection transport
+  units = DDT
+  dimensions = ()
+  type = physics_ptend
+[ptend_deep_conv_convtran%q]
+  standard_name = tendency_of_tracer_concentration_due_to_deep_convection_transport
+  long_name = tendency of tracer concentration due to deep convection transport
+  units = kg kg-1 s-1
+  dimensions = (horizontal_loop_extent, vertical_dimension, number_of_tracers)
+  type = real
+  kind = kind_r8
+[ptend_deep_conv_tot%u]
+  standard_name = tendency_of_x_wind_due_to_all_deep_convection
+  long_name = tendency of x wind due to all deep convection
+  units = m s-2
+  dimensions = (horizontal_loop_extent, vertical_dimension)
+  type = real
+  kind = kind_r8
+[ptend_deep_conv_tot%v]
+  standard_name = tendency_of_y_wind_due_to_all_deep_convection
+  long_name = tendency of y wind due to all deep convection
+  units = m s-2
+  dimensions = (horizontal_loop_extent, vertical_dimension)
+  type = real
+  kind = kind_r8
+[ptend_deep_conv_tot%s]
+  standard_name = tendency_of_dry_static_energy_due_to_all_deep_convection
+  long_name = tendency of dry static energy due to all deep convection
+  units = J kg-1 s-1
+  dimensions = (horizontal_loop_extent, vertical_dimension)
+  type = real
+  kind = kind_r8
+[ptend_deep_conv_tot%q]
+  standard_name = tendency_of_tracer_concentration_due_to_all_deep_convection
+  long_name = tendency of dry static energy due to deep convection transport
+  units = kg kg-1 s-1
+  dimensions = (horizontal_loop_extent, vertical_dimension, number_of_tracers)
+  type = real
+  kind = kind_r8
 [cmfmc]
   standard_name = atmosphere_convective_mass_flux
   long_name = atmosphere convective mass flux
@@ -464,15 +532,15 @@
   type = real
   kind = kind_r8
 [temp_state_u]
-  standard_name = temporary_zonal_wind
-  long_name = temporary state zonal wind
+  standard_name = temporary_x_wind
+  long_name = temporary state x wind
   units = m s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_r8
 [temp_state_v]
-  standard_name = temporary_meridional_wind
-  long_name = temporary state meridonal wind
+  standard_name = temporary_y_wind
+  long_name = temporary state y wind
   units = m s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
@@ -538,6 +606,34 @@
   long_name = net snow production rate
   units = kg kg-1 s-1
   dimensions = (horizontal_loop_extent,vertical_dimension)
+  type = real
+  kind = kind_r8
+[pguall]
+  standard_name = updraft_pressure_gradient_apparent_force
+  long_name = updraft pressure gradient apparent force
+  units = unknown
+  dimensions = (horizontal_loop_extent,vertical_dimension,2)
+  type = real
+  kind = kind_r8
+[pgdall]
+  standard_name = downdraft_pressure_gradient_apparent_force
+  long_name = downdraft pressure gradient apparent force
+  units = unknown
+  dimensions = (horizontal_loop_extent,vertical_dimension,2)
+  type = real
+  kind = kind_r8
+[icwu]
+  standard_name = winds_within_cloudy_updrafts
+  long_name = in-cloud winds in the convective updrafts
+  units = m s-1
+  dimensions = (horizontal_loop_extent,vertical_dimension,2)
+  type = real
+  kind = kind_r8
+[icwd]
+  standard_name = winds_within_cloudy_downdrafts
+  long_name = in-cloud winds in the convective downdrafts
+  units = m s-1
+  dimensions = (horizontal_loop_extent,vertical_dimension,2)
   type = real
   kind = kind_r8
   
@@ -635,8 +731,8 @@
   type = real
   kind = kind_r8
 [evapcdp]
-  standard_name = tendency_of_specific_humidity_due_to_deep_convection_evaporation
-  long_name = tendency of water vapor specific humidity due to deep convection evaporation
+  standard_name = tendency_of_specific_humidity_due_to_deep_convection_evaporation_for_diagnostics
+  long_name = tendency of water vapor specific humidity due to deep convection evaporation for diagnostics
   units = kg kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
@@ -790,6 +886,12 @@
   long_name = flag set to true when the dynamical core being used is finite volume
   units = flag
   dimensions = ()
+  type = logical
+[l_windt]
+  standard_name = flag_for_convective_momentum_transport
+  long_name = flag set to true whose position indicates the wind component to convectively transport
+  units = flag
+  dimensions = (2)
   type = logical
 [ixcldice]
   standard_name = index_of_cloud_ice_mixing_ratio_in_tracer_concentration_array

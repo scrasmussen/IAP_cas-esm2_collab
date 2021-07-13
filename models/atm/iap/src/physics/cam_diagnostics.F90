@@ -1691,6 +1691,44 @@ end subroutine diag_export
      call outfld('PCONVT  ',phys_int_ephem%pcont          ,pcols   ,lchnk   )
      call outfld('PCONVB  ',phys_int_ephem%pconb          ,pcols   ,lchnk   )
      
+     ftem(:ncol,:pver) = phys_int_ephem%ptend_deep_conv_evap%s(:ncol,:pver)/cpair
+     call outfld('EVAPTZM ',   ftem           ,pcols   ,lchnk   )
+     ftem(:ncol,:pver) = phys_int_ephem%tend_s_snwprd  (:ncol,:pver)/cpair
+     call outfld('FZSNTZM ',   ftem           ,pcols   ,lchnk   )
+     ftem(:ncol,:pver) = phys_int_ephem%tend_s_snwevmlt(:ncol,:pver)/cpair
+     call outfld('EVSNTZM ',   ftem           ,pcols   ,lchnk   )
+     call outfld('EVAPQZM ',   phys_int_ephem%ptend_deep_conv_evap%q(1,1,1) ,pcols   ,lchnk   )
+     call outfld('ZMFLXPRC',   phys_int_pers%flxprec, pcols, lchnk)
+     call outfld('ZMFLXSNW',   phys_int_pers%flxsnow, pcols, lchnk)
+     call outfld('ZMNTPRPD',   phys_int_ephem%ntprprd, pcols, lchnk)
+     call outfld('ZMNTSNPD',   phys_int_ephem%ntsnprd, pcols, lchnk)
+     call outfld('ZMEIHEAT',   phys_int_ephem%ptend_deep_conv_evap%s, pcols, lchnk)
+     call outfld('CMFMCDZM   ',phys_int_ephem%cmfmc ,  pcols   ,lchnk   )
+     call outfld('PRECCDZM   ',phys_int_ephem%prec,  pcols   ,lchnk   )
+     call outfld('PRECZ   ',   phys_int_ephem%prec   , pcols, lchnk)
+     
+     if (phys_global%cam_physpkg /= phys_global%cam_physpkg_cam3) then
+       ftem(:ncol,:pver) = phys_int_ephem%ptend_deep_conv_momtran%s(:ncol,:pver)/cpair
+       call outfld('ZMMTT', ftem             , pcols, lchnk)
+       call outfld('ZMMTU', phys_int_ephem%ptend_deep_conv_momtran%u(1,1,1), pcols, lchnk)
+       call outfld('ZMMTV', phys_int_ephem%ptend_deep_conv_momtran%v(1,1,2), pcols, lchnk)
+     
+       ! Output apparent force from  pressure gradient
+       call outfld('ZMUPGU', phys_int_ephem%pguall(1,1,1), pcols, lchnk)
+       call outfld('ZMUPGD', phys_int_ephem%pgdall(1,1,1), pcols, lchnk)
+       call outfld('ZMVPGU', phys_int_ephem%pguall(1,1,2), pcols, lchnk)
+       call outfld('ZMVPGD', phys_int_ephem%pgdall(1,1,2), pcols, lchnk)
+
+       ! Output in-cloud winds
+       call outfld('ZMICUU', phys_int_ephem%icwu(1,1,1), pcols, lchnk)
+       call outfld('ZMICUD', phys_int_ephem%icwd(1,1,1), pcols, lchnk)
+       call outfld('ZMICVU', phys_int_ephem%icwu(1,1,2), pcols, lchnk)
+       call outfld('ZMICVD', phys_int_ephem%icwd(1,1,2), pcols, lchnk)
+     end if
+     
+     call outfld('ZMDICE ',phys_int_ephem%ptend_deep_conv_convtran%q(1,1,phys_global%ixcldice) ,pcols   ,lchnk   )
+     call outfld('ZMDLIQ ',phys_int_ephem%ptend_deep_conv_convtran%q(1,1,phys_global%ixcldliq) ,pcols   ,lchnk   )
+     
    case('ZYX1')
 
    case('ZYX2')
