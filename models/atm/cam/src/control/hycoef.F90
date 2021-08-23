@@ -1,4 +1,7 @@
 module hycoef
+!> \section arg_table_hycoef Argument Table
+!! \htmlinclude hycoef.html
+!!
     use shr_kind_mod, only: r8 => shr_kind_r8
     use spmd_utils,   only: masterproc
     use pmgrid,       only: plev, plevp

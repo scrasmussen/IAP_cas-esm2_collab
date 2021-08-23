@@ -1,5 +1,7 @@
 module spmd_utils
-
+!> \section arg_table_spmd_utils Argument Table
+!! \htmlinclude spmd_utils.html
+!!
 !----------------------------------------------------------------------- 
 ! 
 ! Purpose: This module is responsible for miscellaneous SPMD utilities

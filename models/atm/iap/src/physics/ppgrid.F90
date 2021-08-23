@@ -10,6 +10,9 @@ module ppgrid
 ! Author: 
 ! 
 !-----------------------------------------------------------------------
+!> \section arg_table_ppgrid
+!! \htmlinclude ppgrid.html
+!!
 
   implicit none
   private

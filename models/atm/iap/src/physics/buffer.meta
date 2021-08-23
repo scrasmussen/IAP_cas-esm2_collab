@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = buffer
   type = module
-  dependencies = shr_kind_mod, constituents.F90, ppgrid.F90
+  dependencies = ../../../../csm_share/shr/shr_kind_mod.F90,ppgrid.F90,../../../cam/src/physics/cam/constituents.F90,../../../cam/src/control/infnan.F90
   
 [ccpp-arg-table]
   name = buffer

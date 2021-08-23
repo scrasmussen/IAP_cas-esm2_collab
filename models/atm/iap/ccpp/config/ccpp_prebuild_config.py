@@ -15,10 +15,35 @@ HOST_MODEL_IDENTIFIER = "IAP"
 # dependencies of these files to the list.
 VARIABLE_DEFINITION_FILES = [
     # actual variable definition files
+    '../../csm_share/shr/shr_kind_mod.F90',
+    'src/physics/physics_types.F90',
+    'src/physics/ppgrid.F90',
+    '../cam/src/dynamics/iap/pmgrid.F90',
+    '../cam/src/control/hycoef.F90',
+    '../cam/src/utils/spmd_utils.F90',
+    '../cam/src/control/cam_logfile.F90',
+    '../cam/src/control/camsrfexch_types.F90',
+    '../cam/src/physics/cam/constituents.F90',
+    '../cam/src/control/cam_comp.F90',
+    '../cam/src/control/physconst.F90',
     ]
 
 TYPEDEFS_NEW_METADATA = {
-    
+    'ccpp_types' : {
+        'ccpp_types' : '',
+        'ccpp_t' : 'cdata',
+        },
+    'physics_types' : {
+        'physics_state' : 'physics_state',
+        'physics_int_ephem' : 'physics_int_ephem',
+        'physics_int_pers' : 'physics_int_pers',
+        'physics_global' : 'physics_global',
+        'physics_types' : '',
+        },
+     'camsrfexch_types' : {
+        'cam_in_t' : 'cam_in_t',
+        'camsrfexch_types' : '',
+        },
     }
 
 # Add all physics scheme files relative to basedir
@@ -26,7 +51,15 @@ SCHEME_FILES = [
     # Relative path to source (from where ccpp_prebuild.py is called) : [ list of physics sets in which scheme may be called ];
     # current restrictions are that each scheme can only belong to one physics set, and all schemes within one group in the
     # suite definition file have to belong to the same physics set
-    
+    'ccpp/physics/physics/zm_convr.F90'             ,
+    'ccpp/physics/physics/zm_convr_post.F90'        ,
+    'ccpp/physics/physics/zm_conv_evap.F90'         ,
+    'ccpp/physics/physics/zm_conv_evap_post.F90'    ,
+    'ccpp/physics/physics/zm_conv_momtran.F90'      ,
+    'ccpp/physics/physics/zm_conv_momtran_post.F90' ,
+    'ccpp/physics/physics/zm_conv_convtran.F90'     ,
+    'ccpp/physics/physics/zm_conv_all_post.F90'     ,
+    'ccpp/physics/physics/dummy_loop.F90',
     ]
 
 # Default build dir, relative to current working directory,

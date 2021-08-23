@@ -4,6 +4,15 @@
   <!-- <init></init> -->
   <group name="test1">
     <subcycle loop="1">
+      <scheme>zm_convr</scheme>
+      <scheme>zm_convr_post</scheme>
+      <scheme>zm_conv_evap</scheme>
+      <scheme>zm_conv_evap_post</scheme>
+      <scheme>zm_conv_momtran</scheme>
+      <scheme>zm_conv_momtran_post</scheme>
+      <scheme>zm_conv_convtran</scheme>
+      <scheme>zm_conv_all_post</scheme>
+      <scheme>dummy_loop</scheme>
     </subcycle>
   </group>
   <!-- <finalize></finalize> -->

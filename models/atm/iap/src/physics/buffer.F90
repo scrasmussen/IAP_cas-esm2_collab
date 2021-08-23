@@ -8,6 +8,9 @@ module buffer
 ! Author: 
 ! 
 !-----------------------------------------------------------------------
+!> \section arg_table_buffer
+!! \htmlinclude buffer.html
+!!
 
   use shr_kind_mod, only: r8 => shr_kind_r8
   use constituents, only: pcnst

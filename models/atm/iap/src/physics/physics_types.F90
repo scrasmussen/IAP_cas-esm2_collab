@@ -33,7 +33,9 @@ module physics_types
   logical, parameter :: adjust_te = .FALSE.
   real(kind=r8), parameter :: zero      = 0.0_r8
   real(kind=r8), parameter :: clear_val = zero
-
+#ifdef CCPP
+  type(ccpp_t),       target :: cdata
+#endif
 !> \section arg_table_physics_types
 !! \htmlinclude physics_types.html
 !!
@@ -69,7 +71,6 @@ module physics_types
 !! \section arg_table_physics_state
 !! \htmlinclude physics_state.html
 !!
-  
   type physics_state
      ! yhy
     integer   ::   psetcols=0 ! max number of columns set- if subcols = pcols*psubcols, else =  pcols
@@ -251,6 +252,143 @@ module physics_types
 #endif  
   end type physics_ptend
 
+#ifdef CCPP
+!! \section arg_table_physics_int_ephem
+!! \htmlinclude physics_int_ephem.html
+!!
+  type physics_int_ephem
+    
+    !variables previously internal to tphysbc; there need to be n_threads of this type
+    real(kind=r8), pointer :: prec(:) => null()
+    
+    real(kind=r8), pointer              :: prec(:)  => null()  !<
+    real(kind=r8), pointer              :: snow(:)  => null()  !<
+    type(physics_ptend),   pointer      :: ptend_deep_conv_tot => null()
+    real(kind=r8), pointer              :: cmfmc(:,:) => null()       !< Convective mass flux--m sub c
+    real(kind=r8), pointer              :: cmfcme(:,:)=> null()           !< cmf condensation - evaporation
+    real(kind=r8), pointer              :: dlf(:,:)   => null()           !< Detraining cld H20 from shallow + deep convections
+    real(kind=r8), pointer              :: pflx(:,:)  => null()           !< Conv rain flux thru out btm of lev
+    real(kind=r8), pointer              :: zdu(:,:)   => null()           !< detraining mass flux from deep convection
+    real(kind=r8), pointer              :: rliq(:)    => null()         !< vertical integral of liquid not yet in q(ixcldliq)
+    
+    !variables previously internal to zm_conv_intr
+    real(kind=r8), pointer              :: cape(:) => null() ! convective available potential energy.
+    real(kind=r8), pointer              :: pcont(:) => null()
+    real(kind=r8), pointer              :: pconb(:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_qv(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_s(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_evap_qv(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_evap_s(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_momtran_s(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_momtran_u(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_momtran_v(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_convtran_q(:,:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_tot_s(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_tot_u(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_tot_v(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_tot_q(:,:,:) => null()
+    real(kind=r8), pointer              :: temp_state_u(:,:) => null()
+    real(kind=r8), pointer              :: temp_state_v(:,:) => null()
+    real(kind=r8), pointer              :: temp_state_s(:,:) => null()
+    real(kind=r8), pointer              :: temp_state_q(:,:,:) => null()
+    real(kind=r8), pointer              :: tend_s_snwprd  (:,:) ! Heating rate of snow production
+    real(kind=r8), pointer              :: tend_s_snwevmlt(:,:) ! Heating rate of evap/melting of snow
+    real(kind=r8), pointer              :: ntprprd(:,:) !net precip production in layer
+    real(kind=r8), pointer              :: ntsnprd(:,:) !net snow production in layer
+    real(kind=r8), pointer              :: pguall(:,:,:)
+    real(kind=r8), pointer              :: pgdall(:,:,:)
+    real(kind=r8), pointer              :: icwu(:,:,:)
+    real(kind=r8), pointer              :: icwd(:,:,:)
+    
+    contains
+      procedure :: create      => interstitial_ephemeral_create     !<   allocate array data
+      procedure :: reset       => interstitial_ephemeral_reset      !<   reset array data
+  end type physics_int_ephem
+
+!! \section arg_table_physics_int_pers
+!! \htmlinclude physics_int_pers.html
+!!
+  type physics_int_pers
+   
+   !variables from the physics buffer; memory for these should already allocated as part of pbuf, but
+   !associating the memory in this DDT will make metadata easier
+   
+   !needs to have an array of nchunks of these DDTs and loop through chunks to associate pointers with the right memory
+   
+   
+   !added from convect_deep.F90/convect_deep_register
+   real(kind=r8), pointer :: jctop(:) => null()
+   real(kind=r8), pointer :: jcbot(:) => null()
+   real(kind=r8), pointer :: rprd(:,:) => null()
+   real(kind=r8), pointer :: ql(:,:) => null()
+   real(kind=r8), pointer :: slflx(:,:) => null()
+   real(kind=r8), pointer :: qtflx(:,:) => null()
+   real(kind=r8), pointer :: evapcdp(:,:) => null()
+   
+   !accessed from zm_conv_intr.F90
+   real(kind=r8), pointer :: cld_old(:,:) => null()
+   
+   !added from aerosol_intr.F90; accessed by zm_conv_intr.F90
+   real(kind=r8), pointer :: fracis(:,:,:) => null()
+   
+   !added in zm_conv_intr.F90/zm_conv_register; access in zm_conv_tend
+   real(kind=r8), pointer :: flxprec(:,:) => null()
+   real(kind=r8), pointer :: flxsnow(:,:) => null()
+   real(kind=r8), pointer :: dp_cldliq(:,:) => null()
+   real(kind=r8), pointer :: dp_cldice(:,:) => null()
+   
+   !added from zm_conv_intr.F90 module variables
+   real(kind=r8), pointer :: mu(:,:) => null()
+   real(kind=r8), pointer :: md(:,:) => null()
+   real(kind=r8), pointer :: du(:,:) => null()
+   real(kind=r8), pointer :: eu(:,:) => null()
+   real(kind=r8), pointer :: ed(:,:) => null()
+   real(kind=r8), pointer :: dp(:,:) => null()
+   real(kind=r8), pointer :: dsubcld(:) => null()
+   integer      , pointer :: jt(:) => null()
+   integer      , pointer :: maxg(:) => null()
+   integer      , pointer :: ideep(:) => null()
+   integer                :: lengath
+   
+   !added from buffer.F90
+   real(kind=r8), pointer :: pblht_chnk(:) => null()
+   real(kind=r8), pointer :: tpert_chnk(:) => null()
+   real(kind=r8), pointer :: qpert_chnk(:,:) => null()
+   real(kind=r8), pointer :: tpert2_chnk(:) => null()
+   real(kind=r8), pointer :: qpert2_chnk(:) => null()
+   
+   contains
+     procedure :: associate       => interstitial_persistent_associate
+     procedure :: create          => interstitial_persistent_create
+     procedure :: init            => interstitial_persistent_init
+  end type physics_int_pers
+
+!! \section arg_table_physics_global
+!! \htmlinclude physics_global.html
+!!
+  type physics_global
+    
+    character(len=16)     :: cam_physpkg
+    character(len=16)     :: cam_physpkg_cam3
+    character(len=16)     :: cam_physpkg_cam4
+    character(len=16)     :: cam_physpkg_cam5
+    character(len=16)     :: cam_physpkg_ideal
+    character(len=16)     :: cam_physpkg_adiabatic
+    character(len=16)     :: microp_scheme
+    logical               :: non_dilute_buoy
+    logical               :: no_deep_pbl
+    logical               :: fv_dycore
+    logical, dimension(2) :: l_windt
+    integer               :: ixcldice
+    integer               :: ixcldliq
+    integer               :: ixnumice
+    integer               :: ixnumliq
+    real(kind=r8)         :: half_ztodt
+      
+    contains
+      procedure :: init      => physics_global_init 
+  end type physics_global
+#endif
 
 !===============================================================================
 contains
@@ -1144,47 +1282,6 @@ subroutine set_dry_to_wet (state)
 end subroutine set_dry_to_wet
 
 #ifdef CCPP
-type physics_int_ephem
-  
-  !variables previously internal to tphysbc; there need to be n_threads of this type
-  real(kind=r8), pointer :: prec(:) => null()
-  
-  real(kind=r8), pointer              :: prec(:)  => null()  !<
-  real(kind=r8), pointer              :: snow(:)  => null()  !<
-  type(physics_ptend),   pointer      :: ptend_deep_conv => null()
-  type(physics_ptend),   pointer      :: ptend_deep_conv_evap => null()
-  type(physics_ptend),   pointer      :: ptend_deep_conv_momtran => null()
-  type(physics_ptend),   pointer      :: ptend_deep_conv_convtran => null()
-  type(physics_ptend),   pointer      :: ptend_deep_conv_tot => null()
-  real(kind=r8), pointer              :: cmfmc(:,:) => null()       !< Convective mass flux--m sub c
-  real(kind=r8), pointer              :: cmfcme(:,:)=> null()           !< cmf condensation - evaporation
-  real(kind=r8), pointer              :: dlf(:,:)   => null()           !< Detraining cld H20 from shallow + deep convections
-  real(kind=r8), pointer              :: pflx(:,:)  => null()           !< Conv rain flux thru out btm of lev
-  real(kind=r8), pointer              :: zdu(:,:)   => null()           !< detraining mass flux from deep convection
-  real(kind=r8), pointer              :: rliq(:)    => null()         !< vertical integral of liquid not yet in q(ixcldliq)
-  
-  !variables previously internal to zm_conv_intr
-  real(kind=r8), pointer              :: cape(:) => null() ! convective available potential energy.
-  real(kind=r8), pointer              :: pcont(:) => null()
-  real(kind=r8), pointer              :: pconb(:) => null()
-  real(kind=r8), pointer              :: temp_state_u(:,:) => null()
-  real(kind=r8), pointer              :: temp_state_v(:,:) => null()
-  real(kind=r8), pointer              :: temp_state_s(:,:) => null()
-  real(kind=r8), pointer              :: temp_state_q(:,:,:) => null()
-  real(kind=r8), pointer              :: tend_s_snwprd  (:,:) ! Heating rate of snow production
-  real(kind=r8), pointer              :: tend_s_snwevmlt(:,:) ! Heating rate of evap/melting of snow
-  real(kind=r8), pointer              :: ntprprd(:,:) !net precip production in layer
-  real(kind=r8), pointer              :: ntsnprd(:,:) !net snow production in layer
-  real(kind=r8), pointer              :: pguall(:,:,:)
-  real(kind=r8), pointer              :: pgdall(:,:,:)
-  real(kind=r8), pointer              :: icwu(:,:,:)
-  real(kind=r8), pointer              :: icwd(:,:,:)
-  
-  contains
-    procedure :: create      => interstitial_ephemeral_create     !<   allocate array data
-    procedure :: reset       => interstitial_ephemeral_reset      !<   reset array data
-end type physics_int_ephem
-
 subroutine interstitial_ephemeral_create (int_ephem, ncol, pver, pverp)
   implicit none
   
@@ -1202,6 +1299,18 @@ subroutine interstitial_ephemeral_create (int_ephem, ncol, pver, pverp)
   allocate (int_ephem%rliq  (ncol))
   allocate (int_ephem%pcont (ncol))
   allocate (int_ephem%pconb (ncol))
+  allocate (int_ephem%ptend_deep_conv_qv(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_s(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_evap_qv(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_evap_s(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_momtran_s(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_momtran_u(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_momtran_v(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_convtran_q(ncol,pver,pcnst))
+  allocate (int_ephem%ptend_deep_conv_tot_s(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_tot_u(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_tot_v(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_tot_q(ncol,pver,pcnst))
   allocate (int_ephem%temp_state_u(ncol,pver))
   allocate (int_ephem%temp_state_v(ncol,pver))
   allocate (int_ephem%temp_state_s(ncol,pver))
@@ -1214,13 +1323,7 @@ subroutine interstitial_ephemeral_create (int_ephem, ncol, pver, pverp)
   allocate (int_ephem%pgdall(ncol,pver,2))
   allocate (int_ephem%icwu(ncol,pver,2))
   allocate (int_ephem%icwd(ncol,pver,2))
-  
-  call physics_ptend_init(int_ephem%ptend_deep_conv)
-  call physics_ptend_init(int_ephem%ptend_deep_conv_evap)
-  call physics_ptend_init(int_ephem%ptend_deep_conv_momtran)
-  call physics_ptend_init(int_ephem%ptend_deep_conv_convtran)
-  call physics_ptend_init(int_ephem%ptend_deep_conv_tot)
-  
+    
 end subroutine interstitial_ephemeral_create
 
 subroutine interstitial_ephemeral_reset(int_ephem)
@@ -1239,6 +1342,18 @@ subroutine interstitial_ephemeral_reset(int_ephem)
   int_ephem%rliq            = clear_val
   int_ephem%pcont           = clear_val
   int_ephem%pconb           = clear_val
+  int_ephem%ptend_deep_conv_qv = clear_val
+  int_ephem%ptend_deep_conv_s  = clear_val
+  int_ephem%ptend_deep_conv_evap_qv = clear_val
+  int_ephem%ptend_deep_conv_evap_s  = clear_val
+  int_ephem%ptend_deep_conv_momtran_s  = clear_val
+  int_ephem%ptend_deep_conv_momtran_u  = clear_val
+  int_ephem%ptend_deep_conv_momtran_v  = clear_val
+  int_ephem%ptend_deep_conv_convtran_q = clear_val
+  int_ephem%ptend_deep_conv_tot_s  = clear_val
+  int_ephem%ptend_deep_conv_tot_u  = clear_val
+  int_ephem%ptend_deep_conv_tot_v  = clear_val
+  int_ephem%ptend_deep_conv_tot_q = clear_val
   int_ephem%temp_state_u    = clear_val
   int_ephem%temp_state_v    = clear_val
   int_ephem%temp_state_s    = clear_val
@@ -1251,67 +1366,14 @@ subroutine interstitial_ephemeral_reset(int_ephem)
   int_ephem%pgdall          = clear_val
   int_ephem%icwu            = clear_val
   int_ephem%icwd            = clear_val
-  
-  call physics_ptend_reset(int_ephem%ptend_deep_conv)
-  call physics_ptend_reset(int_ephem%ptend_deep_conv_evap)
-  call physics_ptend_reset(int_ephem%ptend_deep_conv_momtran)
-  call physics_ptend_reset(int_ephem%ptend_deep_conv_convtran)
-  call physics_ptend_reset(int_ephem%ptend_deep_conv_tot)
-  
+    
 end subroutine interstitial_ephemeral_reset
-
-type physics_int_pers
- 
- !variables from the physics buffer; memory for these should already allocated as part of pbuf, but
- !associating the memory in this DDT will make metadata easier
- 
- !needs to have an array of nchunks of these DDTs and loop through chunks to associate pointers with the right memory
- 
- 
- !added from convect_deep.F90/convect_deep_register
- real(kind=r8), pointer :: jctop(:) => null()
- real(kind=r8), pointer :: jcbot(:) => null()
- real(kind=r8), pointer :: rprd(:,:) => null()
- real(kind=r8), pointer :: ql(:,:) => null()
- real(kind=r8), pointer :: slflx(:,:) => null()
- real(kind=r8), pointer :: qtflx(:,:) => null()
- real(kind=r8), pointer :: evapcdp(:,:) => null()
- 
- !accessed from zm_conv_intr.F90
- real(kind=r8), pointer :: cld_old(:,:) => null()
- 
- !added from aerosol_intr.F90; accessed by zm_conv_intr.F90
- real(kind=r8), pointer :: fracis(:,:,:) => null()
- 
- !added in zm_conv_intr.F90/zm_conv_register; access in zm_conv_tend
- real(kind=r8), pointer :: flxprec(:,:) => null()
- real(kind=r8), pointer :: flxsnow(:,:) => null()
- real(kind=r8), pointer :: dp_cldliq(:,:) => null()
- real(kind=r8), pointer :: dp_cldice(:,:) => null()
- 
- !added from zm_conv_intr.F90 module variables
- real(kind=r8), pointer :: mu(:,:) => null()
- real(kind=r8), pointer :: md(:,:) => null()
- real(kind=r8), pointer :: du(:,:) => null()
- real(kind=r8), pointer :: eu(:,:) => null()
- real(kind=r8), pointer :: ed(:,:) => null()
- real(kind=r8), pointer :: dp(:,:) => null()
- real(kind=r8), pointer :: dsubcld(:) => null()
- integer      , pointer :: jt(:) => null()
- integer      , pointer :: maxg(:) => null()
- integer      , pointer :: ideep(:) => null()
- integer                :: lengath
- 
- contains
-   procedure :: associate       => interstitial_persistent_associate
-   procedure :: create          => interstitial_persistent_create
-   procedure :: init            => interstitial_persistent_init
-end type physics_int_pers
 
 subroutine interstitial_persistent_associate(int_pers, pcols, pver, pverp, pcnst, lchnk)
   !should be called once per block before physics init stage
   
   use phys_buffer,   only: pbuf, pbuf_get_fld_idx, pbuf_old_tim_idx
+  use buffer,        only: pblht, tpert, qpert, tpert2, qpert2
   implicit none
   
   class(physics_int_pers)       :: int_pers
@@ -1350,7 +1412,14 @@ subroutine interstitial_persistent_associate(int_pers, pcols, pver, pverp, pcnst
   var_idx = pbuf_get_fld_idx('DP_CLDLIQ')
   int_pers%dp_cldliq => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1)
   var_idx = pbuf_get_fld_idx('DP_CLDICE')
-  int_pers%dp_cldice => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1)  
+  int_pers%dp_cldice => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1)
+  
+  !from buffer.F90
+  int_pers%pblht_chnk => pblht(1:pcols,lchnk)
+  int_pers%tpert_chnk => tpert(1:pcols,lchnk)
+  int_pers%qpert_chnk => qpert(1:pcols,1:pcnst,lchnk)
+  int_pers%tpert2_chnk => tpert2(1:pcols,lchnk)
+  int_pers%qpert2_chnk => qpert2(1:pcols,lchnk)
   
 end subroutine interstitial_persistent_associate
 
@@ -1404,29 +1473,6 @@ subroutine interstitial_persistent_init(int_pers)
   int_pers%lengath = 0
   
 end subroutine interstitial_persistent_init
-
-type physics_global
-  
-  character(len=16)     :: cam_physpkg
-  character(len=16)     :: cam_physpkg_cam3
-  character(len=16)     :: cam_physpkg_cam4
-  character(len=16)     :: cam_physpkg_cam5
-  character(len=16)     :: cam_physpkg_ideal
-  character(len=16)     :: cam_physpkg_adiabatic
-  character(len=16)     :: microp_scheme
-  logical               :: non_dilute_buoy
-  logical               :: no_deep_pbl
-  logical               :: fv_dycore
-  logical, dimension(2) :: l_windt
-  integer               :: ixcldice
-  integer               :: ixcldliq
-  integer               :: ixnumice
-  integer               :: ixnumliq
-  real(kind=r8)         :: half_ztodt
-    
-  contains
-    procedure :: init      => physics_global_init 
-end type physics_global
 
 subroutine physics_global_init(pglob)
   implicit none

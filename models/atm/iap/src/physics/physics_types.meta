@@ -1,33 +1,4 @@
 [ccpp-table-properties]
-  name = physics_types
-  type = module
-  relative_path = 
-  dependencies = shr_kind_mod.F90,ppgrid.F90,constituents.F90
-
-[ccpp-arg-table]
-  name = physics_types
-  type = module
-[physics_state]
-  standard_name = physics_state_type
-  long_name = definition of type physics_state
-  units = DDT
-  dimensions = ()
-  type = physics_state
-[physics_tend]
-  standard_name = physics_tend_type
-  long_name = definition of type physics_tend
-  units = DDT
-  dimensions = ()
-  type = physics_tend
-[physics_ptend]
-  standard_name = physics_ptend_type
-  long_name = definition of type physics_ptend
-  units = DDT
-  dimensions = ()
-  type = physics_ptend
-
-!###################################################################
-[ccpp-table-properties]
   name = physics_state
   type = ddt
   dependencies =
@@ -35,18 +6,6 @@
 [ccpp-arg-table]
   name = physics_state
   type = ddt
-[psetcols]
-  standard_name = ???
-  long_name = ???
-  units = ???
-  dimensions = ()
-  type = integer
-[lchnk]
-  standard_name = ???
-  long_name = ???
-  units = ???
-  dimensions = ()
-  type = integer
 [ncol]
   standard_name = horizontal_loop_extent_for_block
   long_name = horizontal loop extent within each block
@@ -74,38 +33,10 @@
   dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_r8
-[psdry]
-  standard_name = ???
-  long_name = ???
-  units = Pa
-  dimensions = (horizontal_loop_extent)
-  type = real
-  kind = kind_r8
 [phis]
   standard_name = surface_geopotential
   long_name = surface geopotential
   units = m2 s-2 ???
-  dimensions = (horizontal_loop_extent)
-  type = real
-  kind = kind_r8
-[psl]
-  standard_name = ???
-  long_name = ???
-  units = ???
-  dimensions = (horizontal_loop_extent)
-  type = real
-  kind = kind_r8
-[ulat]
-  standard_name = ???
-  long_name = ???
-  units = ???
-  dimensions = (horizontal_loop_extent)
-  type = real
-  kind = kind_r8
-[ulon]
-  standard_name = ???
-  long_name = ???
-  units = ???
   dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_r8
@@ -270,72 +201,6 @@
   dimensions = (horizontal_loop_extent,vertical_dimension_plus_one)
   type = real
   kind = kind_r8
-[...]
-
-!###################################################################
-[ccpp-table-properties]
-  name = physics_tend
-  type = ddt
-  dependencies =
-
-[ccpp-arg-table]
-  name = physics_tend
-  type = ddt
-[dtdt]
-  standard_name = ???
-  long_name = ???
-  units = ???
-  dimensions = (horizontal_loop_extent,vertical_dimension)
-  type = real
-  kind = kind_r8
-[dudt]
-  standard_name = ???
-  long_name = ???
-  units = ???
-  dimensions = (horizontal_loop_extent,vertical_dimension)
-  type = real
-  kind = kind_r8
-[dvdt]
-  standard_name = ???
-  long_name = ???
-  units = ???
-  dimensions = (horizontal_loop_extent,vertical_dimension)
-  type = real
-  kind = kind_r8
-[flx_net]
-  standard_name = ???
-  long_name = ???
-  units = ???
-  dimensions = (horizontal_loop_extent)
-  type = real
-  kind = kind_r8
-[te_tnd]
-  standard_name = ???
-  long_name = ???
-  units = ???
-  dimensions = (horizontal_loop_extent)
-  type = real
-  kind = kind_r8
-[tw_tnd]
-  standard_name = ???
-  long_name = ???
-  units = ???
-  dimensions = (horizontal_loop_extent)
-  type = real
-  kind = kind_r8
-
-!###################################################################
-[ccpp-table-properties]
-  name = physics_ptend
-  type = ddt
-  dependencies =
-
-[ccpp-arg-table]
-  name = physics_ptend
-  type = ddt
-[psetcols]
-[name]
-[...]
 
 !###################################################################
 [ccpp-table-properties]
@@ -360,108 +225,84 @@
   dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_r8
-[ptend_deep_conv]
-  standard_name = tendency_ddt_instance_for_deep_convection
-  long_name = tendency ddt instance for deep convection
-  units = DDT
-  dimensions = ()
-  type = physics_ptend
-[ptend_deep_conv%q(:,:,1)]
+[ptend_deep_conv_qv]
   standard_name = tendency_of_specific_humidity_due_to_deep_convection
   long_name = 
   units = kg kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_r8
-[ptend_deep_conv%s]
+[ptend_deep_conv_s]
   standard_name = tendency_of_dry_static_energy_due_to_deep_convection
   long_name = 
   units = J kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_r8
-[ptend_deep_conv_evap]
-  standard_name = tendency_ddt_instance_for_deep_convection_evaporation
-  long_name = tendency ddt instance for deep convection evaporation
-  units = DDT
-  dimensions = ()
-  type = physics_ptend
-[ptend_deep_conv_evap%s]
+[ptend_deep_conv_evap_s]
   standard_name = tendency_of_dry_static_energy_due_to_deep_convection_evaporation
   long_name = 
   units = J kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_r8
-[ptend_deep_conv_evap%q(:,:,1)]
+[ptend_deep_conv_evap_qv]
   standard_name = tendency_of_specific_humidity_due_to_deep_convection_evaporation
   long_name = 
   units = kg kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_r8
-[ptend_deep_conv_momtran]
-  standard_name = tendency_ddt_instance_for_deep_convection_momentum_transport
-  long_name = tendency ddt instance for deep convection momentum transport
-  units = DDT
-  dimensions = ()
-  type = physics_ptend
-[ptend_deep_conv_momtran%s]
+[ptend_deep_conv_momtran_s]
   standard_name = tendency_of_dry_static_energy_due_to_deep_convection_momentum_transport
   long_name = tendency of dry static energy due to deep convection momentum transport
   units = J kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_r8
-[ptend_deep_conv_momtran%u]
+[ptend_deep_conv_momtran_u]
   standard_name = tendency_of_x_wind_due_to_deep_convection_momentum_transport
   long_name = tendency of x wind due to deep convection momentum transport
   units = m s-2
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_r8
-[ptend_deep_conv_momtran%v]
+[ptend_deep_conv_momtran_v]
   standard_name = tendency_of_y_wind_due_to_deep_convection_momentum_transport
   long_name = tendency of y wind due to deep convection momentum transport
   units = m s-2
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_r8
-[ptend_deep_conv_convtran]
-  standard_name = tendency_ddt_instance_for_deep_convection_transport
-  long_name = tendency ddt instance for deep convection transport
-  units = DDT
-  dimensions = ()
-  type = physics_ptend
-[ptend_deep_conv_convtran%q]
+[ptend_deep_conv_convtran_q]
   standard_name = tendency_of_tracer_concentration_due_to_deep_convection_transport
   long_name = tendency of tracer concentration due to deep convection transport
   units = kg kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension, number_of_tracers)
   type = real
   kind = kind_r8
-[ptend_deep_conv_tot%u]
+[ptend_deep_conv_tot_u]
   standard_name = tendency_of_x_wind_due_to_all_deep_convection
   long_name = tendency of x wind due to all deep convection
   units = m s-2
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_r8
-[ptend_deep_conv_tot%v]
+[ptend_deep_conv_tot_v]
   standard_name = tendency_of_y_wind_due_to_all_deep_convection
   long_name = tendency of y wind due to all deep convection
   units = m s-2
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_r8
-[ptend_deep_conv_tot%s]
+[ptend_deep_conv_tot_s]
   standard_name = tendency_of_dry_static_energy_due_to_all_deep_convection
   long_name = tendency of dry static energy due to all deep convection
   units = J kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_r8
-[ptend_deep_conv_tot%q]
+[ptend_deep_conv_tot_q]
   standard_name = tendency_of_tracer_concentration_due_to_all_deep_convection
   long_name = tendency of dry static energy due to deep convection transport
   units = kg kg-1 s-1
@@ -752,7 +593,7 @@
   type = real
   kind = kind_r8
 [du]
-  standard_name = atmosphere_detrainment_convective_mass_flux
+  standard_name = atmosphere_detrainment_convective_mass_flux_for_convective_triggered_columns
   long_name = atmosphere detrainment convective mass flux
   units = hPa s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
@@ -810,6 +651,41 @@
   units = count
   dimensions = ()
   type = integer
+[pblht_chnk]
+  standard_name = atmosphere_boundary_layer_thickness
+  long_name = pbl height
+  units = m
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_r8
+[tpert_chnk]
+  standard_name = perturbation_of_temperature
+  long_name = pertubation of temperature
+  units = K
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_r8
+[qpert_chnk]
+  standard_name = perturbation_of_tracers
+  long_name = pertubation of tracers
+  units = kg kg-1
+  dimensions = (horizontal_loop_extent,number_of_tracers)
+  type = real
+  kind = kind_r8
+[tpert2_chnk]
+  standard_name = secondary_perturbation_of_temperature
+  long_name = secondary pertubation of temperature
+  units = K
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_r8
+[qpert2_chnk]
+  standard_name = secondary_perturbation_of_tracers
+  long_name = secondary pertubation of tracers
+  units = kg kg-1
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_r8
   
 !###################################################################
 [ccpp-table-properties]
@@ -822,49 +698,49 @@
   type = ddt
 [cam_physpkg]
   standard_name = control_for_cam_physics_package
-  long name = name of cam physics package
+  long_name = name of cam physics package
   units = none
   dimensions = ()
   type = character
   kind = len=16
 [cam_physpkg_cam3]
   standard_name = identifier_for_cam3_physics_package
-  long name = identifier for cam3 physics package
+  long_name = identifier for cam3 physics package
   units = none
   dimensions = ()
   type = character
   kind = len=16
 [cam_physpkg_cam4]
   standard_name = identifier_for_cam4_physics_package
-  long name = identifier for cam4 physics package
+  long_name = identifier for cam4 physics package
   units = none
   dimensions = ()
   type = character
   kind = len=16
 [cam_physpkg_cam5]
   standard_name = identifier_for_cam5_physics_package
-  long name = identifier for cam5 physics package
+  long_name = identifier for cam5 physics package
   units = none
   dimensions = ()
   type = character
   kind = len=16
 [cam_physpkg_ideal]
   standard_name = identifier_for_ideal_physics_package
-  long name = identifier for ideal physics package
+  long_name = identifier for ideal physics package
   units = none
   dimensions = ()
   type = character
   kind = len=16
 [cam_physpkg_adiabatic]
   standard_name = identifier_for_adiabatic_physics_package
-  long name = identifier for adiabatic physics package
+  long_name = identifier for adiabatic physics package
   units = none
   dimensions = ()
   type = character
   kind = len=16
 [microp_scheme]
   standard_name = control_for_microphysics_scheme
-  long name = control for microphysics scheme
+  long_name = control for microphysics scheme
   units = none
   dimensions = ()
   type = character
@@ -924,3 +800,87 @@
   dimensions = ()
   type = real
   kind = kind_r8
+
+!###################################################################
+
+[ccpp-table-properties]
+  name = physics_types
+  type = module
+  relative_path = 
+  dependencies = ../../../../csm_share/shr/shr_kind_mod.F90,ppgrid.F90,../../../cam/src/physics/cam/constituents.F90
+  dependencies = ../../../cam/src/physics/cam/geopotential.F90,../../../cam/src/control/physconst.F90,../../../cam/src/dynamics/iap/dycore.F90
+  dependencies = ../../../cam/src/physics/cam/phys_grid.F90,../../../cam/src/control/cam_logfile.F90,../../../cam/src/utils/abortutils.F90
+  dependencies = ../../../cam/src/utils/time_manager.F90,phys_control.F90,../../../cam/src/control/error_messages.F90
+  dependencies = ../../../cam/src/control/infnan.F90,../../../cam/src/control/scamMod.F90,buffer.F90
+  dependencies = ../../../../csm_share/shr/shr_const_mod.F90,../../../cam/src/utils/namelist_utils.F90,../../../cam/src/utils/string_utils.F90
+  dependencies = ../../../cam/src/control/units.F90,../../../../csm_share/shr/shr_file_mod.F90,../../../../csm_share/shr/shr_sys_mod.F90
+  dependencies = ../../../../csm_share/shr/shr_mpi_mod.F90,../../../../csm_share/shr/shr_log_mod.F90,../../../cam/src/control/mpishorthand.F
+  dependencies = ../../../cam/src/dynamics/iap/pmgrid.F90,../../../cam/src/dynamics/iap/spmd_dyn.F90,../../../cam/src/utils/spmd_utils.F90
+  dependencies = ../../../cam/src/utils/pilgrim/decompmodule.F90,../../../cam/src/utils/pilgrim/ghostmodule.F90,../../../cam/src/utils/pilgrim/parutilitiesmodule.F90
+  dependencies = ../../../cam/src/utils/pilgrim/mod_comm.F90,../../../../utils/timing/perf_mod.F90,../../../../utils/timing/perf_utils.F90
+  dependencies = ../../../cam/src/dynamics/iap/flexib.F90,../../../cam/src/dynamics/iap/IAP_grid.F90,../../../cam/src/control/cam_control_mod.F90
+  dependencies = ../../../../utils/mct/mpeu/m_MergeSorts.F90,../../../../utils/mct/mpeu/m_realkinds.F90,../../../../utils/mct/mpeu/m_stdio.F90
+  dependencies = ../../../../utils/mct/mpeu/m_die.F90,../../../../utils/mct/mpeu/m_mpif90.F90,../../../../utils/mct/mpeu/m_mpout.F90
+  dependencies = ../../../../utils/mct/mpeu/m_ioutil.F90,../../../../utils/mct/mpeu/m_dropdead.F90,../../../../utils/mct/mpeu/m_flow.F90
+  dependencies = ../../../../utils/mct/mpeu/m_chars.F90,../../../cam/src/dynamics/iap/dyn_grid.F90,../../../cam/src/control/rgrid.F90
+  dependencies = ../../../cam/src/control/pspect.F90,../../../cam/src/dynamics/iap/commap.F90,../../../../csm_share/shr/shr_cal_mod.F90
+  dependencies = ../../../../csm_share/shr/shr_string_mod.F90,../../../../csm_share/shr/shr_timer_mod.F90,../../../../utils/esmf_wrf_timemgr/ESMF_Mod.F90
+  dependencies = ../../../../utils/esmf_wrf_timemgr/ESMF_AlarmMod.F90,../../../../utils/esmf_wrf_timemgr/ESMF_BaseMod.F90,../../../../utils/esmf_wrf_timemgr/ESMF_TimeIntervalMod.F90
+  dependencies = ../../../../utils/esmf_wrf_timemgr/ESMF_BaseTimeMod.F90,../../../../utils/esmf_wrf_timemgr/ESMF_FractionMod.F90,../../../../utils/esmf_wrf_timemgr/ESMF_CalendarMod.F90
+  dependencies = ../../../../utils/esmf_wrf_timemgr/ESMF_TimeMod.F90,../../../../utils/esmf_wrf_timemgr/ESMF_Stubs.F90,../../../../utils/esmf_wrf_timemgr/ESMF_ClockMod.F90
+  dependencies = ../../../../utils/esmf_wrf_timemgr/ESMF_AlarmClockMod.F90,../../../../utils/pio/pio.F90,../../../../utils/pio/pio_kinds.F90
+  dependencies = ../../../../utils/pio/piolib_mod.F90,../../../../utils/pio/pio_types.F90,../../../../utils/mct/mct/m_GlobalSegMap.F90
+  dependencies = ../../../../utils/mct/mpeu/m_FcComms.F90,../../../../utils/mct/mct/m_MCTWorld.F90,../../../../utils/mct/mpeu/m_List.F90
+  dependencies = ../../../../utils/mct/mpeu/m_mall.F90,../../../../utils/mct/mpeu/m_String.F90,../../../../utils/mct/mpeu/m_SortingTools.F90
+  dependencies = ../../../../utils/mct/mpeu/m_IndexBin_integer.F90,../../../../utils/mct/mpeu/m_IndexBin_char.F90,../../../../utils/mct/mpeu/m_IndexBin_logical.F90
+  dependencies = ../../../../utils/mct/mpeu/m_rankMerge.F90,../../../../utils/mct/mpeu/m_Permuter.F90,../../../../utils/mct/mct/m_Rearranger.F90
+  dependencies = ../../../../utils/mct/mct/m_Router.F90,../../../../utils/mct/mct/m_ExchangeMaps.F90,../../../../utils/mct/mct/m_GlobalMap.F90
+  dependencies = ../../../../utils/mct/mct/m_ConvertMaps.F90,../../../../utils/mct/mct/m_AttrVect.F90,../../../../utils/mct/mpeu/m_TraceBack.F90
+  dependencies = ../../../../utils/pio/alloc_mod.F90,../../../../utils/pio/pio_support.F90,../../../../utils/pio/ionf_mod.F90
+  dependencies = ../../../../utils/pio/pionfread_mod.F90,../../../../utils/pio/pionfwrite_mod.F90,../../../../utils/pio/nf_mod.F90
+  dependencies = ../../../../utils/pio/pio_msg_mod.F90,../../../../utils/pio/pio_mpi_utils.F90,../../../../utils/pio/iompi_mod.F90
+  dependencies = ../../../../utils/pio/rearrange.F90,../../../../utils/pio/piodarray.F90,../../../../utils/pio/pionfatt_mod.F90
+  dependencies = ../../../../utils/pio/pionfput_mod.F90,../../../../utils/pio/pionfget_mod.F90,../../../../csm_share/shr/shr_scam_mod.F90
+  dependencies = ../../../cam/src/control/wrap_nf.F90,../../../../csm_share/shr/shr_ncread_mod.F90,../../../../csm_share/shr/shr_dmodel_mod.F90
+  dependencies = ../../../../csm_share/shr/mct_mod.F90,../../../../utils/mct/mct/m_AttrVectComms.F90,../../../../utils/mct/mct/m_Accumulator.F90
+  dependencies = ../../../../utils/mct/mct/m_GeneralGrid.F90,../../../../utils/mct/mct/m_GeneralGridComms.F90,../../../../utils/mct/mct/m_Transfer.F90
+  dependencies = ../../../../utils/mct/mct/m_GlobalSegMapComms.F90,../../../../utils/mct/mct/m_SparseMatrix.F90,../../../../utils/mct/mct/m_SparseMatrixComms.F90
+  dependencies = ../../../../utils/mct/mct/m_SparseMatrixPlus.F90,../../../../utils/mct/mct/m_SparseMatrixToMaps.F90,../../../../utils/mct/mct/m_GlobalToLocal.F90
+  dependencies = ../../../../utils/mct/mct/m_Navigator.F90,../../../../utils/mct/mct/m_MatAttrVectMul.F90,../../../../utils/mct/mpeu/m_inpak90.F90
+  dependencies = ../../../../csm_share/shr/shr_strdata_mod.F90,../../../../csm_share/shr/shr_stream_mod.F90,../../../../csm_share/shr/shr_map_mod.F90
+  dependencies = ../../../../csm_share/shr/shr_orb_mod.F90,../../../../csm_share/shr/new_cosz_mod.F90,../../../../csm_share/shr/shr_tInterp_mod.F90
+  dependencies = ../../../../csm_share/shr/shr_mct_mod.F90,../../../../csm_share/shr/shr_pcdf_mod.F90
+
+[ccpp-arg-table]
+  name = physics_types
+  type = module
+[physics_state]
+  standard_name = physics_state
+  long_name = definition of type physics_state
+  units = DDT
+  dimensions = ()
+  type = physics_state
+[physics_int_ephem]
+  standard_name = physics_int_ephem
+  long_name = definition of type physics_int_ephem
+  units = DDT
+  dimensions = ()
+  type = physics_int_ephem
+[physics_int_pers]
+  standard_name = physics_int_pers
+  long_name = definition of type physics_int_pers
+  units = DDT
+  dimensions = ()
+  type = physics_int_pers
+[physics_global]
+  standard_name = physics_global
+  long_name = definition of type physics_global
+  units = DDT
+  dimensions = ()
+  type = physics_global
+[cdata]
+  standard_name = ccpp_t_instance
+  long_name = instance of derived data type ccpp_t
+  units = DDT
+  dimensions = ()
+  type = ccpp_t

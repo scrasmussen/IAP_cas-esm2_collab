@@ -1,25 +1,3 @@
-[ccpp-table-properties]
-  name = camsrfexch_types
-  type = module
-  relative_path = 
-  dependencies = shr_kind_mod.F90,ppgrid.F90,constituents.F90
-
-[ccpp-arg-table]
-  name = camsrfexch_types
-  type = module
-[cam_in_t]
-  standard_name = cam_in_type
-  long_name = definition of type cam_in
-  units = DDT
-  dimensions = ()
-  type = cam_in_t
-[cam_out_t]
-  standard_name = cam_out_type
-  long_name = definition of type cam_out
-  units = DDT
-  dimensions = ()
-  type = cam_out_t
-  
 !###################################################################
 [ccpp-table-properties]
   name = cam_in_t
@@ -36,3 +14,42 @@
   dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_r8
+
+!###################################################################
+[ccpp-table-properties]
+  name = camsrfexch_types
+  type = module
+  relative_path = 
+  dependencies = ../../../../csm_share/shr/shr_kind_mod.F90,../physics/cam/constituents.F90,physconst.F90
+  dependencies = ../../../../csm_share/shr/shr_const_mod.F90,../utils/namelist_utils.F90,../utils/string_utils.F90
+  dependencies = units.F90,../../../../csm_share/shr/shr_file_mod.F90,../../../../csm_share/shr/shr_sys_mod.F90
+  dependencies = ../../../../csm_share/shr/shr_mpi_mod.F90,../../../../csm_share/shr/shr_log_mod.F90,mpishorthand.F,../utils/abortutils.F90,
+  dependencies = cam_logfile.F90,../../../../utils/timing/perf_mod.F90,../../../../utils/timing/perf_utils.F90
+  dependencies = ../../../../csm_share/shr/shr_sys_mod.F90,../../../../csm_share/shr/shr_mpi_mod.F90,../../../../csm_share/shr/shr_file_mod.F90
+  dependencies = infnan.F90,../../../iap/src/physics/ppgrid.F90,../physics/cam/phys_grid.F90
+  dependencies = ../dynamics/iap/spmd_dyn.F90,../utils/spmd_utils.F90
+  dependencies = ../utils/pilgrim/decompmodule.F90,../utils/pilgrim/ghostmodule.F90,../utils/pilgrim/parutilitiesmodule.F90
+  dependencies = ../utils/pilgrim/mod_comm.F90
+  dependencies = ../dynamics/iap/flexib.F90,../dynamics/iap/IAP_grid.F90,../control/cam_control_mod.F90
+  dependencies = ../../../../utils/mct/mpeu/m_MergeSorts.F90,../../../../utils/mct/mpeu/m_realkinds.F90,../../../../utils/mct/mpeu/m_stdio.F90
+  dependencies = ../../../../utils/mct/mpeu/m_die.F90,../../../../utils/mct/mpeu/m_mpif90.F90,../../../../utils/mct/mpeu/m_mpout.F90
+  dependencies = ../../../../utils/mct/mpeu/m_ioutil.F90,../../../../utils/mct/mpeu/m_dropdead.F90,../../../../utils/mct/mpeu/m_flow.F90
+  dependencies = ../../../../utils/mct/mpeu/m_chars.F90,../dynamics/iap/dyn_grid.F90,../control/rgrid.F90
+  dependencies = ../control/pspect.F90,../dynamics/iap/commap.F90
+
+[ccpp-arg-table]
+  name = camsrfexch_types
+  type = module
+[cam_in_t]
+  standard_name = cam_in_t
+  long_name = definition of type cam_in
+  units = DDT
+  dimensions = ()
+  type = cam_in_t
+[cam_out_t]
+  standard_name = cam_out_t
+  long_name = definition of type cam_out
+  units = DDT
+  dimensions = ()
+  type = cam_out_t
+  

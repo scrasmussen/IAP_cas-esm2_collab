@@ -7,8 +7,6 @@
 [ccpp-arg-table]
   name = ppgrid
   type = module
-[begchunk]
-[endchunk]
 [pcols]
   standard_name = horizontal_loop_extent
   long_name = horizontal loop extent
@@ -27,6 +25,3 @@
   units = count
   dimensions = ()
   type = integer
-[nvar_dirOA]
-[nvar_dirOL]
-[indexb]

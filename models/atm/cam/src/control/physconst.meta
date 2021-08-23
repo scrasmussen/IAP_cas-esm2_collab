@@ -1,8 +1,11 @@
-ccpp-table-properties]
+[ccpp-table-properties]
   name = physconst
   type = module
   relative_path = 
-  dependencies = shr_kind_mod.F90
+  dependencies = ../../../../csm_share/shr/shr_kind_mod.F90,../../../../csm_share/shr/shr_const_mod.F90,../utils/namelist_utils.F90,../utils/string_utils.F90
+  dependencies = units.F90,../../../../csm_share/shr/shr_file_mod.F90,../../../../csm_share/shr/shr_sys_mod.F90
+  dependencies = ../../../../csm_share/shr/shr_mpi_mod.F90,../../../../csm_share/shr/shr_log_mod.F90,mpishorthand.F
+  dependencies = ../utils/abortutils.F90,cam_logfile.F90,../../../../utils/timing/perf_mod.F90,../../../../utils/timing/perf_utils.F90
 
 [ccpp-arg-table]
   name = physconst
@@ -83,4 +86,4 @@ ccpp-table-properties]
   units = none
   dimensions = ()
   type = real
-  kind = kind_phys
+  kind = kind_r8

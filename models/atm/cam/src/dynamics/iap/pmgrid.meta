@@ -2,7 +2,7 @@
   name = pmgrid
   type = module
   relative_path =
-  dependencies =
+  dependencies = ../../utils/pilgrim/decompmodule.F90,../../control/cam_logfile.F90
 
 [ccpp-arg-table]
   name = pmgrid

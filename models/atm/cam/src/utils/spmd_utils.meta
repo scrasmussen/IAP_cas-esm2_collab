@@ -2,13 +2,16 @@
   name = spmd_utils
   type = module
   relative_path = 
-  dependencies = 
+  dependencies = ../../../../csm_share/shr/shr_kind_mod.F90,abortutils.F90,../control/mpishorthand.F
+  dependencies = ../control/cam_logfile.F90,../../../../utils/timing/perf_mod.F90,../../../../utils/timing/perf_utils.F90
+  dependencies = ../../../../csm_share/shr/shr_sys_mod.F90,../../../../csm_share/shr/shr_mpi_mod.F90,../../../../csm_share/shr/shr_file_mod.F90
+  dependencies = namelist_utils.F90,string_utils.F90
  
 [ccpp-arg-table]
   name = spmd_utils
   type = module
 [masterproc]
-  name = flag_for_master_processor
+  standard_name = flag_for_master_processor
   long_name = flag for master processor
   units = flag
   dimensions = ()

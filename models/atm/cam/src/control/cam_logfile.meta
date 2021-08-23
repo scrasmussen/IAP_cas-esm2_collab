@@ -8,7 +8,7 @@
   name = cam_logfile
   type = module
 [iulog]
-  name = unit_number_for_output_logging
+  standard_name = unit_number_for_output_logging
   long_name = Fortran I/O unit for logging
   units = index
   dimensions = ()
