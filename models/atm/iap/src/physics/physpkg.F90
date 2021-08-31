@@ -19,6 +19,12 @@ module physpkg
                               physics_ptend, physics_tend_init, physics_update,    &
                               physics_ptend_init, physics_type_alloc,              &
                               physics_int_ephem, physics_int_pers, physics_global
+  use ccpp_static_api,    only: ccpp_physics_init,                   &
+                                ccpp_physics_timestep_init,          &
+                                ccpp_physics_run,                    &
+                                ccpp_physics_timestep_finalize,      &
+                                ccpp_physics_finalize
+  use ccpp_types,        only: ccpp_t
 #else
   use physics_types,    only: physics_state, physics_tend, physics_state_set_grid, &
                               physics_ptend, physics_tend_init, physics_update,    &
@@ -444,7 +450,7 @@ subroutine phys_inidat( cam_out )
 end subroutine phys_inidat
 
 #ifdef CCPP
-subroutine phys_init( phys_state, phys_tend, pbuf, cam_out, phys_int_ephem, phys_int_pers, phys_global )
+subroutine phys_init( phys_state, phys_tend, pbuf, cam_out, cdata_domain, ccpp_suite, phys_int_ephem, phys_int_pers, phys_global )
 #else
 subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
 #endif
@@ -526,6 +532,8 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    type(pbuf_fld), intent(in), dimension(pbuf_size_max) :: pbuf  ! physics buffer
    type(cam_out_t),intent(inout)                        :: cam_out(begchunk:endchunk)
 #ifdef CCPP
+   type(ccpp_t), intent(in)         :: cdata_domain
+   character(len=256), intent(in)   :: ccpp_suite
    type(physics_int_ephem), intent(inout), pointer :: phys_int_ephem(:)
    type(physics_int_pers),  intent(inout), pointer :: phys_int_pers(:)
    type(physics_global),    intent(inout), pointer :: phys_global
@@ -533,7 +541,7 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
 #endif
 
    ! local variables
-   integer :: lchnk
+   integer :: lchnk, ierr
    character(len=*), parameter :: subname = 'phys_init' !czy20181116
 
 ! Get microphysics option
@@ -679,7 +687,16 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
 
    call cldfrc_init
 
+#ifdef CCPP
+   call ccpp_physics_init(cdata_domain, suite_name=trim(ccpp_suite), ierr=ierr)
+   if (ierr/=0) then
+     write(0,'(a)') "An error occurred in ccpp_physics_init"
+     write(0,'(a)') trim(cdata_domain%errmsg)
+     return
+   end if
+#else
    call convect_deep_init(hypi)
+#endif
 
    call cldinti ()
 
@@ -725,7 +742,7 @@ end subroutine phys_init
 subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out, cam_state, cam_tend)
 #else
 #ifdef CCPP
-subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out, phys_int_ephem)
+subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out, phys_int_ephem, phys_int_pers, phys_global, cdata_domain, cdata_chunk, ccpp_suite)
 #else
 subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 #endif
@@ -766,6 +783,12 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 #endif
 #ifdef CCPP
    type(physics_int_ephem), intent(inout), dimension(:) :: phys_int_ephem
+   type(physics_int_pers),  intent(inout), dimension(:) :: phys_int_pers
+   type(physics_global),    intent(inout) :: phys_global
+   type(ccpp_t), intent(inout)         :: cdata_domain
+   type(ccpp_t), intent(inout)         :: cdata_chunk
+   character(len=256), intent(in)   :: ccpp_suite
+   integer :: ierr
 #endif
 !-----------------------------------------------------------------------
 !
@@ -780,6 +803,15 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 
    call t_startf ('physpkg_st1')
    nstep = get_nstep()
+
+#ifdef CCPP
+   call ccpp_physics_timestep_init(cdata_domain, suite_name=trim(ccpp_suite), ierr=ierr)
+   if (ierr/=0) then
+     write(0,'(a)') "An error occurred in ccpp_physics_timestep_init"
+     write(0,'(a)') trim(cdata_domain%errmsg)
+     return
+   end if
+#endif
 
    ! The following initialization depends on the import state (cam_in)
    ! being initialized.  This isn't true when cam_init is called, so need
@@ -849,10 +881,17 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
                        phys_tend(c), pbuf,  fsds(1,c), landm(1,c),                       &
                        cam_out(c), cam_in(c), cam_state(c), cam_tend(c) )  !juangxiong he
 #else
+#ifdef CCPP
+         call tphysbc (ztodt, pblht(1,c), tpert(1,c), qpert(1,1,c),tpert2(1,c), qpert2(1,c),&
+                       fsns(1,c), fsnt(1,c), flns(1,c), flnt(1,c), phys_state(c),        &
+                       phys_tend(c), pbuf,  fsds(1,c), landm(1,c),                       &
+                       cam_out(c), cam_in(c), cdata_chunk(c), ccpp_suite)
+#else
          call tphysbc (ztodt, pblht(1,c), tpert(1,c), qpert(1,1,c),tpert2(1,c), qpert2(1,c),&
                        fsns(1,c), fsnt(1,c), flns(1,c), flnt(1,c), phys_state(c),        &
                        phys_tend(c), pbuf,  fsds(1,c), landm(1,c),                       &
                        cam_out(c), cam_in(c) )
+#endif
 #endif
       end do
 
@@ -860,7 +899,7 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 !$OMP PARALLEL DO PRIVATE (C)
       do c=begchunk, endchunk
         !call new physics variable output setup routine
-        call diag_tphysbc(c, phys_int_ephem(c), phys_int_pers(c))
+        call diag_tphysbc(c, phys_int_ephem(c), phys_int_pers(c), phys_global)
       end do
 #endif
 
@@ -872,6 +911,15 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 
 #ifdef TRACER_CHECK
       call gmean_mass ('between DRY', phys_state)
+#endif
+
+#ifdef CCPP
+   call ccpp_physics_timestep_finalize(cdata_domain, suite_name=trim(ccpp_suite), ierr=ierr)
+   if (ierr/=0) then
+     write(0,'(a)') "An error occurred in ccpp_physics_timestep_finalize"
+     write(0,'(a)') trim(cdata_domain%errmsg)
+     return
+   end if
 #endif
    end if
 
@@ -1095,8 +1143,11 @@ end subroutine phys_run2
 !
 !-----------------------------------------------------------------------
 !
-
+#ifdef CCPP
+subroutine phys_final( phys_state, phys_tend, cdata_chunk, ccpp_suite )
+#else
 subroutine phys_final( phys_state, phys_tend )
+#endif
   use chemistry, only : chem_final
 !-----------------------------------------------------------------------
 !
@@ -1107,6 +1158,25 @@ subroutine phys_final( phys_state, phys_tend )
    ! Input/output arguments
    type(physics_state), pointer :: phys_state(:)
    type(physics_tend ), pointer :: phys_tend(:)
+
+#ifdef CCPP
+   type(ccpp_t), pointer :: cdata_chunk(:)
+   character(len=256)    :: ccpp_suite
+   integer :: i, ierr
+
+   do i=begchunk,endchunk
+     !--- Finalize CCPP physics
+     call ccpp_physics_finalize(cdata_chunk(i), suite_name=trim(ccpp_suite), ierr=ierr)
+     if (ierr/=0) then
+       write(0,'(a,i4)') "An error occurred in ccpp_physics_finalize for block ", i
+       write(0,'(a)') trim(cdata_chunk(i)%errmsg)
+       return
+     end if
+   end do
+
+   ! Deallocate cdata structure for blocks and threads
+   if (allocated(cdata_chunk)) deallocate(cdata_chunk)
+#endif
 
    deallocate(phys_state)
    deallocate(phys_tend)

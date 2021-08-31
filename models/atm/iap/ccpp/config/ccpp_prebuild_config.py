@@ -33,15 +33,18 @@ TYPEDEFS_NEW_METADATA = {
         'ccpp_types' : '',
         'ccpp_t' : 'cdata',
         },
+    'cam_comp' : {
+        'cam_comp' : ''
+        },
     'physics_types' : {
-        'physics_state' : 'physics_state',
-        'physics_int_ephem' : 'physics_int_ephem',
-        'physics_int_pers' : 'physics_int_pers',
-        'physics_global' : 'physics_global',
+        'physics_state' : 'phys_state(cdata%blk_no)',
+        'physics_int_ephem' : 'phys_int_ephem(cdata%blk_no)',
+        'physics_int_pers' : 'phys_int_pers(cdata%blk_no)',
+        'physics_global' : 'phys_global',
         'physics_types' : '',
         },
      'camsrfexch_types' : {
-        'cam_in_t' : 'cam_in_t',
+        'cam_in_t' : 'cam_in(cdata%blk_no)',
         'camsrfexch_types' : '',
         },
     }

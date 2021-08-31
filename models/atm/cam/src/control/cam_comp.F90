@@ -21,6 +21,8 @@ module cam_comp
    use infnan,            only: nan
 #ifdef CCPP
    use physics_types,     only: physics_state, physics_tend, physics_int_ephem, physics_int_pers, physics_global
+   use ccpp_types,        only: ccpp_t
+   use phys_grid,         only: ngcols
 #else
    use physics_types,     only: physics_state, physics_tend
 #endif
@@ -70,6 +72,11 @@ module cam_comp
   type(physics_state), pointer :: phys_state(:)
   type(physics_tend ), pointer :: phys_tend(:)
 #ifdef CCPP
+  integer                          :: nchnks
+  type(ccpp_t),                    :: cdata_domain
+  type(ccpp_t),        allocatable :: cdata_chunk(:)
+  character(len=256)               :: ccpp_suite='undefined'
+  
   type(physics_int_ephem), pointer :: phys_int_ephem(:)
   type(physics_int_pers),  pointer :: phys_int_pers(:)
   type(physics_global),    pointer :: phys_global
@@ -212,6 +219,29 @@ subroutine cam_init( cam_out, cam_in, mpicom_atm, &
    end if
 
 #ifdef CCPP
+   !### temporary until we read the suite in from namelist
+   ccpp_suite = 'IAP_test'
+   
+   nchnks = endchunk - begchunk + 1
+   
+   ! For physics running over the entire domain, block and thread
+   ! number are not used; set to safe values
+   cdata_domain%blk_no = 1
+   cdata_domain%thrd_no = 1
+   
+   ! Allocate cdata structures for blocks and threads
+   if (.not.allocated(cdata_chunk)) allocate(cdata_chunk(begchunk:endchunk), stat=ierr)
+   if( ierr /= 0 ) then
+      write(iulog,*) 'cam_init: cdata_chunk allocation error = ',ierr
+      call endrun('cam_init: failed to allocate cdata_chunk array')
+   end if
+   
+   do i=begchunk,endchunk
+     ! Assign the correct block and thread numbers
+     cdata_chunk(i)%blk_no = i
+     cdata_chunk(i)%thrd_no = 1
+   end do
+   
    call phys_init( phys_state, phys_tend, pbuf, cam_out, phys_int_ephem, phys_int_pers, phys_global)
 #else
    call phys_init( phys_state, phys_tend, pbuf, cam_out )
@@ -455,8 +485,12 @@ subroutine cam_run1(cam_in, cam_out)
 !wangty modify
 #ifdef wrf 
    call phys_run1(phys_state, dtime, phys_tend, pbuf, cam_in, cam_out, cam_state, cam_tend)  ! juanxiong he
-#else   
+#else
+#ifdef CCPP
+   call phys_run1(phys_state, dtime, phys_tend, pbuf, cam_in, cam_out, phys_int_ephem, phys_int_pers, phys_global, cdata_domain, cdata_chunk, ccpp_suite)
+#else
    call phys_run1(phys_state, dtime, phys_tend, pbuf, cam_in, cam_out)
+#endif
 #endif
    call t_stopf  ('phys_run1')
 
@@ -830,7 +864,11 @@ subroutine cam_final( cam_out, cam_in )
 #endif
 !-----------------------------------------------------------------------
 !
+#ifdef CCPP
+   call phys_final( phys_state, phys_tend, cdata_chunk, ccpp_suite )
+#else
    call phys_final( phys_state, phys_tend )
+#endif
    call stepon_final(dyn_in, dyn_out)
 
    if(nsrest==0) then
