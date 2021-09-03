@@ -45,9 +45,9 @@ module physpkg
   use scamMod,          only: single_column, scm_crm_mode
   use flux_avg,         only: flux_avg_init
 #ifdef CCPP
-  use cldwat,           only: inimc
+  use cldwat_ccpp,           only: inimc
 #else
-  use cldwat_ccpp,      only: inimc
+  use cldwat,      only: inimc
 #endif
 #ifdef SPMD
   use mpishorthand
@@ -709,7 +709,7 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    end if
 
 #ifdef CCPP
-   call inimc(tmelt, rhodair/1000.0_r8, gravit, rh2o, hypm, microp_scheme, iulog, masterproc)
+   call inimc(tmelt, rhodair/1000.0_r8, gravit, rh2o, hypm, microp_scheme, iulog, pver, masterproc)
 #else
    call inimc(tmelt, rhodair/1000.0_r8, gravit, rh2o)
 #endif

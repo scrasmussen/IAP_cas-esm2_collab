@@ -10,6 +10,7 @@
 #===============================================================================
 
 CPPDEFS := $(USER_CPPDEFS)
+CPPDEFS += -DCCPP
 
 # USE_ESMF_LIB is currently only defined in env_build.xml
 ifeq ($(USE_ESMF_LIB), TRUE)
