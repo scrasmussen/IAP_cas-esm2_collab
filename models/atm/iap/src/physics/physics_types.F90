@@ -290,6 +290,9 @@ module physics_types
     real(kind=r8), pointer              :: temp_state_v(:,:) => null()
     real(kind=r8), pointer              :: temp_state_s(:,:) => null()
     real(kind=r8), pointer              :: temp_state_q(:,:,:) => null()
+    real(kind=r8), pointer              :: temp_state_t(:,:) => null()
+    real(kind=r8), pointer              :: temp_state_zm(:,:) => null()
+    real(kind=r8), pointer              :: temp_state_zi(:,:) => null()
     real(kind=r8), pointer              :: tend_s_snwprd  (:,:) ! Heating rate of snow production
     real(kind=r8), pointer              :: tend_s_snwevmlt(:,:) ! Heating rate of evap/melting of snow
     real(kind=r8), pointer              :: ntprprd(:,:) !net precip production in layer
@@ -1314,6 +1317,9 @@ subroutine interstitial_ephemeral_create (int_ephem, ncol, pver, pverp, pcnst)
   allocate (int_ephem%temp_state_v(ncol,pver))
   allocate (int_ephem%temp_state_s(ncol,pver))
   allocate (int_ephem%temp_state_q(ncol,pver,pcnst))
+  allocate (int_ephem%temp_state_t(ncol,pver))
+  allocate (int_ephem%temp_state_zm(ncol,pver))
+  allocate (int_ephem%temp_state_zi(ncol,pverp))
   allocate (int_ephem%tend_s_snwprd(ncol,pver))
   allocate (int_ephem%tend_s_snwevmlt(ncol,pver))
   allocate (int_ephem%ntprprd(ncol,pver))
@@ -1357,6 +1363,9 @@ subroutine interstitial_ephemeral_reset(int_ephem)
   int_ephem%temp_state_v    = clear_val
   int_ephem%temp_state_s    = clear_val
   int_ephem%temp_state_q    = clear_val
+  int_ephem%temp_state_t    = clear_val
+  int_ephem%temp_state_zm   = clear_val
+  int_ephem%temp_state_zi   = clear_val
   int_ephem%tend_s_snwprd   = clear_val
   int_ephem%tend_s_snwevmlt = clear_val
   int_ephem%ntprprd         = clear_val
