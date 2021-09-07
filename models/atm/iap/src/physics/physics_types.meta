@@ -18,189 +18,189 @@
   units = radian
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [lon]
   standard_name = longitude
   long_name = longitude
   units = radian
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ps]
   standard_name = surface_air_pressure
   long_name = surface pressure
   units = Pa
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [phis]
   standard_name = surface_geopotential
   long_name = surface geopotential
   units = m2 s-2 ???
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [t]
   standard_name = air_temperature
   long_name = model layer mean temperature
   units = K
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [u]
   standard_name = x_wind
   long_name = x wind
   units = m s-1
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [v]
   standard_name = y_wind
   long_name = y wind
   units = m s-1
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [rh]
   standard_name = relative_humidity
   long_name = layer relative humidity
   units = frac
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [s]
   standard_name = dry_static_energy
   long_name = dry static energy
   units = m2 s-2???
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [omega]
   standard_name = omega
   long_name = layer mean pressure vertical velocity
   units = Pa s-1
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [pmid]
   standard_name = air_pressure
   long_name = midpoint air pressure
   units = Pa
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [pmiddry]
   standard_name = dry_air_pressure
   long_name = midpoint dry air pressure
   units = Pa
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [pdel]
   standard_name = pressure_thickness
   long_name = model layer thickness
   units = Pa
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [pdeldry]
   standard_name = dry_pressure_thickness
   long_name = dry dmodel layer thickness
   units = Pa
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [rpdel]
   standard_name = reciprocal_of_pressure_thickness
   long_name = reciprocal model layer thickness
   units = Pa-1
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [pdeldry]
   standard_name = reciprocal_of_dry_pressure_thickness
   long_name = reciprocal of dry dmodel layer thickness
   units = Pa-1
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [lnpmid]
   standard_name = natural_log_of_air_pressure
   long_name = natural log of midpoint air pressure
   units = ln Pa
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [lnpmiddry]
   standard_name = natural_log_of_dry_air_pressure
   long_name = natural log of midpoint dry air pressure
   units = ln Pa
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [exner]
   standard_name = dimensionless_exner_function
   long_name = dimensionless Exner function w.r.t. surface pressure at model layer centers
   units = none
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [uzm]
   standard_name = x_wind_for_qbo
   long_name = x wind for qbo
   units = m s-1
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [zm]
   standard_name = geopotential_height
   long_name = geopotential height above surface at midpoints
   units = m
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [q]         
   standard_name = tracer_concentration
   long_name = model layer mean tracer concentration
   units = kg kg-1
   dimensions = (horizontal_loop_extent,vertical_dimension,number_of_tracers)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [pint]
   standard_name = air_pressure_at_interface
   long_name = air pressure at model layer interfaces
   units = Pa
   dimensions = (horizontal_loop_extent,vertical_dimension_plus_one)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [pintdry]
   standard_name = dry_air_pressure_at_interface
   long_name = dry air pressure at model layer interfaces
   units = Pa
   dimensions = (horizontal_loop_extent,vertical_dimension_plus_one)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [lnpint]
   standard_name = natural_log_of_air_pressure_at_interface
   long_name = natural log of air pressure at model layer interfaces
   units = ln Pa
   dimensions = (horizontal_loop_extent,vertical_dimension_plus_one)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [lnpintdry]
   standard_name = natural_log_of_dry_air_pressure_at_interface
   long_name = natural log of dry air pressure at model layer interfaces
   units = ln Pa
   dimensions = (horizontal_loop_extent,vertical_dimension_plus_one)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [zi]
   standard_name = geopotential_height_at_interface
   long_name = geopotential height above surface at interface
   units = m
   dimensions = (horizontal_loop_extent,vertical_dimension_plus_one)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 
 !###################################################################
 [ccpp-table-properties]
@@ -217,266 +217,266 @@
   units = m s-1
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [snow]
   standard_name = lwe_convective_snowfall_rate
   long_name = liquid water equivalent convective snowfall rate
   units = m s-1
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ptend_deep_conv_qv]
   standard_name = tendency_of_specific_humidity_due_to_deep_convection
   long_name = 
   units = kg kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ptend_deep_conv_s]
   standard_name = tendency_of_dry_static_energy_due_to_deep_convection
   long_name = 
   units = J kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ptend_deep_conv_evap_s]
   standard_name = tendency_of_dry_static_energy_due_to_deep_convection_evaporation
   long_name = 
   units = J kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ptend_deep_conv_evap_qv]
   standard_name = tendency_of_specific_humidity_due_to_deep_convection_evaporation
   long_name = 
   units = kg kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ptend_deep_conv_momtran_s]
   standard_name = tendency_of_dry_static_energy_due_to_deep_convection_momentum_transport
   long_name = tendency of dry static energy due to deep convection momentum transport
   units = J kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ptend_deep_conv_momtran_u]
   standard_name = tendency_of_x_wind_due_to_deep_convection_momentum_transport
   long_name = tendency of x wind due to deep convection momentum transport
   units = m s-2
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ptend_deep_conv_momtran_v]
   standard_name = tendency_of_y_wind_due_to_deep_convection_momentum_transport
   long_name = tendency of y wind due to deep convection momentum transport
   units = m s-2
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ptend_deep_conv_convtran_q]
   standard_name = tendency_of_tracer_concentration_due_to_deep_convection_transport
   long_name = tendency of tracer concentration due to deep convection transport
   units = kg kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension, number_of_tracers)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ptend_deep_conv_tot_u]
   standard_name = tendency_of_x_wind_due_to_all_deep_convection
   long_name = tendency of x wind due to all deep convection
   units = m s-2
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ptend_deep_conv_tot_v]
   standard_name = tendency_of_y_wind_due_to_all_deep_convection
   long_name = tendency of y wind due to all deep convection
   units = m s-2
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ptend_deep_conv_tot_s]
   standard_name = tendency_of_dry_static_energy_due_to_all_deep_convection
   long_name = tendency of dry static energy due to all deep convection
   units = J kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ptend_deep_conv_tot_q]
   standard_name = tendency_of_tracer_concentration_due_to_all_deep_convection
   long_name = tendency of dry static energy due to deep convection transport
   units = kg kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension, number_of_tracers)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [cmfmc]
   standard_name = atmosphere_convective_mass_flux
   long_name = atmosphere convective mass flux
   units = kg m-2 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension_plus_one)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [cmfcme]
   standard_name = atmosphere_convective_mass_flux_multiplied_by_condensation_minus_evaporation
   long_name = atmosphere convective mass flux multiplied by condensation minus evaporation
   units = kg m-2 s-1 ???
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [cape]
   standard_name = atmosphere_convective_available_potential_energy
   long_name = atmosphere convective available potential energy
   units = J kg-1
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [dlf]
   standard_name = atmosphere_detrainment_convective_cloud_water_mass_flux
   long_name = atmosphere detrainment convective cloud water mass flux
   units = kg m-2 s-1 ???
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [pflx]
   standard_name = scattered_convective_precipitation_flux_at_interface
   long_name = scattered convective precipitation flux
   units = kg m-2 s-1 ???
   dimensions = (horizontal_loop_extent, vertical_dimension_plus_one)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [zdu]
   standard_name = atmosphere_detrainment_convective_mass_flux
   long_name = atmosphere detrainment convective mass flux
   units = kg m-2 s-1 ???
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [rliq]
   standard_name = vertically_integrated_liquid_water_not_in_cloud
   long_name = verticall integrated liquid water not in cloud
   units = m
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [pcont]
   standard_name = air_pressure_at_top_of_deep_convection
   long_name = air pressure at top of deep convection
   units = Pa
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [pconb]
   standard_name = air_pressure_at_bottom_of_deep_convection
   long_name = air pressure at bottom of deep convection
   units = Pa
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [temp_state_u]
   standard_name = temporary_x_wind
   long_name = temporary state x wind
   units = m s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [temp_state_v]
   standard_name = temporary_y_wind
   long_name = temporary state y wind
   units = m s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [temp_state_s]
   standard_name = temporary_dry_static_energy
   long_name = temporary state dry static energy
   units = m2 s-2???
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [temp_state_q]         
   standard_name = temporary_tracer_concentration
   long_name = temporary state model layer mean tracer concentration
   units = kg kg-1
   dimensions = (horizontal_loop_extent,vertical_dimension,number_of_tracers)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [temp_state_t]
   standard_name = temporary_air_temperature
   long_name = temporary model layer mean temperature
   units = K
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [temp_state_zm]
   standard_name = temporary_geopotential_height
   long_name = temporary geopotential height above surface at midpoints
   units = m
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [temp_state_zi]
   standard_name = temporary_geopotential_height_at_interface
   long_name = temporary geopotential height above surface at interface
   units = m
   dimensions = (horizontal_loop_extent,vertical_dimension_plus_one)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [tend_s_snwprd]
   standard_name = tendency_of_dry_static_energy_due_to_deep_convection_snow_production
   long_name = tendency of dry static energy due to deep convection snow production
   units = J kg-1 s-1
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [tend_s_snwevmlt]
   standard_name = tendency_of_dry_static_energy_due_to_deep_convection_snow_melting_and_evaporation
   long_name = tendency of dry static energy due to deep convection snow melting and evaporation
   units = J kg-1 s-1
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ntprprd]
   standard_name = net_rain_production_rate
   long_name = net rain production rate
   units = kg kg-1 s-1
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ntsnprd]
   standard_name = net_snow_production_rate
   long_name = net snow production rate
   units = kg kg-1 s-1
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [pguall]
   standard_name = updraft_pressure_gradient_apparent_force
   long_name = updraft pressure gradient apparent force
   units = unknown
   dimensions = (horizontal_loop_extent,vertical_dimension,2)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [pgdall]
   standard_name = downdraft_pressure_gradient_apparent_force
   long_name = downdraft pressure gradient apparent force
   units = unknown
   dimensions = (horizontal_loop_extent,vertical_dimension,2)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [icwu]
   standard_name = winds_within_cloudy_updrafts
   long_name = in-cloud winds in the convective updrafts
   units = m s-1
   dimensions = (horizontal_loop_extent,vertical_dimension,2)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [icwd]
   standard_name = winds_within_cloudy_downdrafts
   long_name = in-cloud winds in the convective downdrafts
   units = m s-1
   dimensions = (horizontal_loop_extent,vertical_dimension,2)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
   
 !###################################################################
 [ccpp-table-properties]
@@ -493,140 +493,140 @@
   units = index
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [jcbot]
   standard_name = vertical_index_at_cloud_base
   long_name = vertical index at cloud base
   units = index
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [rprd]
   standard_name = rain_production_rate
   long_name = rain production rate
   units = kg kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ql]
   standard_name = cloud_water_mixing_ratio_for_deep_convection
   long_name = cloud water mixing ratio for deep convection
   units = kg kg-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [slflx]
   standard_name = sensible_heat_flux_due_to_deep_convection
   long_name = sensible heat flux due to deep convection
   units = W m-2
   dimensions = (horizontal_loop_extent, vertical_dimension_plus_one)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [qtflx]
   standard_name = latent_heat_flux_due_to_deep_convection
   long_name = latent heat flux due to deep convection
   units = W m-2
   dimensions = (horizontal_loop_extent, vertical_dimension_plus_one)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [cld_old]
   standard_name = cloud_area_fraction_in_atmosphere_layer_at_previous_timestep
   long_name = cloud area fraction at oldest time in the physics buffer
   units = frac
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [flxprec]
   standard_name = convective_precipitation_flux_at_interface
   long_name = convective precipitation flux at interface
   units = kg m-2 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension_plus_one)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [flxsnow]
   standard_name = convective_snowfall_flux_at_interface
   long_name = convective snowfall flux at interface
   units = kg m-2 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension_plus_one)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [dp_cldliq]
   standard_name = deep_convective_cloud_liquid_water_mixing_ratio
   long_name = deep convective cloud liquid water mixing ratio
   units = kg kg-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [dp_cldice]
   standard_name = deep_convective_cloud_ice_mixing_ratio
   long_name = deep convective cloud ice mixing ratio
   units = kg kg-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [fracis]
   standard_name = fraction_of_tracer_that_is_insoluble
   long_name = fraction of transported species that are insoluble
   units = frac
   dimensions = (horizontal_loop_extent, vertical_dimension, number_of_tracers)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [evapcdp]
   standard_name = tendency_of_specific_humidity_due_to_deep_convection_evaporation_for_diagnostics
   long_name = tendency of water vapor specific humidity due to deep convection evaporation for diagnostics
   units = kg kg-1 s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [mu]
   standard_name = atmosphere_updraft_convective_mass_flux
   long_name = atmosphere updraft convective mass flux
   units = hPa s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [md]
   standard_name = atmosphere_downdraft_convective_mass_flux
   long_name = atmosphere downdraft convective mass flux
   units = hPa s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [du]
   standard_name = atmosphere_detrainment_convective_mass_flux_for_convective_triggered_columns
   long_name = atmosphere detrainment convective mass flux
   units = hPa s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [eu]
   standard_name = atmosphere_updraft_entrainment_convective_mass_flux
   long_name = atmosphere updraft entrainment convective mass flux
   units = hPa s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [ed]
   standard_name = atmosphere_downdraft_entrainment_convective_mass_flux
   long_name = atmosphere downdraft entrainment convective mass flux
   units = hPa s-1
   dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [dp]
   standard_name = pressure_thickness_in_hPa
   long_name = model layer thickness in hPa
   units = hPa
   dimensions = (horizontal_loop_extent,vertical_dimension)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [dsubcld]
   standard_name = subcloud_pressure_thickness_in_hPa
   long_name = thickness of subcloud layer in hPa
   units = hPa
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [jt]
   standard_name = vertical_index_at_cloud_top_for_convective_triggered_columns
   long_name = vertical index at cloud top for convective triggered columns
@@ -657,35 +657,35 @@
   units = m
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [tpert_chnk]
   standard_name = perturbation_of_temperature
   long_name = pertubation of temperature
   units = K
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [qpert_chnk]
   standard_name = perturbation_of_tracers
   long_name = pertubation of tracers
   units = kg kg-1
   dimensions = (horizontal_loop_extent,number_of_tracers)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [tpert2_chnk]
   standard_name = secondary_perturbation_of_temperature
   long_name = secondary pertubation of temperature
   units = K
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [qpert2_chnk]
   standard_name = secondary_perturbation_of_tracers
   long_name = secondary pertubation of tracers
   units = kg kg-1
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
   
 !###################################################################
 [ccpp-table-properties]
@@ -799,7 +799,7 @@
   units = s
   dimensions = ()
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 
 !###################################################################
 

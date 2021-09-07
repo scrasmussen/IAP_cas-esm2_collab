@@ -26,11 +26,11 @@
   units = Pa
   dimensions = (vertical_dimension_of_dycore_plus_one)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [hypm]
   standard_name = reference_air_pressure_at_midpoints
   long_name = reference air pressure at midpoints
   units = Pa
   dimensions = (vertical_dimension_of_dycore)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8

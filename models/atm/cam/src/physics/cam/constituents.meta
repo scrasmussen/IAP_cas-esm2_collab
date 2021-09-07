@@ -26,7 +26,7 @@
   units = kg kg-1
   dimensions = (number_of_tracers)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [cnst_type]
   standard_name = tracer_type
   long_name = type of mixing ratio (wet or dry)

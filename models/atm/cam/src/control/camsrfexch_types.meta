@@ -13,7 +13,7 @@
   units = frac
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 
 !###################################################################
 [ccpp-table-properties]

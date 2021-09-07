@@ -121,7 +121,7 @@
   units = s
   dimensions = ()
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [nchnks]
   standard_name = ccpp_block_count
   long_name = for explicit data blocking: number of blocks
