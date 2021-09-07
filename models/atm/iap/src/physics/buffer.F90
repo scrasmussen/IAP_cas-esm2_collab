@@ -23,13 +23,21 @@ module buffer
 
 !  real(r8), allocatable :: qrs(:,:,:)      ! shortwave radiative heating rate 
 !  real(r8), allocatable :: qrl(:,:,:)      ! longwave  radiative heating rate 
-
+#ifdef CCPP
+  real(r8), allocatable,target :: pblht(:,:)      ! PBL height
+  real(r8), allocatable,target :: tpert(:,:)      ! temperature perturbation (PBL)
+  real(r8), allocatable,target :: qpert(:,:,:)    ! moisture/constituent perturb.(PBL)
+!zmh
+  real(r8), allocatable,target :: tpert2(:,:)      ! temperature perturbation (PBL)
+  real(r8), allocatable,target :: qpert2(:,:)    ! moisture/constituent perturb.(PBL)
+#else
   real(r8), allocatable :: pblht(:,:)      ! PBL height
   real(r8), allocatable :: tpert(:,:)      ! temperature perturbation (PBL)
   real(r8), allocatable :: qpert(:,:,:)    ! moisture/constituent perturb.(PBL)
 !zmh
   real(r8), allocatable :: tpert2(:,:)      ! temperature perturbation (PBL)
   real(r8), allocatable :: qpert2(:,:)    ! moisture/constituent perturb.(PBL)
+#endif
 
 CONTAINS
 

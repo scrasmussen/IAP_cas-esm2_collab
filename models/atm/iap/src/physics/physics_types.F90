@@ -11,7 +11,7 @@ module physics_types
    use ppgrid,       only: pcols, pver,pverp,nvar_dirOA,nvar_dirOL,indexb
 !====Jinbo Xie====
 #ifdef CCPP
-  use constituents, only: pcnst, qmin, cnst_name, cnst_get_id
+  use constituents, only: pcnst, qmin, cnst_name, cnst_get_ind
 #else
   use constituents, only: pcnst, qmin, cnst_name
 #endif
@@ -25,6 +25,7 @@ module physics_types
   use time_manager,   only: get_step_size
   use phys_control,   only: phys_deepconv_pbl, cam_physpkg_is, phys_getopts
   use error_messages, only: alloc_err
+  use ccpp_types,     only: ccpp_t
 #endif
 
   implicit none
@@ -259,8 +260,6 @@ module physics_types
   type physics_int_ephem
     
     !variables previously internal to tphysbc; there need to be n_threads of this type
-    real(kind=r8), pointer :: prec(:) => null()
-    
     real(kind=r8), pointer              :: prec(:)  => null()  !<
     real(kind=r8), pointer              :: snow(:)  => null()  !<
     type(physics_ptend),   pointer      :: ptend_deep_conv_tot => null()
@@ -524,9 +523,9 @@ state%terrout=inf
 !------------------------------------------------------------------------
 #endif  
 #ifdef CCPP
-      !call create for each block
-      phys_int_ephem(lchnk)%create(pcols, pver, pverp, pcnst)
-      phys_int_pers (lchnk)%create(pcols, pver)
+       !call create for each block
+       call phys_int_ephem(lchnk)%create(pcols, pver, pverp, pcnst)
+       call phys_int_pers (lchnk)%create(pcols, pver)
 #endif 
     end do
 
@@ -1282,7 +1281,7 @@ subroutine set_dry_to_wet (state)
 end subroutine set_dry_to_wet
 
 #ifdef CCPP
-subroutine interstitial_ephemeral_create (int_ephem, ncol, pver, pverp)
+subroutine interstitial_ephemeral_create (int_ephem, ncol, pver, pverp, pcnst)
   implicit none
   
   class(physics_int_ephem)       :: int_ephem
@@ -1378,7 +1377,7 @@ subroutine interstitial_persistent_associate(int_pers, pcols, pver, pverp, pcnst
   
   class(physics_int_pers)       :: int_pers
   
-  integer, intent(in) :: pcols, pver, pverp, lchnk
+  integer, intent(in) :: pcols, pver, pverp, pcnst, lchnk
   
   integer :: var_idx, itim
   
