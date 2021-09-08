@@ -20,12 +20,10 @@ module cam_comp
    use shr_sys_mod,       only: shr_sys_flush
    use infnan,            only: nan
 #ifdef CCPP
-   use physics_types,     only: physics_state, physics_tend, physics_int_ephem, physics_int_pers, physics_global
-   use ccpp_types,        only: ccpp_t
-   use phys_grid,         only: ngcols
-#else
-   use physics_types,     only: physics_state, physics_tend
+   use ccpp_data,         only: nchnks, cdata_domain, cdata_chunk, ccpp_suite, dt, &
+                                phys_state, phys_int_ephem, phys_int_pers, phys_global, &
 #endif
+   use physics_types,     only: physics_state, physics_tend
    use cam_control_mod,   only: nsrest, print_step_cost, obliqr, lambm0, mvelpp, eccen
    use dyn_comp,          only: dyn_import_t, dyn_export_t
 !wangty modify
@@ -69,18 +67,11 @@ module cam_comp
   type(dyn_import_t) :: dyn_in   ! Dynamics import container
   type(dyn_export_t) :: dyn_out  ! Dynamics export container
 
+#ifndef CCPP
   type(physics_state), pointer :: phys_state(:)
-  type(physics_tend ), pointer :: phys_tend(:)
-#ifdef CCPP
-  integer                          :: nchnks
-  type(ccpp_t),                    :: cdata_domain
-  type(ccpp_t),        allocatable :: cdata_chunk(:)
-  character(len=256)               :: ccpp_suite='undefined'
-  
-  type(physics_int_ephem), pointer :: phys_int_ephem(:)
-  type(physics_int_pers),  pointer :: phys_int_pers(:)
-  type(physics_global),    pointer :: phys_global
 #endif
+  type(physics_tend ), pointer :: phys_tend(:)
+  
   real(r8) :: wcstart, wcend     ! wallclock timestamp at start, end of timestep
   real(r8) :: usrstart, usrend   ! user timestamp at start, end of timestep
   real(r8) :: sysstart, sysend   ! sys timestamp at start, end of timestep
@@ -223,6 +214,8 @@ subroutine cam_init( cam_out, cam_in, mpicom_atm, &
    ccpp_suite = 'IAP_test'
    
    nchnks = endchunk - begchunk + 1
+   
+   dt  = get_step_size()
    
    ! For physics running over the entire domain, block and thread
    ! number are not used; set to safe values
