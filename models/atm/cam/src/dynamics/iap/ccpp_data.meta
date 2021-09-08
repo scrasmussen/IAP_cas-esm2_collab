@@ -55,3 +55,9 @@
   units = count
   dimensions = ()
   type = integer
+[cam_in]
+  standard_name = cam_in_t_instance
+  long_name = instance of derived type cam_in_t
+  units = DDT
+  dimensions = (ccpp_block_count)
+  type = cam_in_t

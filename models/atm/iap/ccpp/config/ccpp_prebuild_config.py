@@ -26,7 +26,6 @@ VARIABLE_DEFINITION_FILES = [
     '../cam/src/physics/cam/constituents.F90',
     '../cam/src/control/physconst.F90',
     '../cam/src/dynamics/iap/ccpp_data.F90',
-    '../cam/src/cpl_esmf/atm_comp_esmf.F90'
     ]
 
 TYPEDEFS_NEW_METADATA = {
@@ -36,9 +35,6 @@ TYPEDEFS_NEW_METADATA = {
         },
     'ccpp_data' : {
         'ccpp_data' : ''
-        },
-    'atm_comp_esmf' : {
-        'atm_comp_esmf' : ''
         },
     'physics_types' : {
         'physics_state' : 'phys_state(cdata%blk_no)',

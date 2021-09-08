@@ -532,7 +532,7 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    type(pbuf_fld), intent(in), dimension(pbuf_size_max) :: pbuf  ! physics buffer
    type(cam_out_t),intent(inout)                        :: cam_out(begchunk:endchunk)
 #ifdef CCPP
-   type(ccpp_t), intent(in)         :: cdata_domain
+   type(ccpp_t), intent(inout)      :: cdata_domain
    character(len=256), intent(in)   :: ccpp_suite
    type(physics_int_ephem), intent(inout), pointer :: phys_int_ephem(:)
    type(physics_int_pers),  intent(inout), pointer :: phys_int_pers(:)
@@ -764,6 +764,9 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 #endif
    use comsrf,         only: fsns, fsnt, flns, flnt, landm, fsds
    use abortutils, only :endrun
+#ifdef CCPP
+   use cam_diagnostics,only: diag_tphysbc
+#endif
 !
 ! Input arguments
 !
@@ -786,7 +789,7 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
    type(physics_int_pers),  intent(inout), dimension(:) :: phys_int_pers
    type(physics_global),    intent(inout) :: phys_global
    type(ccpp_t), intent(inout)         :: cdata_domain
-   type(ccpp_t), intent(inout)         :: cdata_chunk
+   type(ccpp_t), intent(inout)         :: cdata_chunk(:)
    character(len=256), intent(in)   :: ccpp_suite
    integer :: ierr
 #endif
@@ -899,7 +902,7 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 !$OMP PARALLEL DO PRIVATE (C)
       do c=begchunk, endchunk
         !call new physics variable output setup routine
-        call diag_tphysbc(c, phys_int_ephem(c), phys_int_pers(c), phys_global)
+        call diag_tphysbc(c, phys_int_ephem(c), phys_int_pers(c), phys_global, phys_state(c))
       end do
 #endif
 
@@ -1160,7 +1163,7 @@ subroutine phys_final( phys_state, phys_tend )
    type(physics_tend ), pointer :: phys_tend(:)
 
 #ifdef CCPP
-   type(ccpp_t), pointer :: cdata_chunk(:)
+   type(ccpp_t), pointer, allocatable :: cdata_chunk(:)
    character(len=256)    :: ccpp_suite
    integer :: i, ierr
 

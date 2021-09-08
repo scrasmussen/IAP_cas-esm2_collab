@@ -1298,10 +1298,11 @@ subroutine cldwat_readnl(nlfile)
  use namelist_utils,  only: find_group_name
  use units,           only: getunit, freeunit
  use mpishorthand
- use cldwat_ccpp,  only: icritw, icrtic, conke, r3lcrit
+ use cldwat_ccpp,  only: icritw, icritc, conke, r3lcrit
  
  character(len=*), intent(in) :: nlfile  ! filepath for file containing namelist input
 
+ real(r8), parameter :: unset_r8 = huge(1.0_r8)
  ! Namelist variables
  real(r8) :: cldwat_icritw  = unset_r8    !   icritw  = threshold for autoconversion of warm ice  
  real(r8) :: cldwat_icritc  = unset_r8    !   icritc  = threshold for autoconversion of cold ice  

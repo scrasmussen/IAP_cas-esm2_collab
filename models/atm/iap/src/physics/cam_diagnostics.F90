@@ -1626,7 +1626,7 @@ end subroutine diag_export
    end subroutine diag_physvar_ic
 
 #ifdef CCPP
-   subroutine diag_tphysbc (lchnk, phys_int_ephem, phys_int_pers, phys_global)
+   subroutine diag_tphysbc (lchnk, phys_int_ephem, phys_int_pers, phys_global, state)
 !
 !---------------------------------------------
 !
@@ -1644,10 +1644,11 @@ end subroutine diag_export
    type(physics_int_ephem), intent(in) :: phys_int_ephem
    type(physics_int_pers), intent(in) :: phys_int_pers
    type(physics_global), intent(in) :: phys_global 
+   type(physics_state), intent(in) :: state
 !
 !---------------------------Local workspace-----------------------------
 !
-   integer :: i,ii,k
+   integer :: i,ii,k, ncol
    character(len=16) :: deep_scheme
    real(kind=r8)     :: pcont(pcols), pconb(pcols), freqzm(pcols)
    real(kind=r8)     :: mu_out(pcols,pver), md_out(pcols,pver)
@@ -1655,6 +1656,8 @@ end subroutine diag_export
 !
 !-----------------------------------------------------------------------
 !
+   ncol  = state%ncol
+  
    call phys_getopts(deep_scheme_out = deep_scheme)
    
    select case ( deep_scheme )
@@ -1683,51 +1686,65 @@ end subroutine diag_export
      call outfld('ZMMD', md_out(1,1), pcols, lchnk)
      
      ftem = 0._r8
-     ftem(:ncol,:pver) = phys_int_ephem%ptend_deep_conv%s(:ncol,:pver)/cpair
+     ftem(:ncol,:pver) = phys_int_ephem%ptend_deep_conv_s(:ncol,:pver)/cpair
      call outfld('ZMDT    ',ftem           ,pcols   ,lchnk   )
-     call outfld('ZMDQ    ',phys_int_ephem%ptend_deep_conv%q(1,1,1) ,pcols   ,lchnk   )
+     ftem(:ncol,:pver) = phys_int_ephem%ptend_deep_conv_qv(:ncol,:pver)
+     call outfld('ZMDQ    ',ftem           ,pcols   ,lchnk   )
 
      
      call outfld('PCONVT  ',phys_int_ephem%pcont          ,pcols   ,lchnk   )
      call outfld('PCONVB  ',phys_int_ephem%pconb          ,pcols   ,lchnk   )
      
-     ftem(:ncol,:pver) = phys_int_ephem%ptend_deep_conv_evap%s(:ncol,:pver)/cpair
+     ftem(:ncol,:pver) = phys_int_ephem%ptend_deep_conv_evap_s(:ncol,:pver)/cpair
      call outfld('EVAPTZM ',   ftem           ,pcols   ,lchnk   )
      ftem(:ncol,:pver) = phys_int_ephem%tend_s_snwprd  (:ncol,:pver)/cpair
      call outfld('FZSNTZM ',   ftem           ,pcols   ,lchnk   )
      ftem(:ncol,:pver) = phys_int_ephem%tend_s_snwevmlt(:ncol,:pver)/cpair
      call outfld('EVSNTZM ',   ftem           ,pcols   ,lchnk   )
-     call outfld('EVAPQZM ',   phys_int_ephem%ptend_deep_conv_evap%q(1,1,1) ,pcols   ,lchnk   )
+     ftem(:ncol,:pver) = phys_int_ephem%ptend_deep_conv_evap_qv(:ncol,:pver)
+     call outfld('EVAPQZM ',   ftem           ,pcols   ,lchnk   )
      call outfld('ZMFLXPRC',   phys_int_pers%flxprec, pcols, lchnk)
      call outfld('ZMFLXSNW',   phys_int_pers%flxsnow, pcols, lchnk)
      call outfld('ZMNTPRPD',   phys_int_ephem%ntprprd, pcols, lchnk)
      call outfld('ZMNTSNPD',   phys_int_ephem%ntsnprd, pcols, lchnk)
-     call outfld('ZMEIHEAT',   phys_int_ephem%ptend_deep_conv_evap%s, pcols, lchnk)
+     call outfld('ZMEIHEAT',   phys_int_ephem%ptend_deep_conv_evap_s, pcols, lchnk)
      call outfld('CMFMCDZM   ',phys_int_ephem%cmfmc ,  pcols   ,lchnk   )
      call outfld('PRECCDZM   ',phys_int_ephem%prec,  pcols   ,lchnk   )
      call outfld('PRECZ   ',   phys_int_ephem%prec   , pcols, lchnk)
      
      if (phys_global%cam_physpkg /= phys_global%cam_physpkg_cam3) then
-       ftem(:ncol,:pver) = phys_int_ephem%ptend_deep_conv_momtran%s(:ncol,:pver)/cpair
+       ftem(:ncol,:pver) = phys_int_ephem%ptend_deep_conv_momtran_s(:ncol,:pver)/cpair
        call outfld('ZMMTT', ftem             , pcols, lchnk)
-       call outfld('ZMMTU', phys_int_ephem%ptend_deep_conv_momtran%u(1,1,1), pcols, lchnk)
-       call outfld('ZMMTV', phys_int_ephem%ptend_deep_conv_momtran%v(1,1,2), pcols, lchnk)
+       ftem(:ncol,:pver) = phys_int_ephem%ptend_deep_conv_momtran_u(:ncol,:pver)
+       call outfld('ZMMTU', ftem             , pcols, lchnk)
+       ftem(:ncol,:pver) = phys_int_ephem%ptend_deep_conv_momtran_v(:ncol,:pver)
+       call outfld('ZMMTV', ftem             , pcols, lchnk)
      
        ! Output apparent force from  pressure gradient
-       call outfld('ZMUPGU', phys_int_ephem%pguall(1,1,1), pcols, lchnk)
-       call outfld('ZMUPGD', phys_int_ephem%pgdall(1,1,1), pcols, lchnk)
-       call outfld('ZMVPGU', phys_int_ephem%pguall(1,1,2), pcols, lchnk)
-       call outfld('ZMVPGD', phys_int_ephem%pgdall(1,1,2), pcols, lchnk)
+       ftem(:ncol,:pver) = phys_int_ephem%pguall(:ncol,:pver,1)
+       call outfld('ZMUPGU', ftem, pcols, lchnk)
+       ftem(:ncol,:pver) = phys_int_ephem%pgdall(:ncol,:pver,1)
+       call outfld('ZMUPGD', ftem, pcols, lchnk)
+       ftem(:ncol,:pver) = phys_int_ephem%pguall(:ncol,:pver,2)
+       call outfld('ZMVPGU', ftem, pcols, lchnk)
+       ftem(:ncol,:pver) = phys_int_ephem%pgdall(:ncol,:pver,2)
+       call outfld('ZMVPGD', ftem, pcols, lchnk)
 
        ! Output in-cloud winds
-       call outfld('ZMICUU', phys_int_ephem%icwu(1,1,1), pcols, lchnk)
-       call outfld('ZMICUD', phys_int_ephem%icwd(1,1,1), pcols, lchnk)
-       call outfld('ZMICVU', phys_int_ephem%icwu(1,1,2), pcols, lchnk)
-       call outfld('ZMICVD', phys_int_ephem%icwd(1,1,2), pcols, lchnk)
+       ftem(:ncol,:pver) = phys_int_ephem%icwu(:ncol,:pver,1)
+       call outfld('ZMICUU', ftem, pcols, lchnk)
+       ftem(:ncol,:pver) = phys_int_ephem%icwd(:ncol,:pver,1)
+       call outfld('ZMICUD', ftem, pcols, lchnk)
+       ftem(:ncol,:pver) = phys_int_ephem%icwu(:ncol,:pver,2)
+       call outfld('ZMICVU', ftem, pcols, lchnk)
+       ftem(:ncol,:pver) = phys_int_ephem%icwd(:ncol,:pver,2)
+       call outfld('ZMICVD', ftem, pcols, lchnk)
      end if
      
-     call outfld('ZMDICE ',phys_int_ephem%ptend_deep_conv_convtran%q(1,1,phys_global%ixcldice) ,pcols   ,lchnk   )
-     call outfld('ZMDLIQ ',phys_int_ephem%ptend_deep_conv_convtran%q(1,1,phys_global%ixcldliq) ,pcols   ,lchnk   )
+     ftem(:ncol,:pver) = phys_int_ephem%ptend_deep_conv_convtran_q(:ncol,:pver,phys_global%ixcldice)
+     call outfld('ZMDICE ', ftem ,pcols   ,lchnk   )
+     ftem(:ncol,:pver) = phys_int_ephem%ptend_deep_conv_convtran_q(:ncol,:pver,phys_global%ixcldliq)
+     call outfld('ZMDLIQ ', ftem ,pcols   ,lchnk   )
      
    case('ZYX1')
 

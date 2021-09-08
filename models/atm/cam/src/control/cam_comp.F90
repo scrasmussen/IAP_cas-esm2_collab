@@ -21,7 +21,7 @@ module cam_comp
    use infnan,            only: nan
 #ifdef CCPP
    use ccpp_data,         only: nchnks, cdata_domain, cdata_chunk, ccpp_suite, dt, &
-                                phys_state, phys_int_ephem, phys_int_pers, phys_global, &
+                                phys_state, phys_int_ephem, phys_int_pers, phys_global
 #endif
    use physics_types,     only: physics_state, physics_tend
    use cam_control_mod,   only: nsrest, print_step_cost, obliqr, lambm0, mvelpp, eccen
@@ -126,6 +126,9 @@ subroutine cam_init( cam_out, cam_in, mpicom_atm, &
 #ifdef wrf 
    use time_manager, only: get_step_size ! juanxiong he
 #endif
+#ifdef CCPP
+   use time_manager, only: get_step_size
+#endif
 
 #if ( defined SPMD )   
    real(r8) :: mpi_wtime  ! External
@@ -158,9 +161,9 @@ subroutine cam_init( cam_out, cam_in, mpicom_atm, &
    !
 !wangty modify
 #ifdef wrf 
-   integer :: dtime_cam,i,j,k,ncols,ierr        ! Time-step, juxiong he
+   integer :: dtime_cam,i,j,k,ncols        ! Time-step, juxiong he
 #else
-   integer :: dtime_cam        ! Time-step
+   integer :: dtime_cam,i,ierr        ! Time-step
 #endif
    logical :: log_print        ! Flag to print out log information or not
    !-----------------------------------------------------------------------
@@ -223,7 +226,7 @@ subroutine cam_init( cam_out, cam_in, mpicom_atm, &
    cdata_domain%thrd_no = 1
    
    ! Allocate cdata structures for blocks and threads
-   if (.not.allocated(cdata_chunk)) allocate(cdata_chunk(begchunk:endchunk), stat=ierr)
+   allocate(cdata_chunk(begchunk:endchunk), stat=ierr)
    if( ierr /= 0 ) then
       write(iulog,*) 'cam_init: cdata_chunk allocation error = ',ierr
       call endrun('cam_init: failed to allocate cdata_chunk array')
@@ -235,7 +238,7 @@ subroutine cam_init( cam_out, cam_in, mpicom_atm, &
      cdata_chunk(i)%thrd_no = 1
    end do
    
-   call phys_init( phys_state, phys_tend, pbuf, cam_out, phys_int_ephem, phys_int_pers, phys_global)
+   call phys_init( phys_state, phys_tend, pbuf, cam_out, cdata_domain, ccpp_suite, phys_int_ephem, phys_int_pers, phys_global)
 #else
    call phys_init( phys_state, phys_tend, pbuf, cam_out )
 #endif

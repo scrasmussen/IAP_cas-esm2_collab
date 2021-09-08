@@ -49,7 +49,9 @@ module atm_comp_esmf
   use physconst       ,  only: mwco2
   use runtime_opts     , only: read_namelist
   use phys_control     , only: cam_chempkg_is
-
+#ifdef CCPP
+  use ccpp_data        , only: cam_in
+#endif
 !
 ! !PUBLIC TYPES:
   implicit none
@@ -80,9 +82,7 @@ module atm_comp_esmf
 ! Private data
 !--------------------------------------------------------------------------
 
-#ifdef CCPP
-  type(cam_in_t) , pointer, public :: cam_in(:)
-#else
+#ifndef CCPP
   type(cam_in_t) , pointer :: cam_in(:)
 #endif
   type(cam_out_t), pointer :: cam_out(:)

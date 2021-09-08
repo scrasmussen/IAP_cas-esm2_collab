@@ -6,7 +6,9 @@ module ccpp_data
   use physics_types,     only: physics_state, physics_int_ephem, physics_int_pers, physics_global
   use ccpp_types,        only: ccpp_t
   use phys_grid,         only: ngcols
-  
+  use camsrfexch_types , only: cam_in_t  
+    
+
   implicit none
 
   private
@@ -19,16 +21,19 @@ module ccpp_data
          phys_int_ephem, &
          phys_int_pers, &
          phys_global, &
-         phys_state
+         phys_state, &
+         cam_in
   
-  integer                                            :: nchnks
-  type(ccpp_t),                         save, target :: cdata_domain
-  type(ccpp_t),            allocatable, save, target :: cdata_chunk(:)
-  character(len=256)                                 :: ccpp_suite='undefined'
-  real(kind=r8)                                      :: dt
+  integer                                :: nchnks
+  type(ccpp_t),            save, pointer :: cdata_domain
+  type(ccpp_t),            save, pointer :: cdata_chunk(:)
+  character(len=256)                     :: ccpp_suite='undefined'
+  real(kind=r8)                          :: dt
   
-  type(physics_int_ephem), allocatable, save, target :: phys_int_ephem(:)
-  type(physics_int_pers),  allocatable, save, target :: phys_int_pers(:)
-  type(physics_global),    allocatable, save, target :: phys_global
-  type(physics_state),     allocatable, save, target :: phys_state(:)
+  type(physics_int_ephem), save, pointer :: phys_int_ephem(:)
+  type(physics_int_pers),  save, pointer :: phys_int_pers(:)
+  type(physics_global),    save, pointer :: phys_global
+  type(physics_state),     save, pointer :: phys_state(:)
+
+  type(cam_in_t),          save, pointer :: cam_in(:)
 end module ccpp_data
