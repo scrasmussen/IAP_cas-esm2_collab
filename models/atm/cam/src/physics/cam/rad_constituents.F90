@@ -250,12 +250,11 @@ end subroutine rad_cnst_readnl
 
 !================================================================================================
 
-subroutine rad_cnst_init(pbuf, phys_state)
+subroutine rad_cnst_init(pbuf)
 
    use phys_prop, only: physprop_accum_unique_files, physprop_init
 
    type(pbuf_fld),      intent(in) :: pbuf(pbuf_size_max)
-   type(physics_state), pointer    :: phys_state(:) 
 
    integer :: num_aerosols
    integer :: i
@@ -295,7 +294,7 @@ subroutine rad_cnst_init(pbuf, phys_state)
    do i = 0,N_DIAG
       if (namelist(i)%ncnst > 0) then
 
-         call init_lists(namelist(i), gaslist(i), aerosollist(i), pbuf, phys_state)
+         call init_lists(namelist(i), gaslist(i), aerosollist(i), pbuf)
 
          if (masterproc .and. verbose) then
             call print_lists(gaslist(i), aerosollist(i))
@@ -781,7 +780,7 @@ end subroutine rad_cnst_out
 ! Private methods
 !================================================================================================
 
-subroutine init_lists(namelist, gaslist, aerlist, pbuf, phys_state)
+subroutine init_lists(namelist, gaslist, aerlist, pbuf)
 
    ! Initialize the gas and aerosol lists with the constituents specified in the
    ! namelist.
@@ -793,7 +792,6 @@ subroutine init_lists(namelist, gaslist, aerlist, pbuf, phys_state)
 
    type(rad_cnst_namelist_t), intent(in) :: namelist            ! namelist input for climate or diagnostics
    type(pbuf_fld),            intent(in) :: pbuf(pbuf_size_max)
-   type(physics_state),       pointer    :: phys_state(:) 
 
    type(gaslist_t),        intent(inout) :: gaslist
    type(aerlist_t),        intent(inout) :: aerlist

@@ -388,7 +388,7 @@ module physics_types
     real(kind=r8)         :: half_ztodt
       
     contains
-      procedure :: init      => physics_global_init 
+      procedure :: init      => physics_global_init
   end type physics_global
 #endif
 
@@ -1491,8 +1491,8 @@ subroutine physics_global_init(pglob)
   character(len=16) :: deep_conv_scheme
   
   pglob%cam_physpkg_cam3 = 'cam3'
-  pglob%cam_physpkg_cam3 = 'cam4'
-  pglob%cam_physpkg_cam3 = 'cam5'
+  pglob%cam_physpkg_cam4 = 'cam4'
+  pglob%cam_physpkg_cam5 = 'cam5'
   pglob%cam_physpkg_ideal = 'ideal'
   pglob%cam_physpkg_adiabatic = 'adiabatic'
   

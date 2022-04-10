@@ -536,7 +536,7 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    character(len=256), intent(in)   :: ccpp_suite
    type(physics_int_ephem), intent(inout), pointer :: phys_int_ephem(:)
    type(physics_int_pers),  intent(inout), pointer :: phys_int_pers(:)
-   type(physics_global),    intent(inout), pointer :: phys_global
+   type(physics_global),    intent(inout)          :: phys_global
    real(r8) :: dtime              ! Time step for either physics or dynamics (set in dynamics init)
 #endif
 
@@ -624,7 +624,7 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
 #endif
 
    ! Initialize rad constituents and their properties
-   call rad_cnst_init(pbuf, phys_state)
+   call rad_cnst_init(pbuf)
    call aer_rad_props_init()
    call cloud_rad_props_init()
 

@@ -77,8 +77,8 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
    use comsrf,          only: sgh30
    use mzfunctions_mod, only: fout_phy,zmh_ramp
 #ifdef CCPP
-   use ccpp_static_api,    only: ccpp_physics_run
-   use ccpp_types,        only: ccpp_t
+   use ccpp_static_api, only: ccpp_physics_run
+   use ccpp_types,      only: ccpp_t
 #endif
 
    implicit none

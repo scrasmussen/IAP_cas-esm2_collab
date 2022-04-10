@@ -25,14 +25,14 @@ module ccpp_data
          cam_in
   
   integer                                :: nchnks
-  type(ccpp_t),            save, pointer :: cdata_domain
+  type(ccpp_t),            save          :: cdata_domain
   type(ccpp_t),            save, pointer :: cdata_chunk(:)
   character(len=256)                     :: ccpp_suite='undefined'
   real(kind=r8)                          :: dt
   
   type(physics_int_ephem), save, pointer :: phys_int_ephem(:)
   type(physics_int_pers),  save, pointer :: phys_int_pers(:)
-  type(physics_global),    save, pointer :: phys_global
+  type(physics_global),    save          :: phys_global
   type(physics_state),     save, pointer :: phys_state(:)
 
   type(cam_in_t),          save, pointer :: cam_in(:)

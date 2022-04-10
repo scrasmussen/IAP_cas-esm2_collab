@@ -234,6 +234,7 @@ subroutine cam_init( cam_out, cam_in, mpicom_atm, &
    
    do i=begchunk,endchunk
      ! Assign the correct block and thread numbers
+     write(iulog,'(a,i6)') 'XXX: cam_init: assigning chunk ', i
      cdata_chunk(i)%blk_no = i
      cdata_chunk(i)%thrd_no = 1
    end do
