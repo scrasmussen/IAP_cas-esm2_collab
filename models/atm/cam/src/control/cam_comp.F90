@@ -1,9 +1,5 @@
 module cam_comp
 
-!! \section arg_table_cam_comp Argument Table
-!! \htmlinclude cam_comp.html
-!!
-
 !-----------------------------------------------------------------------
 !
 ! Purpose:  The CAM Community Atmosphere Model component. Interfaces with 
