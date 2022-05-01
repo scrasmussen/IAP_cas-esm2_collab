@@ -14,13 +14,13 @@
   dimensions = ()
   type = integer
 [pver]
-  standard_name = vertical_dimension
+  standard_name = vertical_layer_dimension
   long_name = number of vertical levels
   units = count
   dimensions = ()
   type = integer
 [pverp]
-  standard_name = vertical_dimension_plus_one
+  standard_name = vertical_layer_dimension_plus_one
   long_name = number of vertical levels plus one
   units = count
   dimensions = ()

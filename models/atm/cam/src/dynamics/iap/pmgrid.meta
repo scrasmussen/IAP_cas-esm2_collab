@@ -8,13 +8,13 @@
   name = pmgrid
   type = module
 [plev]
-  standard_name = vertical_dimension_of_dycore
+  standard_name = vertical_layer_dimension_of_dycore
   long_name = number of vertical levels in the dycore
   units = count
   dimensions = ()
   type = integer
 [plevp]
-  standard_name = vertical_dimension_of_dycore_plus_one
+  standard_name = vertical_layer_dimension_of_dycore_plus_one
   long_name = number of vertical levels in the dycore plus one
   units = count
   dimensions = ()
