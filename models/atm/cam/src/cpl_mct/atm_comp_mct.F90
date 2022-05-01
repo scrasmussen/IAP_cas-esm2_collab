@@ -65,6 +65,10 @@ module atm_comp_mct
   use physics_types    , only: physics_state, physics_tend, physics_ptend  ! juanxiong he
 #endif
 !
+#ifdef CCPP
+  use ccpp_data, only: cam_in
+#endif
+
 ! !PUBLIC TYPES:
   implicit none
   save
@@ -128,7 +132,9 @@ module atm_comp_mct
 ! Private data
 !--------------------------------------------------------------------------
 #endif
+#ifndef CCPP
   type(cam_in_t) , pointer :: cam_in(:)
+#endif
   type(cam_out_t), pointer :: cam_out(:)
 !wangty modify
 #ifdef wrf
