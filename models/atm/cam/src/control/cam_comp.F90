@@ -16,8 +16,8 @@ module cam_comp
    use shr_sys_mod,       only: shr_sys_flush
    use infnan,            only: nan
 #ifdef CCPP
-   use ccpp_data,         only: nchnks, cdata_domain, cdata_chunk, ccpp_suite, dt, &
-                                phys_state, phys_int_ephem, phys_int_pers, phys_global
+   use ccpp_data,         only: nchnks, ccpp_suite, dt, phys_state, &
+                                phys_int_ephem, phys_int_pers, phys_global
 #endif
    use physics_types,     only: physics_state, physics_tend
    use cam_control_mod,   only: nsrest, print_step_cost, obliqr, lambm0, mvelpp, eccen
@@ -211,31 +211,10 @@ subroutine cam_init( cam_out, cam_in, mpicom_atm, &
 #ifdef CCPP
    !### temporary until we read the suite in from namelist
    ccpp_suite = 'IAP_test'
-   
+   ! DH* is nchnks still needed?
    nchnks = endchunk - begchunk + 1
-   
    dt  = get_step_size()
-   
-   ! For physics running over the entire domain, block and thread
-   ! number are not used; set to safe values
-   cdata_domain%blk_no = 1
-   cdata_domain%thrd_no = 1
-   
-   ! Allocate cdata structures for blocks and threads
-   allocate(cdata_chunk(begchunk:endchunk), stat=ierr)
-   if( ierr /= 0 ) then
-      write(iulog,*) 'cam_init: cdata_chunk allocation error = ',ierr
-      call endrun('cam_init: failed to allocate cdata_chunk array')
-   end if
-   
-   do i=begchunk,endchunk
-     ! Assign the correct block and thread numbers
-     write(iulog,'(a,i6)') 'XXX: cam_init: assigning chunk ', i
-     cdata_chunk(i)%blk_no = i
-     cdata_chunk(i)%thrd_no = 1
-   end do
-   
-   call phys_init( phys_state, phys_tend, pbuf, cam_out, cdata_domain, ccpp_suite, phys_int_ephem, phys_int_pers, phys_global)
+   call phys_init( phys_state, phys_tend, pbuf, cam_out, ccpp_suite, phys_int_ephem, phys_int_pers, phys_global)
 #else
    call phys_init( phys_state, phys_tend, pbuf, cam_out )
 #endif
@@ -480,7 +459,7 @@ subroutine cam_run1(cam_in, cam_out)
    call phys_run1(phys_state, dtime, phys_tend, pbuf, cam_in, cam_out, cam_state, cam_tend)  ! juanxiong he
 #else
 #ifdef CCPP
-   call phys_run1(phys_state, dtime, phys_tend, pbuf, cam_in, cam_out, phys_int_ephem, phys_int_pers, phys_global, cdata_domain, cdata_chunk, ccpp_suite)
+   call phys_run1(phys_state, dtime, phys_tend, pbuf, cam_in, cam_out, phys_int_ephem, phys_int_pers, phys_global, ccpp_suite)
 #else
    call phys_run1(phys_state, dtime, phys_tend, pbuf, cam_in, cam_out)
 #endif
@@ -858,7 +837,7 @@ subroutine cam_final( cam_out, cam_in )
 !-----------------------------------------------------------------------
 !
 #ifdef CCPP
-   call phys_final( phys_state, phys_tend, cdata_chunk, ccpp_suite )
+   call phys_final( phys_state, phys_tend, ccpp_suite )
 #else
    call phys_final( phys_state, phys_tend )
 #endif

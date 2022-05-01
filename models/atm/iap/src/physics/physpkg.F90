@@ -450,7 +450,7 @@ subroutine phys_inidat( cam_out )
 end subroutine phys_inidat
 
 #ifdef CCPP
-subroutine phys_init( phys_state, phys_tend, pbuf, cam_out, cdata_domain, ccpp_suite, phys_int_ephem, phys_int_pers, phys_global )
+subroutine phys_init( phys_state, phys_tend, pbuf, cam_out, ccpp_suite, phys_int_ephem, phys_int_pers, phys_global )
 #else
 subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
 #endif
@@ -532,15 +532,17 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    type(pbuf_fld), intent(in), dimension(pbuf_size_max) :: pbuf  ! physics buffer
    type(cam_out_t),intent(inout)                        :: cam_out(begchunk:endchunk)
 #ifdef CCPP
-   type(ccpp_t), intent(inout)      :: cdata_domain
-   character(len=256), intent(in)   :: ccpp_suite
    type(physics_int_ephem), intent(inout), pointer :: phys_int_ephem(:)
    type(physics_int_pers),  intent(inout), pointer :: phys_int_pers(:)
    type(physics_global),    intent(inout)          :: phys_global
+   character(len=256),      intent(in)             :: ccpp_suite
    real(r8) :: dtime              ! Time step for either physics or dynamics (set in dynamics init)
 #endif
 
    ! local variables
+#ifdef CCPP
+   type(ccpp_t) :: cdata
+#endif
    integer :: lchnk, ierr
    character(len=*), parameter :: subname = 'phys_init' !czy20181116
 
@@ -688,10 +690,11 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    call cldfrc_init
 
 #ifdef CCPP
-   call ccpp_physics_init(cdata_domain, suite_name=trim(ccpp_suite), ierr=ierr)
+   call cdata_init(cdata)
+   call ccpp_physics_init(cdata, suite_name=trim(ccpp_suite), ierr=ierr)
    if (ierr/=0) then
      write(0,'(a)') "An error occurred in ccpp_physics_init"
-     write(0,'(a)') trim(cdata_domain%errmsg)
+     write(0,'(a)') trim(cdata%errmsg)
      return
    end if
 #else
@@ -742,7 +745,7 @@ end subroutine phys_init
 subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out, cam_state, cam_tend)
 #else
 #ifdef CCPP
-subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out, phys_int_ephem, phys_int_pers, phys_global, cdata_domain, cdata_chunk, ccpp_suite)
+subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out, phys_int_ephem, phys_int_pers, phys_global, ccpp_suite)
 #else
 subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 #endif
@@ -788,8 +791,6 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
    type(physics_int_ephem), intent(inout), dimension(:) :: phys_int_ephem
    type(physics_int_pers),  intent(inout), dimension(:) :: phys_int_pers
    type(physics_global),    intent(inout) :: phys_global
-   type(ccpp_t), intent(inout)         :: cdata_domain
-   type(ccpp_t), intent(inout)         :: cdata_chunk(:)
    character(len=256), intent(in)   :: ccpp_suite
    integer :: ierr
 #endif
@@ -797,6 +798,7 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 !
 !---------------------------Local workspace-----------------------------
 !
+   type(ccpp_t) :: cdata
    integer :: c                                 ! indices
    integer :: ncol                              ! number of columns
    integer :: nstep                             ! current timestep number
@@ -808,10 +810,11 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
    nstep = get_nstep()
 
 #ifdef CCPP
-   call ccpp_physics_timestep_init(cdata_domain, suite_name=trim(ccpp_suite), ierr=ierr)
+   call cdata_init(cdata)
+   call ccpp_physics_timestep_init(cdata, suite_name=trim(ccpp_suite), ierr=ierr)
    if (ierr/=0) then
      write(0,'(a)') "An error occurred in ccpp_physics_timestep_init"
-     write(0,'(a)') trim(cdata_domain%errmsg)
+     write(0,'(a)') trim(cdata%errmsg)
      return
    end if
 #endif
@@ -867,7 +870,13 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
       call t_startf ('bc_physics')
       call t_adj_detailf(+1)
 
-!$OMP PARALLEL DO PRIVATE (C)
+#ifdef CCPP
+!$OMP PARALLEL PRIVATE (c,cdata)
+#else
+!$OMP PARALLEL PRIVATE (c)
+#endif
+
+!$OMP DO
       do c=begchunk, endchunk
          !
          ! Output physics terms to IC file
@@ -885,10 +894,18 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
                        cam_out(c), cam_in(c), cam_state(c), cam_tend(c) )  !juangxiong he
 #else
 #ifdef CCPP
+#ifdef _OPENMP
+         call cdata_init(cdata, blk=c, thrd=omp_get_thread_num())
+#else
+         call cdata_init(cdata, blk=c, thrd=1)
+#endif
+         ! DH*
+         write(0,'(a,i6,a,i6)') "XXX: Calling tphysbc with c =", c," and cdata%blk_no = ", cdata%blk_no
+         ! *DH
          call tphysbc (ztodt, pblht(1,c), tpert(1,c), qpert(1,1,c),tpert2(1,c), qpert2(1,c),&
                        fsns(1,c), fsnt(1,c), flns(1,c), flnt(1,c), phys_state(c),        &
                        phys_tend(c), pbuf,  fsds(1,c), landm(1,c),                       &
-                       cam_out(c), cam_in(c), cdata_chunk(c), ccpp_suite)
+                       cam_out(c), cam_in(c), cdata, ccpp_suite)
 #else
          call tphysbc (ztodt, pblht(1,c), tpert(1,c), qpert(1,1,c),tpert2(1,c), qpert2(1,c),&
                        fsns(1,c), fsnt(1,c), flns(1,c), flnt(1,c), phys_state(c),        &
@@ -897,14 +914,18 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 #endif
 #endif
       end do
+!$OMP END DO
 
 #ifdef CCPP
-!$OMP PARALLEL DO PRIVATE (C)
+!$OMP DO
       do c=begchunk, endchunk
         !call new physics variable output setup routine
         call diag_tphysbc(c, phys_int_ephem(c), phys_int_pers(c), phys_global, phys_state(c))
       end do
+!$OMP END DO
 #endif
+
+!$OMP END PARALLEL
 
       call t_adj_detailf(-1)
       call t_stopf ('bc_physics')
@@ -917,10 +938,11 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 #endif
 
 #ifdef CCPP
-   call ccpp_physics_timestep_finalize(cdata_domain, suite_name=trim(ccpp_suite), ierr=ierr)
+   call cdata_init(cdata)
+   call ccpp_physics_timestep_finalize(cdata, suite_name=trim(ccpp_suite), ierr=ierr)
    if (ierr/=0) then
      write(0,'(a)') "An error occurred in ccpp_physics_timestep_finalize"
-     write(0,'(a)') trim(cdata_domain%errmsg)
+     write(0,'(a)') trim(cdata%errmsg)
      return
    end if
 #endif
@@ -1147,7 +1169,7 @@ end subroutine phys_run2
 !-----------------------------------------------------------------------
 !
 #ifdef CCPP
-subroutine phys_final( phys_state, phys_tend, cdata_chunk, ccpp_suite )
+subroutine phys_final( phys_state, phys_tend, ccpp_suite )
 #else
 subroutine phys_final( phys_state, phys_tend )
 #endif
@@ -1163,22 +1185,18 @@ subroutine phys_final( phys_state, phys_tend )
    type(physics_tend ), pointer :: phys_tend(:)
 
 #ifdef CCPP
-   type(ccpp_t), pointer, allocatable :: cdata_chunk(:)
-   character(len=256)    :: ccpp_suite
-   integer :: i, ierr
+   character(len=256), intent(in) :: ccpp_suite
+   type(ccpp_t) :: cdata
+   integer :: ierr
 
-   do i=begchunk,endchunk
-     !--- Finalize CCPP physics
-     call ccpp_physics_finalize(cdata_chunk(i), suite_name=trim(ccpp_suite), ierr=ierr)
-     if (ierr/=0) then
-       write(0,'(a,i4)') "An error occurred in ccpp_physics_finalize for block ", i
-       write(0,'(a)') trim(cdata_chunk(i)%errmsg)
-       return
-     end if
-   end do
-
-   ! Deallocate cdata structure for blocks and threads
-   if (allocated(cdata_chunk)) deallocate(cdata_chunk)
+   !--- Finalize CCPP physics
+   call cdata_init(cdata)
+   call ccpp_physics_finalize(cdata, suite_name=trim(ccpp_suite), ierr=ierr)
+   if (ierr/=0) then
+     write(0,'(a)') "An error occurred in ccpp_physics_finalize"
+     write(0,'(a)') trim(cdata%errmsg)
+     return
+   end if
 #endif
 
    deallocate(phys_state)
@@ -1186,5 +1204,27 @@ subroutine phys_final( phys_state, phys_tend )
    call chem_final
 
 end subroutine phys_final
+
+#ifdef CCPP
+subroutine cdata_init(cdata, blk, thrd)
+   type(ccpp_t), intent(out) :: cdata
+   integer, intent(in), optional :: blk
+   integer, intent(in), optional :: thrd
+   cdata%loop_cnt = 1
+   cdata%loop_max = 1
+   cdata%errflg   = 0
+   cdata%errmsg   = ''
+   if (present(blk)) then
+     cdata%blk_no   = blk
+   else
+     cdata%blk_no   = -999
+   end if
+   if (present(thrd)) then
+     cdata%thrd_no  = thrd
+   else
+     cdata%thrd_no  = -999
+   end if
+end subroutine cdata_init
+#endif
 
 end module physpkg

@@ -15,6 +15,7 @@ HOST_MODEL_IDENTIFIER = "IAP"
 # dependencies of these files to the list.
 VARIABLE_DEFINITION_FILES = [
     # actual variable definition files
+    'ccpp/framework/src/ccpp_types.F90',
     '../../csm_share/shr/shr_kind_mod.F90',
     'src/physics/physics_types.F90',
     'src/physics/ppgrid.F90',
