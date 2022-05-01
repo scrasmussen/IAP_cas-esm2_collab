@@ -1,4 +1,4 @@
-!###################################################################
+###################################################################
 [ccpp-table-properties]
   name = cam_in_t
   type = ddt
@@ -15,7 +15,17 @@
   type = real
   kind = shr_kind_r8
 
-!###################################################################
+###################################################################
+[ccpp-table-properties]
+  name = cam_out_t
+  type = ddt
+  dependencies =
+
+[ccpp-arg-table]
+  name = cam_out_t
+  type = ddt
+
+###################################################################
 [ccpp-table-properties]
   name = camsrfexch_types
   type = module

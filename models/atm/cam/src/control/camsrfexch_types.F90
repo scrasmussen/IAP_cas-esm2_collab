@@ -42,7 +42,9 @@ module camsrfexch_types
 !---------------------------------------------------------------------------
 ! This is the data that is sent from the atmosphere to the surface models
 !---------------------------------------------------------------------------
-
+!> \section arg_table_cam_out_t
+!! \htmlinclude cam_out_t.html
+!!
   type cam_out_t 
      integer  :: lchnk               ! chunk index
      integer  :: ncol                ! number of columns in chunk
@@ -97,7 +99,7 @@ module camsrfexch_types
 !> \section arg_table_cam_in_t
 !! \htmlinclude cam_in_t.html
 !!
-  type cam_in_t    
+  type cam_in_t
      integer  :: lchnk                   ! chunk index
      integer  :: ncol                    ! number of active columns
      real(r8) :: asdir(pcols)            ! albedo: shortwave, direct
