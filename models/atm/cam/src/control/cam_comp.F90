@@ -16,7 +16,7 @@ module cam_comp
    use shr_sys_mod,       only: shr_sys_flush
    use infnan,            only: nan
 #ifdef CCPP
-   use ccpp_data,         only: nchnks, ccpp_suite, dt, phys_state, &
+   use ccpp_data,         only: ccpp_suite, dt, phys_state, &
                                 phys_int_ephem, phys_int_pers, phys_global
 #endif
    use physics_types,     only: physics_state, physics_tend
@@ -211,8 +211,6 @@ subroutine cam_init( cam_out, cam_in, mpicom_atm, &
 #ifdef CCPP
    !### temporary until we read the suite in from namelist
    ccpp_suite = 'IAP_test'
-   ! DH* is nchnks still needed?
-   nchnks = endchunk - begchunk + 1
    dt  = get_step_size()
    call phys_init( phys_state, phys_tend, pbuf, cam_out, ccpp_suite, phys_int_ephem, phys_int_pers, phys_global)
 #else

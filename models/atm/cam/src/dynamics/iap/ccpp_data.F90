@@ -1,19 +1,18 @@
 module ccpp_data
-  !! \section arg_table_ccpp_data Argument Table
-  !! \htmlinclude ccpp_data.html
-  !!
   use shr_kind_mod,      only: r8 => SHR_KIND_R8
   use physics_types,     only: physics_state, physics_int_ephem, physics_int_pers, physics_global
   use phys_grid,         only: ngcols
   use camsrfexch_types , only: cam_in_t
-    
+
+!! \section arg_table_ccpp_data Argument Table
+!! \htmlinclude ccpp_data.html
+!!
 
   implicit none
 
   private
   
-  public nchnks, &
-         ngcols, &
+  public ngcols, &
          ccpp_suite, &
          dt, &
          phys_int_ephem, &
@@ -21,8 +20,7 @@ module ccpp_data
          phys_global, &
          phys_state, &
          cam_in
-  
-  integer,            save               :: nchnks
+
   character(len=256), save               :: ccpp_suite='undefined'
   real(kind=r8),      save               :: dt
   
