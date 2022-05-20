@@ -7,6 +7,18 @@
 [ccpp-arg-table]
   name = ppgrid
   type = module
+[begchunk]
+  standard_name = ccpp_block_number_begin
+  long_name = first chunk (block) to process
+  units = index
+  dimensions = ()
+  type = integer
+[endchunk]
+  standard_name = ccpp_block_number_end
+  long_name = last chunk (block) to process
+  units = index
+  dimensions = ()
+  type = integer
 [pcols]
   standard_name = horizontal_loop_extent
   long_name = horizontal loop extent
