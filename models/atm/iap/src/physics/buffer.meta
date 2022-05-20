@@ -10,69 +10,69 @@
   standard_name = atmosphere_boundary_layer_thickness_all_blocks
   long_name = pbl height for all blocks
   units = m
-  dimensions = (horizontal_loop_extent,ccpp_block_count)
+  dimensions = (horizontal_loop_extent,ccpp_block_number_begin:ccpp_block_number_end)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [pblht(:,ccpp_block_number)]
   standard_name = atmosphere_boundary_layer_thickness
   long_name = pbl height
   units = m
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [tpert]
   standard_name = perturbation_of_temperature_all_blocks
   long_name = pertubation of temperature for all blocks
   units = K
-  dimensions = (horizontal_loop_extent,ccpp_block_count)
+  dimensions = (horizontal_loop_extent,ccpp_block_number_begin:ccpp_block_number_end)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [tpert(:,ccpp_block_number)]
   standard_name = perturbation_of_temperature
   long_name = pertubation of temperature
   units = K
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [qpert]
   standard_name = perturbation_of_tracers_all_blocks
   long_name = pertubation of tracers for all blocks
   units = kg kg-1
-  dimensions = (horizontal_loop_extent,number_of_tracers,ccpp_block_count)
+  dimensions = (horizontal_loop_extent,number_of_tracers,ccpp_block_number_begin:ccpp_block_number_end)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [qpert(:,:,ccpp_block_number)]
   standard_name = perturbation_of_tracers
   long_name = pertubation of tracers
   units = kg kg-1
   dimensions = (horizontal_loop_extent,number_of_tracers)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [tpert2]
   standard_name = secondary_perturbation_of_temperature_all_blocks
   long_name = secondary pertubation of temperature for all blocks
   units = K
-  dimensions = (horizontal_loop_extent,ccpp_block_count)
+  dimensions = (horizontal_loop_extent,ccpp_block_number_begin:ccpp_block_number_end)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [tpert2(:,ccpp_block_number)]
   standard_name = secondary_perturbation_of_temperature
   long_name = secondary pertubation of temperature
   units = K
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [qpert2]
   standard_name = secondary_perturbation_of_tracers_all_blocks
   long_name = secondary pertubation of tracers for all blocks
   units = kg kg-1
-  dimensions = (horizontal_loop_extent,ccpp_block_count)
+  dimensions = (horizontal_loop_extent,ccpp_block_number_begin:ccpp_block_number_end)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
 [qpert2(:,ccpp_block_number)]
   standard_name = secondary_perturbation_of_tracers
   long_name = secondary pertubation of tracers
   units = kg kg-1
   dimensions = (horizontal_loop_extent)
   type = real
-  kind = kind_r8
+  kind = shr_kind_r8
