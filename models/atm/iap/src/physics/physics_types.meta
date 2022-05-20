@@ -651,48 +651,6 @@
   units = count
   dimensions = ()
   type = integer
-[pblht(:,ccpp_block_number)]
-  standard_name = atmosphere_boundary_layer_thickness
-  long_name = pbl height
-  units = m
-  dimensions = (horizontal_loop_extent)
-  type = real
-  kind = shr_kind_r8
-[pblht_chnk]
-  standard_name = atmosphere_boundary_layer_thickness_ORIGINAL
-  long_name = pbl height
-  units = m
-  dimensions = (horizontal_loop_extent)
-  type = real
-  kind = shr_kind_r8
-[tpert_chnk]
-  standard_name = perturbation_of_temperature
-  long_name = pertubation of temperature
-  units = K
-  dimensions = (horizontal_loop_extent)
-  type = real
-  kind = shr_kind_r8
-[qpert_chnk]
-  standard_name = perturbation_of_tracers
-  long_name = pertubation of tracers
-  units = kg kg-1
-  dimensions = (horizontal_loop_extent,number_of_tracers)
-  type = real
-  kind = shr_kind_r8
-[tpert2_chnk]
-  standard_name = secondary_perturbation_of_temperature
-  long_name = secondary pertubation of temperature
-  units = K
-  dimensions = (horizontal_loop_extent)
-  type = real
-  kind = shr_kind_r8
-[qpert2_chnk]
-  standard_name = secondary_perturbation_of_tracers
-  long_name = secondary pertubation of tracers
-  units = kg kg-1
-  dimensions = (horizontal_loop_extent)
-  type = real
-  kind = shr_kind_r8
 
 ###################################################################
 [ccpp-table-properties]
