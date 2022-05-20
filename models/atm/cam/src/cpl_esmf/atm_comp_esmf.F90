@@ -1,7 +1,4 @@
 module atm_comp_esmf
-!! \section arg_table_atm_comp_esmf Argument Table
-!! \htmlinclude atm_comp_esmf.html
-!!
   use pio              , only: file_desc_t, io_desc_t, var_desc_t, pio_double, pio_def_dim, &
                                pio_put_att, pio_enddef, pio_initdecomp, pio_read_darray, pio_freedecomp, &
                                pio_closefile, pio_write_darray, pio_def_var, pio_inq_varid, &
