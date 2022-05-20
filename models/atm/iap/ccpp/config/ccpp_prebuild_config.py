@@ -27,6 +27,7 @@ VARIABLE_DEFINITION_FILES = [
     '../cam/src/physics/cam/constituents.F90',
     '../cam/src/control/physconst.F90',
     '../cam/src/dynamics/iap/ccpp_data.F90',
+    'src/physics/buffer.F90',
     ]
 
 TYPEDEFS_NEW_METADATA = {
@@ -47,6 +48,13 @@ TYPEDEFS_NEW_METADATA = {
      'camsrfexch_types' : {
         'cam_in_t' : 'cam_in(cdata%blk_no)',
         'camsrfexch_types' : '',
+        },
+    'buffer' : {
+        'pblht(:,ccpp_block_number)'  : 'pblht(:,cdata%blk_no)',
+        'tpert(:,ccpp_block_number)'  : 'tpert(:,cdata%blk_no)',
+        'tpert2(:,ccpp_block_number)' : 'tpert2(:,cdata%blk_no)',
+        'qpert2(:,ccpp_block_number)' : 'qpert2(:,cdata%blk_no)',
+        'buffer' : '',
         },
     }
 
