@@ -9,7 +9,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,            &
                     fsns,    fsnt,    flns,    flnt,    state,   &
                     tend,    pbuf,    fsds,    landm,            &
-                    cam_out, cam_in,  cdata_chunk, ccpp_suite )
+                    cam_out, cam_in,  cdata,   ccpp_suite )
 #else
 subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,            &
                     fsns,    fsnt,    flns,    flnt,    state,   &
@@ -112,7 +112,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
    type(physics_tend ), intent(inout) :: cam_tend ! juanxiong he
 #endif
 #ifdef CCPP
-   type(ccpp_t), intent(inout)      :: cdata_chunk
+   type(ccpp_t), intent(inout)      :: cdata
    character(len=256), intent(in)   :: ccpp_suite
    integer :: ierr
 #endif
@@ -406,14 +406,19 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 #ifdef CCPP
    !GJF: while all IAP physics are being worked on, ccpp_physics_run calls are placed within tphysbc; eventually,
    !     these calls should be in physpkg instead of tphysbc, tphysac, etc. which can be groups within an SDF
-   
-   call ccpp_physics_run(cdata_chunk, suite_name=trim(ccpp_suite), group_name='test1', ierr=ierr)
+   write(0,'(a,i6)') "XXX: Calling ccpp_physics_run for suite " // trim(ccpp_suite) // ", group test1 and block ", cdata%blk_no
+   write(0,'(a,3i6)') "XXX: loop_cnt, loop_max, thrd_no:", cdata%loop_cnt, cdata%loop_max, cdata%thrd_no
+   write(0,'(a,3i6)') "XXX: shape(state%q(:,:,:))               :", shape(state%q(:,:,:))
+   write(0,'(a,3i6)') "XXX: shape(state%q(:ncol,:pver,       1)):", shape(state%q(:ncol,:pver,       1))
+   write(0,'(a,2i6)') "XXX: ncol, pver:", ncol, pver
+   call ccpp_physics_run(cdata, suite_name=trim(ccpp_suite), group_name='test1', ierr=ierr)
    if (ierr/=0) then
       write(0,'(3a,i4)') "An error occurred in ccpp_physics_run for group ", "test1", &
                                 ", chunk ", lchnk
-      write(0,'(a)') trim(cdata_chunk%errmsg)
+      write(0,'(a)') trim(cdata%errmsg)
    end if
-   
+   write(0,'(3(a,i6))') "XXX: Call to ccpp_physics_run for suite " // trim(ccpp_suite) // ", group test1 and block ", cdata%blk_no, &
+       " returned with error code ", cdata%errflg, " = ", ierr
    !GJF: If we need to transfer data between new CCPP data types (physics_int_ephem) and the rest of physics, that
    !     should be done here
 #else
