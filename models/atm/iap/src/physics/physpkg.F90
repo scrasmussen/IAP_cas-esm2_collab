@@ -895,7 +895,7 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 #else
 #ifdef CCPP
 #ifdef _OPENMP
-         call cdata_init(cdata, blk=c, thrd=omp_get_thread_num())
+         call cdata_init(cdata, blk=c, thrd=omp_get_thread_num()+1)
 #else
          call cdata_init(cdata, blk=c, thrd=1)
 #endif
