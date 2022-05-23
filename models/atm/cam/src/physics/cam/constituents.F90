@@ -14,6 +14,9 @@ module constituents
 !                             found.
 ! 2006-10-31  B. Eaton        Remove 'non-advected' constituent functionality.
 !----------------------------------------------------------------------------------------------
+!> \section arg_table_constituents
+!! \htmlinclude constituents.html
+!!
   use shr_kind_mod, only: r8 => shr_kind_r8
   use physconst,    only: r_universal
   use spmd_utils,   only: masterproc

@@ -10,6 +10,7 @@
 #===============================================================================
 
 CPPDEFS := $(USER_CPPDEFS)
+CPPDEFS += -DCCPP
 
 # USE_ESMF_LIB is currently only defined in env_build.xml
 ifeq ($(USE_ESMF_LIB), TRUE)
@@ -130,10 +131,10 @@ FIXEDFLAGS    := -132
 FREEFLAGS     := -FR
 #FFLAGS        := $(CPPDEFS) -no-prec-div -traceback -convert big_endian -fp-model source  -assume byterecl -ftz  -traceback -m64 -shared-intel -mcmodel=large -safe-cray-ptr
 FFLAGS        := $(CPPDEFS)  -no-prec-div -traceback -convert big_endian -fp-model source  -assume byterecl -ftz   -m64  -mcmodel=large -safe-cray-ptr
-#FFLAGS_NOOPT  := $(FFLAGS) -O0
-#FFLAGS_OPT    := -O1
-FFLAGS_NOOPT  := $(FFLAGS) -O3
-FFLAGS_OPT    := -O3
+FFLAGS_NOOPT  := $(FFLAGS) -O0 -g -check all
+FFLAGS_OPT    := -O1
+#FFLAGS_NOOPT  := $(FFLAGS) -O3
+#FFLAGS_OPT    := -O3
 
 LDFLAGS       := -m64 -static-intel
 AR            := ar
@@ -163,12 +164,12 @@ endif
 # NOTE - all CPPDEFS options must be defined before this point
 #===============================================================================
 ifeq ($(strip $(MODEL)),pop2)
-#FFLAGS        := $(CPPDEFS) -O1 -r8 -i4 -g -convert big_endian -assume byterecl  -fp-model precise -fp-speculation=safe -no-vec -traceback
-FFLAGS        := $(CPPDEFS) -O3 -r8 -i4 -g -convert big_endian -assume byterecl  -fp-model precise -fp-speculation=safe -no-vec -traceback
+FFLAGS        := $(CPPDEFS) -O1 -r8 -i4 -g -convert big_endian -assume byterecl  -fp-model precise -fp-speculation=safe -no-vec -traceback
+#FFLAGS        := $(CPPDEFS) -O3 -r8 -i4 -g -convert big_endian -assume byterecl  -fp-model precise -fp-speculation=safe -no-vec -traceback
 endif
 ifeq ($(strip $(MODEL)),licom)
-#FFLAGS        := $(CPPDEFS) -O1 -r8 -i4 -g -convert big_endian -assume byterecl  -DLICOM -fp-model precise -fp-speculation=safe -no-vec -traceback
-FFLAGS        := $(CPPDEFS) -O3 -r8 -i4 -g -convert big_endian -assume byterecl  -DLICOM -fp-model precise -fp-speculation=safe -no-vec -traceback
+FFLAGS        := $(CPPDEFS) -O1 -r8 -i4 -g -convert big_endian -assume byterecl  -DLICOM -fp-model precise -fp-speculation=safe -no-vec -traceback
+#FFLAGS        := $(CPPDEFS) -O3 -r8 -i4 -g -convert big_endian -assume byterecl  -DLICOM -fp-model precise -fp-speculation=safe -no-vec -traceback
 endif
 
 ifeq ($(DEBUG),TRUE)

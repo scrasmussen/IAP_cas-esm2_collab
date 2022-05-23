@@ -14,9 +14,22 @@ module physpkg
 !-----------------------------------------------------------------------
   use shr_kind_mod,     only: r8 => shr_kind_r8
   use spmd_utils,       only: masterproc
+#ifdef CCPP
+  use physics_types,    only: physics_state, physics_tend, physics_state_set_grid, &
+                              physics_ptend, physics_tend_init, physics_update,    &
+                              physics_ptend_init, physics_type_alloc,              &
+                              physics_int_ephem, physics_int_pers, physics_global
+  use ccpp_static_api,    only: ccpp_physics_init,                   &
+                                ccpp_physics_timestep_init,          &
+                                ccpp_physics_run,                    &
+                                ccpp_physics_timestep_finalize,      &
+                                ccpp_physics_finalize
+  use ccpp_types,        only: ccpp_t
+#else
   use physics_types,    only: physics_state, physics_tend, physics_state_set_grid, &
                               physics_ptend, physics_tend_init, physics_update,    &
                               physics_ptend_init, physics_type_alloc
+#endif
   use phys_grid,        only: get_ncols_p
   use phys_gmean,       only: gmean_mass
   !use ppgrid,           only: begchunk, endchunk, pcols
@@ -31,7 +44,11 @@ module physpkg
   use phys_control,     only: phys_do_flux_avg
   use scamMod,          only: single_column, scm_crm_mode
   use flux_avg,         only: flux_avg_init
-  use cldwat,           only: inimc
+#ifdef CCPP
+  use cldwat_ccpp,           only: inimc
+#else
+  use cldwat,      only: inimc
+#endif
 #ifdef SPMD
   use mpishorthand
 #endif
@@ -432,8 +449,11 @@ subroutine phys_inidat( cam_out )
   call initialize_short_lived_species(ncid_ini)
 end subroutine phys_inidat
 
-
+#ifdef CCPP
+subroutine phys_init( phys_state, phys_tend, pbuf, cam_out, ccpp_suite, phys_int_ephem, phys_int_pers, phys_global )
+#else
 subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
+#endif
 !-----------------------------------------------------------------------
 !
 ! Purpose:
@@ -476,7 +496,12 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    use radiation,          only: radiation_init
    use cloud_diagnostics,  only: cloud_diagnostics_init
    use stratiform,         only: stratiform_init
+#ifdef CCPP
+   use phys_control,       only: phys_getopts, phys_deepconv_pbl
+   use ppgrid,             only: pver, pverp
+#else
    use phys_control,       only: phys_getopts
+#endif
    use microp_driver,      only: microp_driver_init
    use macrop_driver,      only: macrop_driver_init
    use conv_water,         only: conv_water_init
@@ -506,9 +531,19 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    type(physics_tend ), pointer :: phys_tend(:)
    type(pbuf_fld), intent(in), dimension(pbuf_size_max) :: pbuf  ! physics buffer
    type(cam_out_t),intent(inout)                        :: cam_out(begchunk:endchunk)
+#ifdef CCPP
+   type(physics_int_ephem), intent(inout), pointer :: phys_int_ephem(:)
+   type(physics_int_pers),  intent(inout), pointer :: phys_int_pers(:)
+   type(physics_global),    intent(inout)          :: phys_global
+   character(len=256),      intent(in)             :: ccpp_suite
+   real(r8) :: dtime              ! Time step for either physics or dynamics (set in dynamics init)
+#endif
 
    ! local variables
-   integer :: lchnk
+#ifdef CCPP
+   type(ccpp_t) :: cdata
+#endif
+   integer :: lchnk, ierr
    character(len=*), parameter :: subname = 'phys_init' !czy20181116
 
 ! Get microphysics option
@@ -524,8 +559,12 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    call phys_getopts( macrop_scheme_out = macrop_scheme )
 
    !-----------------------------------------------------------------------
-
+#ifdef CCPP
+   call physics_type_alloc(phys_state, phys_tend, phys_int_ephem, phys_int_pers, begchunk, endchunk)
+#else
    call physics_type_alloc(phys_state, phys_tend, begchunk, endchunk)
+#endif
+
 !---------------------------- test zhh ------------------------
 !!   if (masterproc) print*, 'success physics_type_alloc'
 !---------------------------- test zhh ------------------------
@@ -577,8 +616,17 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    ! CAM3 prescribed aerosols
    if (cam3_aero_data_on) call cam3_aero_data_init(phys_state(begchunk:endchunk))
 
+#ifdef CCPP
+   do lchnk = begchunk,endchunk
+      call phys_int_ephem(lchnk)%reset()
+      call phys_int_pers(lchnk)%init()
+   end do
+   
+   call phys_global%init()
+#endif
+
    ! Initialize rad constituents and their properties
-   call rad_cnst_init(pbuf, phys_state)
+   call rad_cnst_init(pbuf)
    call aer_rad_props_init()
    call cloud_rad_props_init()
 
@@ -641,8 +689,17 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
 
    call cldfrc_init
 
-
+#ifdef CCPP
+   call cdata_init(cdata)
+   call ccpp_physics_init(cdata, suite_name=trim(ccpp_suite), ierr=ierr)
+   if (ierr/=0) then
+     write(0,'(a)') "An error occurred in ccpp_physics_init"
+     write(0,'(a)') trim(cdata%errmsg)
+     return
+   end if
+#else
    call convect_deep_init(hypi)
+#endif
 
    call cldinti ()
 
@@ -653,7 +710,12 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
       call microp_driver_init
       call conv_water_init
    end if
+
+#ifdef CCPP
+   call inimc(tmelt, rhodair/1000.0_r8, gravit, rh2o, hypm, microp_scheme, iulog, pver, masterproc)
+#else
    call inimc(tmelt, rhodair/1000.0_r8, gravit, rh2o)
+#endif
 
 #if ( defined WACCM_PHYS )
    call iondrag_init( hypm )
@@ -666,6 +728,13 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    call sslt_rebin_init
    call tropopause_init()
 
+#ifdef CCPP
+! Assume that all physics buffer variables have been added at this point, so associate pointers
+   do lchnk = begchunk,endchunk
+      call phys_int_pers(lchnk)%associate(pcols, pver, pverp, pcnst, lchnk)
+   end do
+#endif
+
 end subroutine phys_init
 
 !
@@ -675,7 +744,11 @@ end subroutine phys_init
 #ifdef wrf
 subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out, cam_state, cam_tend)
 #else
+#ifdef CCPP
+subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out, phys_int_ephem, phys_int_pers, phys_global, ccpp_suite)
+#else
 subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
+#endif
 #endif
 !-----------------------------------------------------------------------
 !
@@ -694,6 +767,9 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 #endif
    use comsrf,         only: fsns, fsnt, flns, flnt, landm, fsds
    use abortutils, only :endrun
+#ifdef CCPP
+   use cam_diagnostics,only: diag_tphysbc
+#endif
 !
 ! Input arguments
 !
@@ -711,10 +787,18 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
    type(physics_state), intent(inout), dimension(begchunk:endchunk) :: cam_state ! juanxiong he
    type(physics_tend ), intent(inout), dimension(begchunk:endchunk) :: cam_tend ! juanxiong he
 #endif
+#ifdef CCPP
+   type(physics_int_ephem), intent(inout), dimension(:) :: phys_int_ephem
+   type(physics_int_pers),  intent(inout), dimension(:) :: phys_int_pers
+   type(physics_global),    intent(inout) :: phys_global
+   character(len=256), intent(in)   :: ccpp_suite
+   integer :: ierr
+#endif
 !-----------------------------------------------------------------------
 !
 !---------------------------Local workspace-----------------------------
 !
+   type(ccpp_t) :: cdata
    integer :: c                                 ! indices
    integer :: ncol                              ! number of columns
    integer :: nstep                             ! current timestep number
@@ -724,6 +808,16 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 
    call t_startf ('physpkg_st1')
    nstep = get_nstep()
+
+#ifdef CCPP
+   call cdata_init(cdata)
+   call ccpp_physics_timestep_init(cdata, suite_name=trim(ccpp_suite), ierr=ierr)
+   if (ierr/=0) then
+     write(0,'(a)') "An error occurred in ccpp_physics_timestep_init"
+     write(0,'(a)') trim(cdata%errmsg)
+     return
+   end if
+#endif
 
    ! The following initialization depends on the import state (cam_in)
    ! being initialized.  This isn't true when cam_init is called, so need
@@ -776,7 +870,13 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
       call t_startf ('bc_physics')
       call t_adj_detailf(+1)
 
-!$OMP PARALLEL DO PRIVATE (C)
+#ifdef CCPP
+!$OMP PARALLEL PRIVATE (c,cdata)
+#else
+!$OMP PARALLEL PRIVATE (c)
+#endif
+
+!$OMP DO
       do c=begchunk, endchunk
          !
          ! Output physics terms to IC file
@@ -793,12 +893,39 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
                        phys_tend(c), pbuf,  fsds(1,c), landm(1,c),                       &
                        cam_out(c), cam_in(c), cam_state(c), cam_tend(c) )  !juangxiong he
 #else
+#ifdef CCPP
+#ifdef _OPENMP
+         call cdata_init(cdata, blk=c, thrd=omp_get_thread_num()+1)
+#else
+         call cdata_init(cdata, blk=c, thrd=1)
+#endif
+         ! DH*
+         write(0,'(a,i6,a,i6)') "XXX: Calling tphysbc with c =", c," and cdata%blk_no = ", cdata%blk_no
+         ! *DH
+         call tphysbc (ztodt, pblht(1,c), tpert(1,c), qpert(1,1,c),tpert2(1,c), qpert2(1,c),&
+                       fsns(1,c), fsnt(1,c), flns(1,c), flnt(1,c), phys_state(c),        &
+                       phys_tend(c), pbuf,  fsds(1,c), landm(1,c),                       &
+                       cam_out(c), cam_in(c), cdata, ccpp_suite)
+#else
          call tphysbc (ztodt, pblht(1,c), tpert(1,c), qpert(1,1,c),tpert2(1,c), qpert2(1,c),&
                        fsns(1,c), fsnt(1,c), flns(1,c), flnt(1,c), phys_state(c),        &
                        phys_tend(c), pbuf,  fsds(1,c), landm(1,c),                       &
                        cam_out(c), cam_in(c) )
 #endif
+#endif
       end do
+!$OMP END DO
+
+#ifdef CCPP
+!$OMP DO
+      do c=begchunk, endchunk
+        !call new physics variable output setup routine
+        call diag_tphysbc(c, phys_int_ephem(c), phys_int_pers(c), phys_global, phys_state(c))
+      end do
+!$OMP END DO
+#endif
+
+!$OMP END PARALLEL
 
       call t_adj_detailf(-1)
       call t_stopf ('bc_physics')
@@ -808,6 +935,16 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 
 #ifdef TRACER_CHECK
       call gmean_mass ('between DRY', phys_state)
+#endif
+
+#ifdef CCPP
+   call cdata_init(cdata)
+   call ccpp_physics_timestep_finalize(cdata, suite_name=trim(ccpp_suite), ierr=ierr)
+   if (ierr/=0) then
+     write(0,'(a)') "An error occurred in ccpp_physics_timestep_finalize"
+     write(0,'(a)') trim(cdata%errmsg)
+     return
+   end if
 #endif
    end if
 
@@ -1031,8 +1168,11 @@ end subroutine phys_run2
 !
 !-----------------------------------------------------------------------
 !
-
+#ifdef CCPP
+subroutine phys_final( phys_state, phys_tend, ccpp_suite )
+#else
 subroutine phys_final( phys_state, phys_tend )
+#endif
   use chemistry, only : chem_final
 !-----------------------------------------------------------------------
 !
@@ -1044,10 +1184,47 @@ subroutine phys_final( phys_state, phys_tend )
    type(physics_state), pointer :: phys_state(:)
    type(physics_tend ), pointer :: phys_tend(:)
 
+#ifdef CCPP
+   character(len=256), intent(in) :: ccpp_suite
+   type(ccpp_t) :: cdata
+   integer :: ierr
+
+   !--- Finalize CCPP physics
+   call cdata_init(cdata)
+   call ccpp_physics_finalize(cdata, suite_name=trim(ccpp_suite), ierr=ierr)
+   if (ierr/=0) then
+     write(0,'(a)') "An error occurred in ccpp_physics_finalize"
+     write(0,'(a)') trim(cdata%errmsg)
+     return
+   end if
+#endif
+
    deallocate(phys_state)
    deallocate(phys_tend)
    call chem_final
 
 end subroutine phys_final
+
+#ifdef CCPP
+subroutine cdata_init(cdata, blk, thrd)
+   type(ccpp_t), intent(out) :: cdata
+   integer, intent(in), optional :: blk
+   integer, intent(in), optional :: thrd
+   cdata%loop_cnt = 1
+   cdata%loop_max = 1
+   cdata%errflg   = 0
+   cdata%errmsg   = ''
+   if (present(blk)) then
+     cdata%blk_no   = blk
+   else
+     cdata%blk_no   = -999
+   end if
+   if (present(thrd)) then
+     cdata%thrd_no  = thrd
+   else
+     cdata%thrd_no  = -999
+   end if
+end subroutine cdata_init
+#endif
 
 end module physpkg

@@ -1,0 +1,15 @@
+[ccpp-table-properties]
+  name = cam_logfile
+  type = module
+  relative_path = 
+  dependencies = 
+ 
+[ccpp-arg-table]
+  name = cam_logfile
+  type = module
+[iulog]
+  standard_name = unit_number_for_output_logging
+  long_name = Fortran I/O unit for logging
+  units = index
+  dimensions = ()
+  type = integer

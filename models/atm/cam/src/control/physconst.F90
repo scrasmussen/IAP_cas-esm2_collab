@@ -2,6 +2,9 @@ module physconst
    ! update: juanxiong he, 201008
    ! Physical constants.  Use CCSM shared values whenever available.
 
+!> \section arg_table_physconst Argument Table
+!! \htmlinclude physconst.html
+!!
    use shr_kind_mod, only: r8 => shr_kind_r8
    use shr_const_mod, only: shr_const_g,      shr_const_stebol, shr_const_tkfrz,  &
                             shr_const_mwdair, shr_const_rdair,  shr_const_mwwv,   &

@@ -364,28 +364,49 @@
    ! Input-Output Arguments !
    ! ---------------------- !
 
+   ! DH* - Temporary for testing, or permanent?
    type(physics_state), intent(in)    :: state                           ! Physics state variables
    real(r8),            intent(in)    :: ztodt                           ! 2 delta-t  [ s ]
-   real(r8),            intent(in)    :: pblht(pcols)                    ! PBL height [ m ]
+   !real(r8),            intent(in)    :: pblht(pcols)                    ! PBL height [ m ]
 !zmh
-   real(r8),            intent(in)    :: tpert(pcols)     
-   real(r8),            intent(in)    :: qpert(pcols,pcnst)
-   real(r8),            intent(in)    :: gradt(pcols)     
-   real(r8),            intent(in)    :: gradq(pcols)     
-   real(r8), intent(in) :: landfrac(pcols) 
+   !real(r8),            intent(in)    :: tpert(pcols)     
+   !real(r8),            intent(in)    :: qpert(pcols,pcnst)
+   !real(r8),            intent(in)    :: gradt(pcols)     
+   !real(r8),            intent(in)    :: gradq(pcols)     
+   !real(r8), intent(in) :: landfrac(pcols) 
+   !
+   !type(physics_ptend), intent(out)   :: ptend_all                       ! Indivdual parameterization tendencies
+   !real(r8),            intent(out)   :: cmfmc2(pcols,pverp)             ! Updraft mass flux by shallow convection [ kg/s/m2 ]
+   !real(r8),            intent(out)   :: precc(pcols)                    ! Shallow convective precipitation (rain+snow) rate at surface [ m/s ]
+   !real(r8),            intent(out)   :: snow(pcols)                     ! Shallow convective snow rate at surface [ m/s ]
+   !real(r8),            intent(out)   :: rliq2(pcols)                    ! Vertically-integrated reserved cloud condensate [ m/s ]
+   !real(r8),            intent(out)   :: qc2(pcols,pver)                 ! Same as qc but only from shallow convection scheme
+   !
+   !type(pbuf_fld),      intent(inout), dimension(pbuf_size_max) :: pbuf  ! Physics buffer
+   !real(r8),            intent(inout) :: cmfmc(pcols,pverp)              ! Moist deep + shallow convection cloud mass flux [ kg/s/m2 ]
+   !real(r8),            intent(inout) :: qc(pcols,pver)                  ! dq/dt due to export of cloud water into environment by shallow and deep convection [ kg/kg/s ]
+   !real(r8),            intent(inout) :: rliq(pcols)                     ! Vertical integral of qc [ m/s ]
+   !!!
+   real(r8),            intent(in)    :: pblht(:)                    ! PBL height [ m ]
+!zmh
+   real(r8),            intent(in)    :: tpert(:)     
+   real(r8),            intent(in)    :: qpert(:,:)
+   real(r8),            intent(in)    :: gradt(:)     
+   real(r8),            intent(in)    :: gradq(:)     
+   real(r8), intent(in) :: landfrac(:) 
 
    type(physics_ptend), intent(out)   :: ptend_all                       ! Indivdual parameterization tendencies
-   real(r8),            intent(out)   :: cmfmc2(pcols,pverp)             ! Updraft mass flux by shallow convection [ kg/s/m2 ]
-   real(r8),            intent(out)   :: precc(pcols)                    ! Shallow convective precipitation (rain+snow) rate at surface [ m/s ]
-   real(r8),            intent(out)   :: snow(pcols)                     ! Shallow convective snow rate at surface [ m/s ]
-   real(r8),            intent(out)   :: rliq2(pcols)                    ! Vertically-integrated reserved cloud condensate [ m/s ]
-   real(r8),            intent(out)   :: qc2(pcols,pver)                 ! Same as qc but only from shallow convection scheme
+   real(r8),            intent(out)   :: cmfmc2(:,:)             ! Updraft mass flux by shallow convection [ kg/s/m2 ]
+   real(r8),            intent(out)   :: precc(:)                    ! Shallow convective precipitation (rain+snow) rate at surface [ m/s ]
+   real(r8),            intent(out)   :: snow(:)                     ! Shallow convective snow rate at surface [ m/s ]
+   real(r8),            intent(out)   :: rliq2(:)                    ! Vertically-integrated reserved cloud condensate [ m/s ]
+   real(r8),            intent(out)   :: qc2(:,:)                 ! Same as qc but only from shallow convection scheme
 
-   type(pbuf_fld),      intent(inout), dimension(pbuf_size_max) :: pbuf  ! Physics buffer
-   real(r8),            intent(inout) :: cmfmc(pcols,pverp)              ! Moist deep + shallow convection cloud mass flux [ kg/s/m2 ]
-   real(r8),            intent(inout) :: qc(pcols,pver)                  ! dq/dt due to export of cloud water into environment by shallow and deep convection [ kg/kg/s ]
-   real(r8),            intent(inout) :: rliq(pcols)                     ! Vertical integral of qc [ m/s ]
-
+   type(pbuf_fld),      intent(inout), dimension(:) :: pbuf  ! Physics buffer
+   real(r8),            intent(inout) :: cmfmc(:,:)              ! Moist deep + shallow convection cloud mass flux [ kg/s/m2 ]
+   real(r8),            intent(inout) :: qc(:,:)                  ! dq/dt due to export of cloud water into environment by shallow and deep convection [ kg/kg/s ]
+   real(r8),            intent(inout) :: rliq(:)                     ! Vertical integral of qc [ m/s ]
+   ! *DH
 
    ! --------------- !
    ! Local Variables ! 

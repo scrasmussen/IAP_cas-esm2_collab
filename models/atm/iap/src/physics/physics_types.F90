@@ -8,27 +8,48 @@ module physics_types
   use shr_kind_mod, only: r8 => shr_kind_r8
 !====Jinbo Xie====
   !use ppgrid,       only: pcols, pver
-   use ppgrid,       only: pcols, pver,nvar_dirOA,nvar_dirOL,indexb
+   use ppgrid,       only: pcols, pver,pverp,nvar_dirOA,nvar_dirOL,indexb
 !====Jinbo Xie====
+#ifdef CCPP
+  use constituents, only: pcnst, qmin, cnst_name, cnst_get_ind
+#else
   use constituents, only: pcnst, qmin, cnst_name
+#endif
   use geopotential, only: geopotential_dse
   use physconst,    only: zvir, gravit, cpair, rair
   use dycore,       only: dycore_is
   use phys_grid,    only: get_ncols_p, get_rlon_all_p, get_rlat_all_p, get_gcol_all_p
   use cam_logfile,  only: iulog
   use abortutils,   only: endrun
+#ifdef CCPP
+  use time_manager,   only: get_step_size
+  use phys_control,   only: phys_deepconv_pbl, cam_physpkg_is, phys_getopts
+  use error_messages, only: alloc_err
+  use ccpp_types,     only: ccpp_t
+#endif
 
   implicit none
   private          ! Make default type private to the module
 
   logical, parameter :: adjust_te = .FALSE.
+  real(kind=r8), parameter :: zero      = 0.0_r8
+  real(kind=r8), parameter :: clear_val = zero
+
+!> \section arg_table_physics_types
+!! \htmlinclude physics_types.html
+!!
 
 ! Public types:
 
   public physics_state
   public physics_tend
   public physics_ptend
-  
+#ifdef CCPP
+  public physics_int_ephem
+  public physics_int_pers
+  public physics_global
+#endif
+
 ! Public interfaces
 
   public physics_update
@@ -46,6 +67,9 @@ module physics_types
   public set_dry_to_wet
   public physics_type_alloc
 !-------------------------------------------------------------------------------
+!! \section arg_table_physics_state
+!! \htmlinclude physics_state.html
+!!
   type physics_state
      ! yhy
     integer   ::   psetcols=0 ! max number of columns set- if subcols = pcols*psubcols, else =  pcols
@@ -60,7 +84,7 @@ module physics_types
           phis,    &! surface geopotential
 !wangty modify
 !#ifdef wrf  !zmh
-          psl,     &! seal level pressure, added by juanxiong he          
+          psl,     &! seal level pressure, added by juanxiong he
 !#endif
           ulat,    &! unique latitudes  (radians)
           ulon      ! unique longitudes (radians)
@@ -70,18 +94,18 @@ module physics_types
           v,       &! meridional wind (m/s)
 !wangty modify
 !#ifdef wrf  !zmh
-          rh,      &! relative humidity(%), added by juanxiong he           
+          rh,      &! relative humidity(%), added by juanxiong he
 !#endif
           s,       &! dry static energy
-          omega,   &! vertical pressure velocity (Pa/s) 
-          pmid,    &! midpoint pressure (Pa) 
-          pmiddry, &! midpoint pressure dry (Pa) 
+          omega,   &! vertical pressure velocity (Pa/s)
+          pmid,    &! midpoint pressure (Pa)
+          pmiddry, &! midpoint pressure dry (Pa)
           pdel,    &! layer thickness (Pa)
           pdeldry, &! layer thickness dry (Pa)
           rpdel,   &! reciprocal of layer thickness (Pa)
           rpdeldry,&! recipricol layer thickness dry (Pa)
           lnpmid,  &! ln(pmid)
-          lnpmiddry,&! log midpoint pressure dry (Pa) 
+          lnpmiddry,&! log midpoint pressure dry (Pa)
           exner,   &! inverse exner function w.r.t. surface pressure (ps/p)^(R/cp)
           uzm,     &! zonal wind for qbo (m/s)
 !wangty modify
@@ -111,9 +135,9 @@ module physics_types
 
      real(r8), dimension(pcols,pver+1)           :: &
           pint,    &! interface pressure (Pa)
-          pintdry, &! interface pressure dry (Pa) 
+          pintdry, &! interface pressure dry (Pa)
           lnpint,  &! ln(pint)
-          lnpintdry,&! log interface pressure dry (Pa) 
+          lnpintdry,&! log interface pressure dry (Pa)
           zi        ! geopotential height above surface at interfaces (m)
 
      real(r8), dimension(pcols)                  :: &
@@ -158,7 +182,7 @@ module physics_types
           oadir        !orographic asymmetry in a coarse grid
 #ifndef continuous
      real(r8), dimension(pcols,nvar_dirOL)           :: &
-          ol        !orographic length in a coarse grid 
+          ol        !orographic length in a coarse grid
      !real(r8), dimension(pcols,nvar_dirOL)           :: &
           !dxydir    !representative grid length in a coarse grid
 #else
@@ -167,7 +191,7 @@ module physics_types
 #endif
 !====Jinbo Xie===========
 !-czy20181120==================================================
-      
+
   end type physics_state
 
 !-------------------------------------------------------------------------------
@@ -183,8 +207,8 @@ module physics_types
 ! This is for tendencies returned from individual parameterizations
   type physics_ptend
       ! yhy
-     integer   ::   psetcols=0 ! max number of columns set- if subcols = pcols*psubcols, else =  pcols 
-     
+     integer   ::   psetcols=0 ! max number of columns set- if subcols = pcols*psubcols, else =  pcols
+
      character*24 :: name    ! name of parameterization which produced tendencies.
 
      logical ::             &
@@ -224,20 +248,158 @@ module physics_types
                                                      rvndgdten, &  ! v tendency
                                                      rtndgdten, &  ! t tendency
                                                      rqndgdten  ! q tendency
-#endif  
+#endif
   end type physics_ptend
 
+#ifdef CCPP
+!! \section arg_table_physics_int_ephem
+!! \htmlinclude physics_int_ephem.html
+!!
+  type physics_int_ephem
+
+    !variables previously internal to tphysbc; there need to be n_threads of this type
+    real(kind=r8), pointer              :: prec(:)  => null()  !<
+    real(kind=r8), pointer              :: snow(:)  => null()  !<
+    type(physics_ptend),   pointer      :: ptend_deep_conv_tot => null()
+    real(kind=r8), pointer              :: cmfmc(:,:) => null()       !< Convective mass flux--m sub c
+    real(kind=r8), pointer              :: cmfcme(:,:)=> null()           !< cmf condensation - evaporation
+    real(kind=r8), pointer              :: dlf(:,:)   => null()           !< Detraining cld H20 from shallow + deep convections
+    real(kind=r8), pointer              :: pflx(:,:)  => null()           !< Conv rain flux thru out btm of lev
+    real(kind=r8), pointer              :: zdu(:,:)   => null()           !< detraining mass flux from deep convection
+    real(kind=r8), pointer              :: rliq(:)    => null()         !< vertical integral of liquid not yet in q(ixcldliq)
+
+    !variables previously internal to zm_conv_intr
+    real(kind=r8), pointer              :: cape(:) => null() ! convective available potential energy.
+    real(kind=r8), pointer              :: pcont(:) => null()
+    real(kind=r8), pointer              :: pconb(:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_qv(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_s(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_evap_qv(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_evap_s(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_momtran_s(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_momtran_u(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_momtran_v(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_convtran_q(:,:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_tot_s(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_tot_u(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_tot_v(:,:) => null()
+    real(kind=r8), pointer              :: ptend_deep_conv_tot_q(:,:,:) => null()
+    real(kind=r8), pointer              :: temp_state_u(:,:) => null()
+    real(kind=r8), pointer              :: temp_state_v(:,:) => null()
+    real(kind=r8), pointer              :: temp_state_s(:,:) => null()
+    real(kind=r8), pointer              :: temp_state_q(:,:,:) => null()
+    real(kind=r8), pointer              :: temp_state_t(:,:) => null()
+    real(kind=r8), pointer              :: temp_state_zm(:,:) => null()
+    real(kind=r8), pointer              :: temp_state_zi(:,:) => null()
+    real(kind=r8), pointer              :: tend_s_snwprd  (:,:) ! Heating rate of snow production
+    real(kind=r8), pointer              :: tend_s_snwevmlt(:,:) ! Heating rate of evap/melting of snow
+    real(kind=r8), pointer              :: ntprprd(:,:) !net precip production in layer
+    real(kind=r8), pointer              :: ntsnprd(:,:) !net snow production in layer
+    real(kind=r8), pointer              :: pguall(:,:,:)
+    real(kind=r8), pointer              :: pgdall(:,:,:)
+    real(kind=r8), pointer              :: icwu(:,:,:)
+    real(kind=r8), pointer              :: icwd(:,:,:)
+
+    contains
+      procedure :: create      => interstitial_ephemeral_create     !<   allocate array data
+      procedure :: reset       => interstitial_ephemeral_reset      !<   reset array data
+  end type physics_int_ephem
+
+!! \section arg_table_physics_int_pers
+!! \htmlinclude physics_int_pers.html
+!!
+  type physics_int_pers
+
+   !variables from the physics buffer; memory for these should already allocated as part of pbuf, but
+   !associating the memory in this DDT will make metadata easier
+
+   !needs to have an array of nchunks of these DDTs and loop through chunks to associate pointers with the right memory
+
+
+   !added from convect_deep.F90/convect_deep_register
+   real(kind=r8), pointer :: jctop(:) => null()
+   real(kind=r8), pointer :: jcbot(:) => null()
+   real(kind=r8), pointer :: rprd(:,:) => null()
+   real(kind=r8), pointer :: ql(:,:) => null()
+   real(kind=r8), pointer :: slflx(:,:) => null()
+   real(kind=r8), pointer :: qtflx(:,:) => null()
+   real(kind=r8), pointer :: evapcdp(:,:) => null()
+
+   !accessed from zm_conv_intr.F90
+   real(kind=r8), pointer :: cld_old(:,:) => null()
+
+   !added from aerosol_intr.F90; accessed by zm_conv_intr.F90
+   real(kind=r8), pointer :: fracis(:,:,:) => null()
+
+   !added in zm_conv_intr.F90/zm_conv_register; access in zm_conv_tend
+   real(kind=r8), pointer :: flxprec(:,:) => null()
+   real(kind=r8), pointer :: flxsnow(:,:) => null()
+   real(kind=r8), pointer :: dp_cldliq(:,:) => null()
+   real(kind=r8), pointer :: dp_cldice(:,:) => null()
+
+   !added from zm_conv_intr.F90 module variables
+   real(kind=r8), pointer :: mu(:,:) => null()
+   real(kind=r8), pointer :: md(:,:) => null()
+   real(kind=r8), pointer :: du(:,:) => null()
+   real(kind=r8), pointer :: eu(:,:) => null()
+   real(kind=r8), pointer :: ed(:,:) => null()
+   real(kind=r8), pointer :: dp(:,:) => null()
+   real(kind=r8), pointer :: dsubcld(:) => null()
+   integer      , pointer :: jt(:) => null()
+   integer      , pointer :: maxg(:) => null()
+   integer      , pointer :: ideep(:) => null()
+   integer                :: lengath
+
+   contains
+     procedure :: associate       => interstitial_persistent_associate
+     procedure :: create          => interstitial_persistent_create
+     procedure :: init            => interstitial_persistent_init
+  end type physics_int_pers
+
+!! \section arg_table_physics_global
+!! \htmlinclude physics_global.html
+!!
+  type physics_global
+
+    character(len=16)     :: cam_physpkg
+    character(len=16)     :: cam_physpkg_cam3
+    character(len=16)     :: cam_physpkg_cam4
+    character(len=16)     :: cam_physpkg_cam5
+    character(len=16)     :: cam_physpkg_ideal
+    character(len=16)     :: cam_physpkg_adiabatic
+    character(len=16)     :: microp_scheme
+    logical               :: non_dilute_buoy
+    logical               :: no_deep_pbl
+    logical               :: fv_dycore
+    logical, dimension(2) :: l_windt
+    integer               :: ixcldice
+    integer               :: ixcldliq
+    integer               :: ixnumice
+    integer               :: ixnumliq
+    real(kind=r8)         :: half_ztodt
+
+    contains
+      procedure :: init      => physics_global_init
+  end type physics_global
+#endif
 
 !===============================================================================
 contains
 !===============================================================================
+#ifdef CCPP
+  subroutine physics_type_alloc(phys_state, phys_tend, phys_int_ephem, phys_int_pers, begchunk, endchunk)
+#else
   subroutine physics_type_alloc(phys_state, phys_tend, begchunk, endchunk)
+#endif
     use infnan, only : inf
     implicit none
     type(physics_state), pointer :: phys_state(:)
     type(physics_tend), pointer :: phys_tend(:)
     integer, intent(in) :: begchunk, endchunk
-    
+#ifdef CCPP
+    type(physics_int_ephem), pointer :: phys_int_ephem(:)
+    type(physics_int_pers), pointer :: phys_int_pers(:)
+#endif
     integer :: ierr, lchnk
     type(physics_state), pointer :: state
     type(physics_tend), pointer :: tend
@@ -254,6 +416,21 @@ contains
        call endrun('physics_types: failed to allocate physics_tend array')
     end if
 
+#ifdef CCPP
+    allocate(phys_int_ephem(begchunk:endchunk), stat=ierr)
+    if( ierr /= 0 ) then
+       write(iulog,*) 'physics_types: phys_int_ephem allocation error = ',ierr
+       call endrun('physics_types: failed to allocate physics_int_ephem array')
+    end if
+
+    write(0,'(a,2i6)') "Calling allocate(phys_int_pers(begchunk:endchunk)) with:", begchunk, endchunk
+    allocate(phys_int_pers(begchunk:endchunk), stat=ierr)
+    if( ierr /= 0 ) then
+       write(iulog,*) 'physics_types: phys_int_pers allocation error = ',ierr
+       call endrun('physics_types: failed to allocate physics_int_pers array')
+    end if
+#endif
+
    ! Set chunk id, number of columns, and coordinates
     do lchnk = begchunk,endchunk
        state => phys_state(lchnk)
@@ -263,6 +440,10 @@ contains
        state%ulat(:) = inf
        state%ulon(:) = inf
        state%ps(:) = inf
+       ! DH*
+       write(0,'(a,3i6)') "XXX: begchunk, endchunk, lchnk", begchunk, endchunk, lchnk
+       write(0,'(a,3i6)') "XXX: pcols, ncol, size(lat)", pcols, state%ncol, size(state%lat)
+       ! *DH
 !wangty modify
 #ifdef wrf
        state%psl(:) = inf ! added by juanxiong he
@@ -290,13 +471,13 @@ contains
        state%uzm(:,:) = inf
        state%zm(:,:) = inf
        state%q(:,:,:) = inf
-      
+
        state%pint(:,:) = inf
        state%pintdry(:,:) = inf
        state%lnpint(:,:) = inf
        state%lnpintdry(:,:) = inf
        state%zi(:,:) = inf
-      
+
        state%te_ini(:) = inf
        state%te_cur(:) = inf
        state%tw_ini(:) = inf
@@ -339,7 +520,13 @@ state%terrout=inf
 !------------------------------------------------------------------------
 ! Juanxiong He
 !------------------------------------------------------------------------
-#endif   
+#endif
+#ifdef CCPP
+       !call create for each block
+       write(0,'(a,3i6)') "Calling phys_int_pers % create with:", lchnk, pcols, pver
+       call phys_int_ephem(lchnk)%create(pcols, pver, pverp, pcnst)
+       call phys_int_pers (lchnk)%create(pcols, pver)
+#endif
     end do
 
   end subroutine physics_type_alloc
@@ -414,7 +601,7 @@ state%terrout=inf
     ! the indices will be set to -1)
     call cnst_get_ind('NUMICE', ixnumice, abort=.false.)
     call cnst_get_ind('NUMLIQ', ixnumliq, abort=.false.)
- 
+
     do m = 1, pcnst
        if(ptend%lq(m)) then
           do k = ptend%top_level, ptend%bot_level
@@ -541,7 +728,7 @@ state%terrout=inf
 
 !-----------------------------------------------------------------------
     ncol = state%ncol
-    
+
 
 ! Update u,v fields
     if(ptend%lu) then
@@ -795,28 +982,28 @@ state%terrout=inf
 
 !===============================================================================
   subroutine physics_dme_adjust(state, tend, qini, dt)
-    !----------------------------------------------------------------------- 
-    ! 
+    !-----------------------------------------------------------------------
+    !
     ! Purpose: Adjust the dry mass in each layer back to the value of physics input state
-    ! 
+    !
     ! Method: Conserve the integrated mass, momentum and total energy in each layer
     !         by scaling the specific mass of consituents, specific momentum (velocity)
     !         and specific total energy by the relative change in layer mass. Solve for
     !         the new temperature by subtracting the new kinetic energy from total energy
     !         and inverting the hydrostatic equation
     !
-    !         The mass in each layer is modified, changing the relationship of the layer 
-    !         interfaces and midpoints to the surface pressure. The result is no longer in 
-    !         the original hybrid coordinate. 
+    !         The mass in each layer is modified, changing the relationship of the layer
+    !         interfaces and midpoints to the surface pressure. The result is no longer in
+    !         the original hybrid coordinate.
     !
     !         This procedure cannot be applied to the "eul" or "sld" dycores because they
     !         require the hybrid coordinate.
-    ! 
+    !
     ! Author: Byron Boville
 
     ! !REVISION HISTORY:
     !   03.03.28  Boville    Created, partly from code by Lin in p_d_adjust
-    ! 
+    !
     !-----------------------------------------------------------------------
 
     use constituents, only : cnst_get_type_byind
@@ -861,7 +1048,7 @@ state%terrout=inf
 
        if (adjust_te) then
           ! compute specific total energy of unadjusted state (J/kg)
-          te(:ncol) = state%s(:ncol,k) + 0.5_r8*(state%u(:ncol,k)**2 + state%v(:ncol,k)**2) 
+          te(:ncol) = state%s(:ncol,k) + 0.5_r8*(state%u(:ncol,k)**2 + state%v(:ncol,k)**2)
 
           ! recompute initial u,v from the new values and the tendencies
           utmp(:ncol) = state%u(:ncol,k) - dt * tend%dudt(:ncol,k)
@@ -898,7 +1085,7 @@ state%terrout=inf
 
 !===============================================================================
   subroutine physics_state_copy(state_in, state_out)
-    
+
     use ppgrid,       only: pver, pverp
     use constituents, only: pcnst
 
@@ -917,69 +1104,69 @@ state%terrout=inf
 
 
     ncol = state_in%ncol
-    
+
     state_out%lchnk = state_in%lchnk
     state_out%ncol  = state_in%ncol
-    state_out%count = state_in%count 
+    state_out%count = state_in%count
 
     do i = 1, ncol
        state_out%lat(i)    = state_in%lat(i)
        state_out%lon(i)    = state_in%lon(i)
        state_out%ps(i)     = state_in%ps(i)
        state_out%phis(i)   = state_in%phis(i)
-       state_out%te_ini(i) = state_in%te_ini(i) 
-       state_out%te_cur(i) = state_in%te_cur(i) 
-       state_out%tw_ini(i) = state_in%tw_ini(i) 
-       state_out%tw_cur(i) = state_in%tw_cur(i) 
+       state_out%te_ini(i) = state_in%te_ini(i)
+       state_out%te_cur(i) = state_in%te_cur(i)
+       state_out%tw_ini(i) = state_in%tw_ini(i)
+       state_out%tw_cur(i) = state_in%tw_cur(i)
     end do
 
     do k = 1, pver
        do i = 1, ncol
-          state_out%t(i,k)         = state_in%t(i,k) 
-          state_out%u(i,k)         = state_in%u(i,k) 
-          state_out%v(i,k)         = state_in%v(i,k) 
-          state_out%s(i,k)         = state_in%s(i,k) 
-          state_out%omega(i,k)     = state_in%omega(i,k) 
-          state_out%pmid(i,k)      = state_in%pmid(i,k) 
-          state_out%pdel(i,k)      = state_in%pdel(i,k) 
-          state_out%rpdel(i,k)     = state_in%rpdel(i,k) 
-          state_out%lnpmid(i,k)    = state_in%lnpmid(i,k) 
-          state_out%exner(i,k)     = state_in%exner(i,k) 
+          state_out%t(i,k)         = state_in%t(i,k)
+          state_out%u(i,k)         = state_in%u(i,k)
+          state_out%v(i,k)         = state_in%v(i,k)
+          state_out%s(i,k)         = state_in%s(i,k)
+          state_out%omega(i,k)     = state_in%omega(i,k)
+          state_out%pmid(i,k)      = state_in%pmid(i,k)
+          state_out%pdel(i,k)      = state_in%pdel(i,k)
+          state_out%rpdel(i,k)     = state_in%rpdel(i,k)
+          state_out%lnpmid(i,k)    = state_in%lnpmid(i,k)
+          state_out%exner(i,k)     = state_in%exner(i,k)
           state_out%zm(i,k)        = state_in%zm(i,k)
        end do
     end do
 
     do k = 1, pverp
        do i = 1, ncol
-          state_out%pint(i,k)      = state_in%pint(i,k) 
-          state_out%lnpint(i,k)    = state_in%lnpint(i,k) 
-          state_out%zi(i,k)        = state_in% zi(i,k) 
+          state_out%pint(i,k)      = state_in%pint(i,k)
+          state_out%lnpint(i,k)    = state_in%lnpint(i,k)
+          state_out%zi(i,k)        = state_in% zi(i,k)
        end do
     end do
 
 
        do i = 1, ncol
-          state_out%psdry(i)  = state_in%psdry(i) 
+          state_out%psdry(i)  = state_in%psdry(i)
        end do
        do k = 1, pver
           do i = 1, ncol
-             state_out%lnpmiddry(i,k) = state_in%lnpmiddry(i,k) 
-             state_out%pmiddry(i,k)   = state_in%pmiddry(i,k) 
-             state_out%pdeldry(i,k)   = state_in%pdeldry(i,k) 
-             state_out%rpdeldry(i,k)  = state_in%rpdeldry(i,k) 
+             state_out%lnpmiddry(i,k) = state_in%lnpmiddry(i,k)
+             state_out%pmiddry(i,k)   = state_in%pmiddry(i,k)
+             state_out%pdeldry(i,k)   = state_in%pdeldry(i,k)
+             state_out%rpdeldry(i,k)  = state_in%rpdeldry(i,k)
           end do
        end do
        do k = 1, pverp
           do i = 1, ncol
              state_out%pintdry(i,k)   = state_in%pintdry(i,k)
-             state_out%lnpintdry(i,k) = state_in%lnpintdry(i,k) 
+             state_out%lnpintdry(i,k) = state_in%lnpintdry(i,k)
           end do
        end do
 
     do m = 1, pcnst
        do k = 1, pver
           do i = 1, ncol
-             state_out%q(i,k,m) = state_in%q(i,k,m) 
+             state_out%q(i,k,m) = state_in%q(i,k,m)
           end do
        end do
     end do
@@ -988,9 +1175,9 @@ state%terrout=inf
 !===============================================================================
 
   subroutine physics_tend_init(tend)
-    
+
     implicit none
-    
+
     !
     ! Arguments
     !
@@ -1006,7 +1193,7 @@ state%terrout=inf
     tend%flx_net = 0._r8
     tend%te_tnd  = 0._r8
     tend%tw_tnd  = 0._r8
-    
+
 end subroutine physics_tend_init
 
 !===============================================================================
@@ -1020,7 +1207,7 @@ subroutine set_state_pdry (state,pdeld_calc)
 
   type(physics_state), intent(inout) :: state
   logical, optional, intent(in) :: pdeld_calc    !  .true. do calculate pdeld [default]
-                                                 !  .false. don't calculate pdeld 
+                                                 !  .false. don't calculate pdeld
   integer ncol
   integer i, k
   logical do_pdeld_calc
@@ -1030,7 +1217,7 @@ subroutine set_state_pdry (state,pdeld_calc)
   else
      do_pdeld_calc = .true.
   endif
-  
+
   ncol = state%ncol
 
   state%psdry(:ncol) = ps0 * hyai(1) + state%ps(:ncol) * hybi(1)
@@ -1051,7 +1238,7 @@ subroutine set_state_pdry (state,pdeld_calc)
   state%lnpmiddry(:ncol,:) = log(state%pmiddry(:ncol,:))
   state%lnpintdry(:ncol,:) = log(state%pintdry(:ncol,:))
 
-end subroutine set_state_pdry 
+end subroutine set_state_pdry
 
 !===============================================================================
 
@@ -1062,7 +1249,7 @@ subroutine set_wet_to_dry (state)
   type(physics_state), intent(inout) :: state
 
   integer m, ncol
-  
+
   ncol = state%ncol
 
   do m = 1,pcnst
@@ -1071,7 +1258,7 @@ subroutine set_wet_to_dry (state)
      endif
   end do
 
-end subroutine set_wet_to_dry 
+end subroutine set_wet_to_dry
 
 !===============================================================================
 
@@ -1082,7 +1269,7 @@ subroutine set_dry_to_wet (state)
   type(physics_state), intent(inout) :: state
 
   integer m, ncol
-  
+
   ncol = state%ncol
 
   do m = 1,pcnst
@@ -1093,5 +1280,253 @@ subroutine set_dry_to_wet (state)
 
 end subroutine set_dry_to_wet
 
+#ifdef CCPP
+subroutine interstitial_ephemeral_create (int_ephem, ncol, pver, pverp, pcnst)
+  implicit none
 
+  class(physics_int_ephem)       :: int_ephem
+  integer,                intent(in) :: ncol, pver, pverp, pcnst
+
+  allocate (int_ephem%prec  (ncol))
+  allocate (int_ephem%snow  (ncol))
+  allocate (int_ephem%cmfmc (ncol, pverp))
+  allocate (int_ephem%cmfcme(ncol, pver))
+  allocate (int_ephem%cape  (ncol))
+  allocate (int_ephem%dlf   (ncol, pver))
+  allocate (int_ephem%pflx  (ncol, pverp))
+  allocate (int_ephem%zdu   (ncol, pver))
+  allocate (int_ephem%rliq  (ncol))
+  allocate (int_ephem%pcont (ncol))
+  allocate (int_ephem%pconb (ncol))
+  allocate (int_ephem%ptend_deep_conv_qv(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_s(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_evap_qv(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_evap_s(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_momtran_s(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_momtran_u(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_momtran_v(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_convtran_q(ncol,pver,pcnst))
+  allocate (int_ephem%ptend_deep_conv_tot_s(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_tot_u(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_tot_v(ncol,pver))
+  allocate (int_ephem%ptend_deep_conv_tot_q(ncol,pver,pcnst))
+  allocate (int_ephem%temp_state_u(ncol,pver))
+  allocate (int_ephem%temp_state_v(ncol,pver))
+  allocate (int_ephem%temp_state_s(ncol,pver))
+  allocate (int_ephem%temp_state_q(ncol,pver,pcnst))
+  allocate (int_ephem%temp_state_t(ncol,pver))
+  allocate (int_ephem%temp_state_zm(ncol,pver))
+  allocate (int_ephem%temp_state_zi(ncol,pverp))
+  allocate (int_ephem%tend_s_snwprd(ncol,pver))
+  allocate (int_ephem%tend_s_snwevmlt(ncol,pver))
+  allocate (int_ephem%ntprprd(ncol,pver))
+  allocate (int_ephem%ntsnprd(ncol,pver))
+  allocate (int_ephem%pguall(ncol,pver,2))
+  allocate (int_ephem%pgdall(ncol,pver,2))
+  allocate (int_ephem%icwu(ncol,pver,2))
+  allocate (int_ephem%icwd(ncol,pver,2))
+
+end subroutine interstitial_ephemeral_create
+
+subroutine interstitial_ephemeral_reset(int_ephem)
+  implicit none
+
+  class(physics_int_ephem)       :: int_ephem
+
+  int_ephem%prec            = clear_val
+  int_ephem%snow            = clear_val
+  int_ephem%cmfmc           = clear_val
+  int_ephem%cmfcme          = clear_val
+  int_ephem%cape            = clear_val
+  int_ephem%dlf             = clear_val
+  int_ephem%pflx            = clear_val
+  int_ephem%zdu             = clear_val
+  int_ephem%rliq            = clear_val
+  int_ephem%pcont           = clear_val
+  int_ephem%pconb           = clear_val
+  int_ephem%ptend_deep_conv_qv = clear_val
+  int_ephem%ptend_deep_conv_s  = clear_val
+  int_ephem%ptend_deep_conv_evap_qv = clear_val
+  int_ephem%ptend_deep_conv_evap_s  = clear_val
+  int_ephem%ptend_deep_conv_momtran_s  = clear_val
+  int_ephem%ptend_deep_conv_momtran_u  = clear_val
+  int_ephem%ptend_deep_conv_momtran_v  = clear_val
+  int_ephem%ptend_deep_conv_convtran_q = clear_val
+  int_ephem%ptend_deep_conv_tot_s  = clear_val
+  int_ephem%ptend_deep_conv_tot_u  = clear_val
+  int_ephem%ptend_deep_conv_tot_v  = clear_val
+  int_ephem%ptend_deep_conv_tot_q = clear_val
+  int_ephem%temp_state_u    = clear_val
+  int_ephem%temp_state_v    = clear_val
+  int_ephem%temp_state_s    = clear_val
+  int_ephem%temp_state_q    = clear_val
+  int_ephem%temp_state_t    = clear_val
+  int_ephem%temp_state_zm   = clear_val
+  int_ephem%temp_state_zi   = clear_val
+  int_ephem%tend_s_snwprd   = clear_val
+  int_ephem%tend_s_snwevmlt = clear_val
+  int_ephem%ntprprd         = clear_val
+  int_ephem%ntsnprd         = clear_val
+  int_ephem%pguall          = clear_val
+  int_ephem%pgdall          = clear_val
+  int_ephem%icwu            = clear_val
+  int_ephem%icwd            = clear_val
+
+end subroutine interstitial_ephemeral_reset
+
+subroutine interstitial_persistent_associate(int_pers, pcols, pver, pverp, pcnst, lchnk)
+  !should be called once per block before physics init stage
+
+  use phys_buffer,   only: pbuf, pbuf_get_fld_idx, pbuf_old_tim_idx
+  use buffer,        only: pblht, tpert, qpert, tpert2, qpert2
+  implicit none
+
+  class(physics_int_pers)       :: int_pers
+
+  integer, intent(in) :: pcols, pver, pverp, pcnst, lchnk
+
+  integer :: var_idx, itim
+
+  !from convect_deep.F90/convect_deep_init,convect_deep_tend
+  var_idx = pbuf_get_fld_idx('CLDTOP')
+  int_pers%jctop => pbuf(var_idx)%fld_ptr(1,1:pcols,1,lchnk,1)
+  var_idx = pbuf_get_fld_idx('CLDBOT')
+  int_pers%jcbot => pbuf(var_idx)%fld_ptr(1,1:pcols,1,lchnk,1)
+  var_idx = pbuf_get_fld_idx('RPRDDP')
+  int_pers%rprd => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1)
+  var_idx = pbuf_get_fld_idx('ICWMRDP')
+  int_pers%ql => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1)
+  var_idx = pbuf_get_fld_idx('slflxdp')
+  int_pers%slflx => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pverp,lchnk,1)
+  var_idx = pbuf_get_fld_idx('qtflxdp')
+  int_pers%qtflx => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pverp,lchnk,1)
+  var_idx = pbuf_get_fld_idx('NEVAPR_DPCU')
+  int_pers%evapcdp => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1)
+
+  !from zm_conv_intr.F90/zm_conv_init/tend
+  var_idx = pbuf_get_fld_idx('CLD')
+  itim    = pbuf_old_tim_idx()
+  int_pers%cld_old => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,itim)
+  var_idx = pbuf_get_fld_idx('FRACIS')
+  int_pers%fracis  => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1:pcnst)
+
+  var_idx = pbuf_get_fld_idx('DP_FLXPRC')
+  int_pers%flxprec => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pverp,lchnk,1)
+  var_idx = pbuf_get_fld_idx('DP_FLXSNW')
+  int_pers%flxsnow => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pverp,lchnk,1)
+  var_idx = pbuf_get_fld_idx('DP_CLDLIQ')
+  int_pers%dp_cldliq => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1)
+  var_idx = pbuf_get_fld_idx('DP_CLDICE')
+  int_pers%dp_cldice => pbuf(var_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1)
+
+end subroutine interstitial_persistent_associate
+
+subroutine interstitial_persistent_create(int_pers, pcols, pver)
+  implicit none
+
+  class(physics_int_pers)       :: int_pers
+
+  integer, intent(in) :: pcols, pver
+
+  integer :: istat
+
+  allocate (int_pers%mu(pcols, pver), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'mu', pcols*pver)
+  allocate (int_pers%md(pcols, pver), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'md', pcols*pver)
+  allocate (int_pers%du(pcols, pver), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'du', pcols*pver)
+  allocate (int_pers%eu(pcols, pver), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'eu', pcols*pver)
+  allocate (int_pers%ed(pcols, pver), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'ed', pcols*pver)
+  allocate (int_pers%dp(pcols, pver), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'dp', pcols*pver)
+  allocate (int_pers%dsubcld(pcols), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'dsubcld', pcols)
+  allocate (int_pers%jt(pcols), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'jt', pcols)
+  allocate (int_pers%maxg(pcols), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'maxg', pcols)
+  allocate (int_pers%ideep(pcols), stat=istat)
+  call alloc_err( istat, 'interstitial_persistent_create', 'ideep', pcols)
+
+end subroutine interstitial_persistent_create
+
+subroutine interstitial_persistent_init(int_pers)
+  implicit none
+
+  class(physics_int_pers)       :: int_pers
+
+  int_pers%mu = clear_val
+  int_pers%md = clear_val
+  int_pers%du = clear_val
+  int_pers%eu = clear_val
+  int_pers%ed = clear_val
+  int_pers%dp = clear_val
+  int_pers%dsubcld = clear_val
+  int_pers%jt = clear_val
+  int_pers%maxg = clear_val
+  int_pers%ideep = clear_val
+  int_pers%lengath = 0
+
+end subroutine interstitial_persistent_init
+
+subroutine physics_global_init(pglob)
+  implicit none
+
+  class(physics_global)       :: pglob
+
+  real(kind=r8) :: ztodt
+  character(len=16) :: deep_conv_scheme
+
+  pglob%cam_physpkg_cam3 = 'cam3'
+  pglob%cam_physpkg_cam4 = 'cam4'
+  pglob%cam_physpkg_cam5 = 'cam5'
+  pglob%cam_physpkg_ideal = 'ideal'
+  pglob%cam_physpkg_adiabatic = 'adiabatic'
+
+  if (cam_physpkg_is(pglob%cam_physpkg_cam3)) then
+    pglob%cam_physpkg = pglob%cam_physpkg_cam3
+  else if (cam_physpkg_is(pglob%cam_physpkg_cam4)) then
+    pglob%cam_physpkg = pglob%cam_physpkg_cam4
+  else if (cam_physpkg_is(pglob%cam_physpkg_cam5)) then
+    pglob%cam_physpkg = pglob%cam_physpkg_cam5
+  else if (cam_physpkg_is(pglob%cam_physpkg_ideal)) then
+    pglob%cam_physpkg = pglob%cam_physpkg_ideal
+  else if (cam_physpkg_is(pglob%cam_physpkg_adiabatic)) then
+    pglob%cam_physpkg = pglob%cam_physpkg_adiabatic
+  else
+    pglob%cam_physpkg = 'UNSET'
+  end if
+
+  call phys_getopts(microp_scheme_out=pglob%microp_scheme)
+
+  if (trim(pglob%cam_physpkg) == trim(pglob%cam_physpkg_cam3)) then
+    pglob%non_dilute_buoy = .true.
+  else
+    pglob%non_dilute_buoy = .false.
+  end if
+
+  pglob%no_deep_pbl = phys_deepconv_pbl()
+  pglob%fv_dycore = dycore_is ('LR')
+
+  call cnst_get_ind('CLDICE', pglob%ixcldice, abort=.false.)
+  call cnst_get_ind('CLDLIQ', pglob%ixcldliq, abort=.false.)
+  ! Check for number concentration of cloud liquid and cloud ice (if not present
+  ! the indices will be set to -1)
+  call cnst_get_ind('NUMICE', pglob%ixnumice, abort=.false.)
+  call cnst_get_ind('NUMLIQ', pglob%ixnumliq, abort=.false.)
+
+  ztodt = get_step_size()
+  pglob%half_ztodt = 0.5_r8*ztodt
+
+  call phys_getopts(deep_scheme_out=deep_conv_scheme)
+  pglob%l_windt(:) = .false.
+  if ((pglob%cam_physpkg /= pglob%cam_physpkg_cam3) .and. (deep_conv_scheme == 'ZM')) then
+    pglob%l_windt(:) = .true.
+  end if
+
+end subroutine physics_global_init
+#endif
 end module physics_types

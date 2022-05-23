@@ -1,0 +1,21 @@
+[ccpp-table-properties]
+  name = shr_kind_mod
+  type = module
+  dependencies = 
+
+########################################################################
+[ccpp-arg-table]
+  name = shr_kind_mod
+  type = module
+[shr_kind_r8]
+  standard_name = shr_kind_r8
+  long_name = definition of shr_kind_r8
+  units = none
+  dimensions = ()
+  type = integer
+[shr_kind_r4]
+  standard_name = shr_kind_r4
+  long_name = definition of shr_kind_r4
+  units = none
+  dimensions = ()
+  type = integer

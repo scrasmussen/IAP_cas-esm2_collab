@@ -1,6 +1,8 @@
 
 module cam_logfile
-
+!> \section arg_table_cam_logfile Argument Table
+!! \htmlinclude cam_logfile.html
+!!
 !----------------------------------------------------------------------- 
 ! 
 ! Purpose: This module is responsible for managing the logical unit 

@@ -1,6 +1,8 @@
 
 module pmgrid
-
+!> \section arg_table_pmgrid Argument Table
+!! \htmlinclude pmgrid.html
+!!
 !----------------------------------------------------------------------- 
 ! 
 ! Purpose: Parameters and variables related to the dynamics grid

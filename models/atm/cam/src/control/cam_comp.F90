@@ -1,4 +1,5 @@
 module cam_comp
+
 !-----------------------------------------------------------------------
 !
 ! Purpose:  The CAM Community Atmosphere Model component. Interfaces with 
@@ -14,6 +15,10 @@ module cam_comp
    use camsrfexch_types,  only: cam_out_t, cam_in_t     
    use shr_sys_mod,       only: shr_sys_flush
    use infnan,            only: nan
+#ifdef CCPP
+   use ccpp_data,         only: ccpp_suite, dt, phys_state, &
+                                phys_int_ephem, phys_int_pers, phys_global
+#endif
    use physics_types,     only: physics_state, physics_tend
    use cam_control_mod,   only: nsrest, print_step_cost, obliqr, lambm0, mvelpp, eccen
    use dyn_comp,          only: dyn_import_t, dyn_export_t
@@ -58,8 +63,11 @@ module cam_comp
   type(dyn_import_t) :: dyn_in   ! Dynamics import container
   type(dyn_export_t) :: dyn_out  ! Dynamics export container
 
+#ifndef CCPP
   type(physics_state), pointer :: phys_state(:)
+#endif
   type(physics_tend ), pointer :: phys_tend(:)
+  
   real(r8) :: wcstart, wcend     ! wallclock timestamp at start, end of timestep
   real(r8) :: usrstart, usrend   ! user timestamp at start, end of timestep
   real(r8) :: sysstart, sysend   ! sys timestamp at start, end of timestep
@@ -114,6 +122,9 @@ subroutine cam_init( cam_out, cam_in, mpicom_atm, &
 #ifdef wrf 
    use time_manager, only: get_step_size ! juanxiong he
 #endif
+#ifdef CCPP
+   use time_manager, only: get_step_size
+#endif
 
 #if ( defined SPMD )   
    real(r8) :: mpi_wtime  ! External
@@ -146,9 +157,9 @@ subroutine cam_init( cam_out, cam_in, mpicom_atm, &
    !
 !wangty modify
 #ifdef wrf 
-   integer :: dtime_cam,i,j,k,ncols,ierr        ! Time-step, juxiong he
+   integer :: dtime_cam,i,j,k,ncols        ! Time-step, juxiong he
 #else
-   integer :: dtime_cam        ! Time-step
+   integer :: dtime_cam,i,ierr        ! Time-step
 #endif
    logical :: log_print        ! Flag to print out log information or not
    !-----------------------------------------------------------------------
@@ -197,7 +208,14 @@ subroutine cam_init( cam_out, cam_in, mpicom_atm, &
 #endif
    end if
 
+#ifdef CCPP
+   !### temporary until we read the suite in from namelist
+   ccpp_suite = 'IAP_test'
+   dt  = get_step_size()
+   call phys_init( phys_state, phys_tend, pbuf, cam_out, ccpp_suite, phys_int_ephem, phys_int_pers, phys_global)
+#else
    call phys_init( phys_state, phys_tend, pbuf, cam_out )
+#endif
 
    call bldfld ()       ! master field list (if branch, only does hash tables)
 
@@ -437,8 +455,12 @@ subroutine cam_run1(cam_in, cam_out)
 !wangty modify
 #ifdef wrf 
    call phys_run1(phys_state, dtime, phys_tend, pbuf, cam_in, cam_out, cam_state, cam_tend)  ! juanxiong he
-#else   
+#else
+#ifdef CCPP
+   call phys_run1(phys_state, dtime, phys_tend, pbuf, cam_in, cam_out, phys_int_ephem, phys_int_pers, phys_global, ccpp_suite)
+#else
    call phys_run1(phys_state, dtime, phys_tend, pbuf, cam_in, cam_out)
+#endif
 #endif
    call t_stopf  ('phys_run1')
 
@@ -812,7 +834,11 @@ subroutine cam_final( cam_out, cam_in )
 #endif
 !-----------------------------------------------------------------------
 !
+#ifdef CCPP
+   call phys_final( phys_state, phys_tend, ccpp_suite )
+#else
    call phys_final( phys_state, phys_tend )
+#endif
    call stepon_final(dyn_in, dyn_out)
 
    if(nsrest==0) then

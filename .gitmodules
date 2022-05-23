@@ -1,0 +1,10 @@
+[submodule "models/atm/iap/ccpp/framework"]
+  path = models/atm/iap/ccpp/framework
+  #url = https://github.com/NCAR/ccpp-framework
+  url = https://github.com/climbfuji/ccpp-framework
+  branch = feature/iap_dom
+[submodule "models/atm/iap/ccpp/physics"]
+  path = models/atm/iap/ccpp/physics
+  #url = https://github.com/NCAR/ccpp-physics
+  url = https://github.com/climbfuji/ccpp-physics
+  branch = feature/iap_dom

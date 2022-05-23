@@ -5,10 +5,17 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
                     tend,    pbuf,    fsds,    landm,            &
                     cam_out, cam_in, cam_state, cam_tend ) ! juanxiong he
 #else
+#ifdef CCPP
+subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,            &
+                    fsns,    fsnt,    flns,    flnt,    state,   &
+                    tend,    pbuf,    fsds,    landm,            &
+                    cam_out, cam_in,  cdata,   ccpp_suite )
+#else
 subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,            &
                     fsns,    fsnt,    flns,    flnt,    state,   &
                     tend,    pbuf,    fsds,    landm,            &
                     cam_out, cam_in )
+#endif
 #endif
 !----------------------------------------------------------------------- 
 ! 
@@ -69,6 +76,10 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 !zmh
    use comsrf,          only: sgh30
    use mzfunctions_mod, only: fout_phy,zmh_ramp
+#ifdef CCPP
+   use ccpp_static_api, only: ccpp_physics_run
+   use ccpp_types,      only: ccpp_t
+#endif
 
    implicit none
 
@@ -99,6 +110,11 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 #ifdef wrf
    type(physics_state), intent(inout) :: cam_state ! juanxiong he
    type(physics_tend ), intent(inout) :: cam_tend ! juanxiong he
+#endif
+#ifdef CCPP
+   type(ccpp_t), intent(inout)      :: cdata
+   character(len=256), intent(in)   :: ccpp_suite
+   integer :: ierr
 #endif
 !
 !---------------------------Local workspace-----------------------------
@@ -387,6 +403,25 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 !print*,'ptend%s1',ptend%s(2,1)
 !
    call t_startf ('convect_deep_tend')
+#ifdef CCPP
+   !GJF: while all IAP physics are being worked on, ccpp_physics_run calls are placed within tphysbc; eventually,
+   !     these calls should be in physpkg instead of tphysbc, tphysac, etc. which can be groups within an SDF
+   write(0,'(a,i6)') "XXX: Calling ccpp_physics_run for suite " // trim(ccpp_suite) // ", group test1 and block ", cdata%blk_no
+   write(0,'(a,3i6)') "XXX: loop_cnt, loop_max, thrd_no:", cdata%loop_cnt, cdata%loop_max, cdata%thrd_no
+   write(0,'(a,3i6)') "XXX: shape(state%q(:,:,:))               :", shape(state%q(:,:,:))
+   write(0,'(a,3i6)') "XXX: shape(state%q(:ncol,:pver,       1)):", shape(state%q(:ncol,:pver,       1))
+   write(0,'(a,2i6)') "XXX: ncol, pver:", ncol, pver
+   call ccpp_physics_run(cdata, suite_name=trim(ccpp_suite), group_name='test1', ierr=ierr)
+   if (ierr/=0) then
+      write(0,'(3a,i4)') "An error occurred in ccpp_physics_run for group ", "test1", &
+                                ", chunk ", lchnk
+      write(0,'(a)') trim(cdata%errmsg)
+   end if
+   write(0,'(3(a,i6))') "XXX: Call to ccpp_physics_run for suite " // trim(ccpp_suite) // ", group test1 and block ", cdata%blk_no, &
+       " returned with error code ", cdata%errflg, " = ", ierr
+   !GJF: If we need to transfer data between new CCPP data types (physics_int_ephem) and the rest of physics, that
+   !     should be done here
+#else
    call convect_deep_tend(  prec_zmc,   &
         pblht,    cmfmc,      cmfcme,             &
         tpert,    qpert(:,1), gradt, gradq, vort3, dlf, pflx,    zdu,       & 
@@ -394,6 +429,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
         ztodt,    snow_zmc,  &
         !state,   ptend, cam_in%landfrac,  pbuf ) 
         state,   ptend, cam_in%landfrac, cam_in%lhf, cam_in%shf, pbuf )  !zmh
+#endif
    call t_stopf('convect_deep_tend')
 
 !zmh

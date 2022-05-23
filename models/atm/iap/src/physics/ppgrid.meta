@@ -1,0 +1,39 @@
+[ccpp-table-properties]
+  name = ppgrid
+  type = module
+  relative_path = 
+  dependencies = 
+ 
+[ccpp-arg-table]
+  name = ppgrid
+  type = module
+[begchunk]
+  standard_name = ccpp_block_number_begin
+  long_name = first chunk (block) to process
+  units = index
+  dimensions = ()
+  type = integer
+[endchunk]
+  standard_name = ccpp_block_number_end
+  long_name = last chunk (block) to process
+  units = index
+  dimensions = ()
+  type = integer
+[pcols]
+  standard_name = horizontal_loop_extent
+  long_name = horizontal loop extent
+  units = count
+  dimensions = ()
+  type = integer
+[pver]
+  standard_name = vertical_layer_dimension
+  long_name = number of vertical levels
+  units = count
+  dimensions = ()
+  type = integer
+[pverp]
+  standard_name = vertical_layer_dimension_plus_one
+  long_name = number of vertical levels plus one
+  units = count
+  dimensions = ()
+  type = integer

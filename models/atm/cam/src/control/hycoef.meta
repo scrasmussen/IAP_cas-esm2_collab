@@ -1,0 +1,36 @@
+[ccpp-table-properties]
+  name = hycoef
+  type = module
+  relative_path = 
+  dependencies = ../../../../csm_share/shr/shr_kind_mod.F90,../../../cam/src/utils/spmd_utils.F90,../../../cam/src/dynamics/iap/pmgrid.F90
+  dependencies = ../../../cam/src/control/cam_logfile.F90,../../../../utils/pio/pio.F90,../../../../utils/pio/pio_kinds.F90
+  dependencies = ../../../../utils/pio/piolib_mod.F90,../../../../utils/pio/pio_types.F90,../../../../utils/mct/mct/m_GlobalSegMap.F90
+  dependencies = ../../../../utils/mct/mpeu/m_FcComms.F90,../../../../utils/mct/mct/m_MCTWorld.F90,../../../../utils/mct/mpeu/m_List.F90
+  dependencies = ../../../../utils/mct/mpeu/m_mall.F90,../../../../utils/mct/mpeu/m_String.F90,../../../../utils/mct/mpeu/m_SortingTools.F90
+  dependencies = ../../../../utils/mct/mpeu/m_IndexBin_integer.F90,../../../../utils/mct/mpeu/m_IndexBin_char.F90,../../../../utils/mct/mpeu/m_IndexBin_logical.F90
+  dependencies = ../../../../utils/mct/mpeu/m_rankMerge.F90,../../../../utils/mct/mpeu/m_Permuter.F90,../../../../utils/mct/mct/m_Rearranger.F90
+  dependencies = ../../../../utils/mct/mct/m_Router.F90,../../../../utils/mct/mct/m_ExchangeMaps.F90,../../../../utils/mct/mct/m_GlobalMap.F90
+  dependencies = ../../../../utils/mct/mct/m_ConvertMaps.F90,../../../../utils/mct/mct/m_AttrVect.F90,../../../../utils/mct/mpeu/m_TraceBack.F90
+  dependencies = ../../../../utils/pio/alloc_mod.F90,../../../../utils/pio/pio_support.F90,../../../../utils/pio/ionf_mod.F90
+  dependencies = ../../../../utils/pio/pionfread_mod.F90,../../../../utils/pio/pionfwrite_mod.F90,../../../../utils/pio/nf_mod.F90
+  dependencies = ../../../../utils/pio/pio_msg_mod.F90,../../../../utils/pio/pio_mpi_utils.F90,../../../../utils/pio/iompi_mod.F90
+  dependencies = ../../../../utils/pio/rearrange.F90,../../../../utils/pio/piodarray.F90,../../../../utils/pio/pionfatt_mod.F90
+  dependencies = ../../../../utils/pio/pionfput_mod.F90,../../../../utils/pio/pionfget_mod.F90
+
+[ccpp-arg-table]
+  name = hycoef
+  type = module
+[hypi]
+  standard_name = reference_air_pressure_at_interface
+  long_name = reference air pressure at interface
+  units = Pa
+  dimensions = (vertical_layer_dimension_of_dycore_plus_one)
+  type = real
+  kind = shr_kind_r8
+[hypm]
+  standard_name = reference_air_pressure_at_midpoints
+  long_name = reference air pressure at midpoints
+  units = Pa
+  dimensions = (vertical_layer_dimension_of_dycore)
+  type = real
+  kind = shr_kind_r8

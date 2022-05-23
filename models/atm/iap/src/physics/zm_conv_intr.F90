@@ -10,8 +10,10 @@ module zm_conv_intr
 ! January 2010 modified by J. Kay to add COSP simulator fields to physics buffer
 !---------------------------------------------------------------------------------
    use shr_kind_mod, only: r8=>shr_kind_r8
+!<GJF>: These will come through the CCPP interface
    use physconst,    only: cpair                              
    use ppgrid,       only: pver, pcols, pverp, begchunk, endchunk
+!</GJF>
    use zm_conv,      only: zm_conv_evap, zm_convr, convtran, momtran
    use cam_history,  only: outfld, addfld, add_default, phys_decomp
    use perf_mod
@@ -24,13 +26,14 @@ module zm_conv_intr
    ! Public methods
 
    public ::&
-      zm_conv_register,           &! register fields in physics buffer
-      zm_conv_init,               &! initialize donner_deep module
-      zm_conv_tend,               &! return tendencies
+      zm_conv_register,           &! register fields in physics buffer <GJF>moved to new physics_register.F90 module</GJF>
+      zm_conv_init,               &! initialize donner_deep module <GJF>mostly moved to init stage of zm_conv</GJF>
+      zm_conv_tend,               &! return tendencies <GJF>moved to run phase of several individual schemes</GJF>
       zm_conv_tend_2               ! return tendencies
 
    ! Private module data
 
+!<GJF>moved to physics_types.F90/phys_int_pers since this data is expected to persist in memory
    real(r8), allocatable, dimension(:,:,:) :: mu  !(pcols,pver,begchunk:endchunk)
    real(r8), allocatable, dimension(:,:,:) :: eu  !(pcols,pver,begchunk:endchunk)
    real(r8), allocatable, dimension(:,:,:) :: du  !(pcols,pver,begchunk:endchunk)
@@ -49,7 +52,9 @@ module zm_conv_intr
 	! w holds position of gathered points vs longitude index
 
    integer, allocatable, dimension(:) :: lengath !(begchunk:endchunk)
+!</GJF>
 
+!<GJF>these are not needed to interact with the physics buffer anymore; they are replaced by pointers to the physics_buffer data in the new physics_int_pers DDT
    integer ::& ! indices for fields in the physics buffer
       dp_flxprc_idx, &
       dp_flxsnw_idx, &
@@ -66,12 +71,12 @@ module zm_conv_intr
 !wxc zmh
    integer  ::    slflxdp_idx      = 0
    integer  ::    qtflxdp_idx      = 0
-
+!</GJF>
 
 !=========================================================================================
 contains
 !=========================================================================================
-
+!<GJF> functionality moved to new physics_register.F90 module
 subroutine zm_conv_register
 
 !----------------------------------------
@@ -89,9 +94,11 @@ subroutine zm_conv_register
    call pbuf_add('DP_CLDICE', 'global', 1, pver,  1, dp_cldice_idx) ! deep gbm cloud liquid water (kg/kg)    
 
 end subroutine zm_conv_register
+!</GJF>
 
 !=========================================================================================
 
+!<GJF>Some functionality is now part of init stage of zm_convr; some moved other places as indicated
 subroutine zm_conv_init(hypi)
 
 !----------------------------------------
@@ -123,6 +130,7 @@ subroutine zm_conv_init(hypi)
 !
 ! Allocate space for arrays private to this module
 !
+!<GJF>allocation of these variables is now part of the new physics_types.F90/physics_int_pers%create subroutine
      allocate( mu(pcols,pver,begchunk:endchunk), stat=istat )
       call alloc_err( istat, 'zm_conv_tend', 'mu', &
                       pcols*pver*((endchunk-begchunk)+1) )
@@ -156,13 +164,13 @@ subroutine zm_conv_init(hypi)
      allocate( lengath(begchunk:endchunk), stat=istat )
       call alloc_err( istat, 'zm_conv_tend', 'lengath', &
                       ((endchunk-begchunk)+1) )
-
+!</GJF>
 
 ! 
 ! Register fields with the output buffer
 !
 
-
+!<GJF>added to cam_diagnostics.F90/diag_init
     call addfld ('PRECZ   ','m/s     ',1,    'A','total precipitation from ZM convection',        phys_decomp)
     call addfld ('ZMDT    ','K/s     ',pver, 'A','T tendency - Zhang-McFarlane moist convection', phys_decomp)
     call addfld ('ZMDQ    ','kg/kg/s ',pver, 'A','Q tendency - Zhang-McFarlane moist convection', phys_decomp)
@@ -225,10 +233,12 @@ subroutine zm_conv_init(hypi)
        end if
 
     end if
+!</GJF>
 !
 ! Limit deep convection to regions below 40 mb
 ! Note this calculation is repeated in the shallow convection interface
 !
+!<GJF>added to init phase of zm_convr scheme
     limcnv = 0   ! null value to check against below
     if (hypi(1) >= 4.e3_r8) then
        limcnv = 1
@@ -249,7 +259,9 @@ subroutine zm_conv_init(hypi)
         
     no_deep_pbl = phys_deepconv_pbl()
     call zm_convi(limcnv,no_deep_pbl_in = no_deep_pbl)
+!</GJF>
 
+!<GJF>handled as part of physics_types/physics_int_pers%associate
     cld_idx          = pbuf_get_fld_idx('CLD')
     icwmrdp_idx      = pbuf_get_fld_idx('ICWMRDP')
     rprddp_idx       = pbuf_get_fld_idx('RPRDDP')
@@ -258,9 +270,10 @@ subroutine zm_conv_init(hypi)
 !wxc zmh
     slflxdp_idx      = pbuf_get_fld_idx('slflxdp')
     qtflxdp_idx      = pbuf_get_fld_idx('qtflxdp')
-
+!</GJF>
 
 end subroutine zm_conv_init
+!</GJF>
 !=========================================================================================
 !subroutine zm_conv_tend(state, ptend, tdt, pbuf)
 
@@ -272,7 +285,8 @@ subroutine zm_conv_tend(prec    , &
      jctop   ,jcbot , &
      state   ,ptend_all   ,landfrac   ,pbuf  )
   
-
+!<GJF> None of these modules should exist in host-agnostic physics; where they are absolutely necessary for function (physics_update, physics_ptend_sum), 
+!      they should be put in modules within ccpp-physics, but without use of DDTs (only Fortran intrinsic arguments)
    use cam_history,   only: outfld
    use physics_types, only: physics_state, physics_ptend, physics_tend
    use physics_types, only: physics_ptend_init,  physics_tend_init,physics_update
@@ -286,13 +300,21 @@ subroutine zm_conv_tend(prec    , &
    use check_energy,  only: check_energy_chng
    use physconst,     only: gravit
    use phys_control,  only: cam_physpkg_is
+!</GJF>
 
    ! Arguments
 
+!<GJF> Although this layer has access to the 'state' DDT, we will pass in components as necessary
    type(physics_state), intent(in ) :: state          ! Physics state variables
+!<GJF> The main output of this layer are tendencies for state variables; we need to pass out the components of the physics_ptend DDT
    type(physics_ptend), intent(out) :: ptend_all          ! indivdual parameterization tendencies
+!<GJF> All of the physics buffer interactions need to happen in physics_types.F90; if variables are in the physics buffer, they need
+!      to stay persistent in memory and should be handled in physics_types.F90/physics_int_pers as part of that new type and associated methods
    type(pbuf_fld), intent(inout), dimension(pbuf_size_max) :: pbuf  ! physics buffer
 
+!<GJF> Variables that are part of the argument list into this layer must be allocated in some layer above; search for where it is and
+!      make sure there is metadata there (or create it); if it is only coming from either the tphysbc or phypkg layer, they can probably
+!      be put in the physics_types.F90/phys_int_pers or phys_int_ephem datatypes, depending on its scope/persistence
    real(r8), intent(in) :: ztodt                       ! 2 delta t (model time increment)
    real(r8), intent(in) :: pblh(pcols)                 ! Planetary boundary layer height
    real(r8), intent(in) :: tpert(pcols)                ! Thermal temperature excess
@@ -307,10 +329,11 @@ subroutine zm_conv_tend(prec    , &
    real(r8), intent(out) :: prec(pcols)   ! total precipitation
    real(r8), intent(out) :: snow(pcols)   ! snow from ZM convection 
    real(r8), intent(out) :: rliq(pcols) ! reserved liquid (not yet in cldliq) for energy integrals
+!</GJF>
 
 
    ! Local variables
-
+!<GJF> Variables that are local to this layer should be put in physics_types.F90/physics_int_ephem since they should not need to be persistent or used outside this scope
    integer :: i,k,m
    integer :: ilon                      ! global longitude index of a column
    integer :: ilat                      ! global latitude index of a column
@@ -326,12 +349,17 @@ subroutine zm_conv_tend(prec    , &
    real(r8) :: tend_s_snwprd  (pcols,pver) ! Heating rate of snow production
    real(r8) :: tend_s_snwevmlt(pcols,pver) ! Heating rate of evap/melting of snow
    real(r8) :: fake_dpdry(pcols,pver) ! used in convtran call
+!</GJF>
 
    ! physics types
+!<GJF> To the extent that these are needed to shuttle data between components of the ZM scheme, we should be dealing with their components
+!      and not the DDTs
    type(physics_state) :: state1        ! locally modify for evaporation to use, not returned
    type(physics_tend ) :: tend          ! Physics tendencies (empty, needed for physics_update call)
    type(physics_ptend) :: ptend_loc     ! package tendencies
 
+!<GJF> All of the physics buffer interactions need to happen in physics_types.F90; if variables are in the physics buffer, they need
+!      to stay persistent in memory and should be handled in physics_types.F90/physics_int_pers as part of that new type and associated methods
    ! physics buffer fields
    real(r8), pointer, dimension(:,:) :: cld
    real(r8), pointer, dimension(:,:) :: ql           ! wg grid slice of cloud liquid water.
@@ -342,7 +370,9 @@ subroutine zm_conv_tend(prec    , &
    real(r8), pointer, dimension(:,:) :: flxsnow      ! Convective-scale flux of snow   at interfaces (kg/m2/s)
    real(r8), pointer, dimension(:,:) :: dp_cldliq
    real(r8), pointer, dimension(:,:) :: dp_cldice
+!</GJF>
 
+!<GJF> Variables that are local to this layer should be put in physics_types.F90/physics_int_ephem since they should not need to be persistent or used outside this scope
 !wxc zmh
    real(r8), pointer, dimension(:,:) :: slflx           !
    real(r8), pointer, dimension(:,:) :: qtflx           !
@@ -368,8 +398,10 @@ subroutine zm_conv_tend(prec    , &
    logical  :: l_windt(2)
    real(r8) :: tfinal1, tfinal2
    integer  :: ii
+!</GJF>
    !----------------------------------------------------------------------
 
+!<GJF> if local variables are moved to physics_types.F90/phys_int_ephem, they should be initialized using methods for that type
    ! initialize
    lchnk = state%lchnk
    ncol  = state%ncol
@@ -379,13 +411,19 @@ subroutine zm_conv_tend(prec    , &
    mu_out(:,:) = 0._r8
    md_out(:,:) = 0._r8
    wind_tends(:ncol,:pver,:) = 0.0_r8
+!</GJF>
 
+!<GJF> This physics_state_copy is handled in zm_convr_post_run; state1 components aren't needed until AFTER zm_convr
    call physics_state_copy(state,state1)   ! copy state to local state1.
+!</GJF>
+!<GJF> For convenience, we have ptend types to hold tendencies from all ZM conv components in physics_types.F90/phys_int_ephem; 
+!they are initialized in the init/reset methods
    call physics_ptend_init(ptend_loc)  ! initialize local ptend type
    call physics_ptend_init(ptend_all)  ! initialize output ptend type
+!</GJF>
    call physics_tend_init(tend)        ! tend type here is a null place holder
 
-
+!<GJF> Interacting with the physics buffer takes place as part of physics_type.F90/phys_int_pers associate method
 !
 ! Associate pointers with physics buffer fields
 !
@@ -400,12 +438,15 @@ subroutine zm_conv_tend(prec    , &
 !wxc zmh
    slflx => pbuf(slflxdp_idx)%fld_ptr(1,1:pcols,1:pverp,lchnk,1)
    qtflx => pbuf(qtflxdp_idx)%fld_ptr(1,1:pcols,1:pverp,lchnk,1)
+!</GJF>
 
 !
 ! Begin with Zhang-McFarlane (1996) convection parameterization
 !
+!<GJF> t_starf and t_stopf calls are ignored for now (haven't figured out how to integrate into host-agnostic CCPP scheme)
    call t_startf ('zm_convr')
 
+!<GJF> The zm_convr call is turned into its own CCPP scheme; see ccpp/physics/zm_convr.[F90/meta]
    call zm_convr(   lchnk   ,ncol    , &
                     state%t       ,state%q     ,prec    ,jctop   ,jcbot   , &
                     pblh    ,state%zm      ,state%phis    ,state%zi      ,ptend_loc%q(:,:,1)    , &
@@ -416,6 +457,9 @@ subroutine zm_conv_tend(prec    , &
                     dp(:,:,lchnk) ,dsubcld(:,lchnk) ,jt(:,lchnk),maxg(:,lchnk),ideep(:,lchnk)   , &
 !wxc                    lengath(lchnk) ,ql      ,rliq  ,landfrac   )
                     lengath(lchnk) ,ql      ,rliq  ,landfrac   , slflx, qtflx   )
+!</GJF>
+
+!<GJF> This stuff is ignored for now
 i=1
 if(i<0)then
 write(*,*)'nstep=',nstep
@@ -432,6 +476,10 @@ write(*,*)'cape',cape
 write(*,*)'prec',prec
 write(*,*)''
 endif
+!</GJF>
+
+!<GJF> Since CCPP schemes are not supposed to do I/O, the outfld calls are moved to a new method in cam_diagnostics.F90/diag_tphysbc to be called after tphysbc physics are executed;
+!      One needs to make sure that whatever variables are passed to outfld has memory in tact when that call is made
    call outfld('CAPE', cape, pcols, lchnk)        ! RBN - CAPE output
 !
 ! Output fractional occurance of ZM convection
@@ -459,17 +507,21 @@ endif
    call outfld('ZMMU', mu_out(1,1), pcols, lchnk)
    call outfld('ZMMD', md_out(1,1), pcols, lchnk)
 
+!<GJF> handled prior to calling the new physics_update module in ccpp-physics within zm_convr_post.F90 scheme
    ptend_loc%name  = 'zm_convr'
    ptend_loc%ls    = .TRUE.
    ptend_loc%lq(1) = .TRUE.
+!</GJF>
 
    ftem(:ncol,:pver) = ptend_loc%s(:ncol,:pver)/cpair
    call outfld('ZMDT    ',ftem           ,pcols   ,lchnk   )
    call outfld('ZMDQ    ',ptend_loc%q(1,1,1) ,pcols   ,lchnk   )
    call t_stopf ('zm_convr')
+!</GJF>
 
 !    do i = 1,pcols
 !    do i = 1,nco
+!<GJF> This code needs to be executed in a zm_convr_post scheme in order for pcont/pconb to be available for cam_diagnostics.F90/diag_tphysbc
    pcont(:ncol) = state%ps(:ncol)
    pconb(:ncol) = state%ps(:ncol)
    do i = 1,lengath(lchnk)
@@ -479,43 +531,70 @@ endif
        endif
        !     write(iulog,*) ' pcont, pconb ', pcont(i), pconb(i), cnt(i), cnb(i)
     end do
+!</GJF>
+!<GJF> in cam_diagnostics.F90/diag_tphysbc
     call outfld('PCONVT  ',pcont          ,pcols   ,lchnk   )
     call outfld('PCONVB  ',pconb          ,pcols   ,lchnk   )
+!</GJF>
 
+!<GJF> Adding up tendencies from all ZM convection components doesn't need to happen until after all ZM components have been executed;
+!      therefore, this functionality is now in the zm_conv_all_post.F90 scheme
   ! add tendency from this process to tendencies from other processes
   call physics_ptend_sum(ptend_loc,ptend_all, state)
+!</GJF>
 
+!<GJF> The physics_update subroutine is made into a utility module within ccpp-physics and uses straight Fortran variable arguments instead of DDTs;
+!      The updating of the temporary state components (to be passed into the remaining ZM conv processes) is handled in zm_convr_post scheme
   ! update physics state type state1 with ptend_loc 
   call physics_update(state1, tend, ptend_loc, ztodt)
+!</GJF>
 
+!<GJF> This is handled in physics_types.F90/phys_int_ephem init/reset
   ! initialize ptend for next process
   call physics_ptend_init(ptend_loc)
+!</GJF>
 
+!<GJF> ignored for now
    call t_startf ('zm_conv_evap')
+!</GJF>
+
 !
 ! Determine the phase of the precipitation produced and add latent heat of fusion
 ! Evaporate some of the precip directly into the environment (Sundqvist)
 ! Allow this to use the updated state1 and the fresh ptend_loc type
 ! heating and specific humidity tendencies produced
 !
+!<GJF> handled prior to calling the new physics_update module in ccpp-physics within zm_conv_evap_post.F90 scheme
     ptend_loc%name  = 'zm_conv_evap'
     ptend_loc%ls    = .TRUE.
     ptend_loc%lq(1) = .TRUE.
+!</GJF>
 
+!<GJF> handled as part of physics_types.F90/phys_int_pers associate methods
     flxprec    => pbuf(dp_flxprc_idx)%fld_ptr(1,1:pcols,1:pverp,lchnk,1)
     flxsnow    => pbuf(dp_flxsnw_idx)%fld_ptr(1,1:pcols,1:pverp,lchnk,1)
     dp_cldliq  => pbuf(dp_cldliq_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1)
     dp_cldice  => pbuf(dp_cldice_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,1)
+!</GJF>
+!<GJF> Since these are reinitialized to zero and they are persistent, this must happen before the zm_conv_evap scheme is run;
+!      for lack of a better place, it was put in zm_convr_post
     dp_cldliq(:ncol,:) = 0._r8
     dp_cldice(:ncol,:) = 0._r8
+!</GJF>
 
+!<GJF> This code exists as its own scheme in ccpp/physics as zm_conv_evap.F90; note that the temporary state variables are passed in as input
     call zm_conv_evap(state1%ncol,state1%lchnk, &
          state1%t,state1%pmid,state1%pdel,state1%q(:pcols,:pver,1), &
          ptend_loc%s, tend_s_snwprd, tend_s_snwevmlt, ptend_loc%q(:pcols,:pver,1), &
          rprd, cld, ztodt, &
          prec, snow, ntprprd, ntsnprd , flxprec, flxsnow)
+!</GJF>
 
+!<GJF> handled in zm_conv_evap_post.F90 scheme
     evapcdp(:ncol,:pver) = ptend_loc%q(:ncol,:pver,1)
+!</GJF>
+
+!<GJF> handed in cam_diagnostics.F90/diag_tphysbc
 !
 ! Write out variables from zm_conv_evap
 !
@@ -534,54 +613,78 @@ endif
    call outfld('CMFMCDZM   ',mcon ,  pcols   ,lchnk   )
    call outfld('PRECCDZM   ',prec,  pcols   ,lchnk   )
 
-
+!<GJF> ignored for now
    call t_stopf ('zm_conv_evap')
 
    call outfld('PRECZ   ', prec   , pcols, lchnk)
+!</GJF>
 
+!<GJF> Adding up tendencies from all ZM convection components doesn't need to happen until after all ZM components have been executed;
+!      therefore, this functionality is now in the zm_conv_all_post.F90 scheme
   ! add tendency from this process to tend from other processes here
   call physics_ptend_sum(ptend_loc,ptend_all, state)
 
+!<GJF> The updating of the temporary state components (to be passed into the remaining ZM conv processes) is handled in zm_conv_evap_post scheme
   ! update physics state type state1 with ptend_loc 
   call physics_update(state1, tend, ptend_loc, ztodt)
+!<GJF>
 
+!<GJF> This is handled in physics_types.F90/phys_int_ephem init/reset
   ! initialize ptend for next process
   call physics_ptend_init(ptend_loc)
+!</GJF>
 
   ! Momentum Transport (non-cam3 physics)
 
+!<GJF> Check for this condition in new zm_conv_momtran.F90 scheme (during init phase)
   if ( .not. cam_physpkg_is('cam3')) then
-
+     
+     !<GJF> rewrite zm_conv_momtran interface such that the temporary state u and v are passed in instead of the combined 'winds' array (which is no longer needed externally)
      winds(:ncol,:pver,1) = state1%u(:ncol,:pver)
      winds(:ncol,:pver,2) = state1%v(:ncol,:pver)
-   
+     !</GJF>
+     
+     !<GJF> This array is moved to physics_types.F90/phys_global and is initialized there (assuming the condition above is met)
      l_windt(1) = .true.
      l_windt(2) = .true.
+     !</GJF>
 
-     call t_startf ('momtran')
+     call t_startf ('momtran') !<GJF> ignored for now
+     !<GJF> This now exists as the zm_conv_momtran.F90 scheme in ccpp-physics
      call momtran (lchnk, ncol,                                        &
                    l_windt,winds, 2,  mu(1,1,lchnk), md(1,1,lchnk),   &
                    du(1,1,lchnk), eu(1,1,lchnk), ed(1,1,lchnk), dp(1,1,lchnk), dsubcld(1,lchnk),  &
                    jt(1,lchnk),maxg(1,lchnk), ideep(1,lchnk), 1, lengath(lchnk),  &
-                   nstep,  wind_tends, pguall, pgdall, icwu, icwd, ztodt, seten )  
-     call t_stopf ('momtran')
-
+                   nstep,  wind_tends, pguall, pgdall, icwu, icwd, ztodt, seten )
+     !</GJF>
+     call t_stopf ('momtran') !<GJF> ignored for now
+     
+     !<GJF> handled as part of zm_conv_momtran_post.F90 scheme (locally)
      ptend_loc%lu = .TRUE.
      ptend_loc%lv = .TRUE.
      ptend_loc%ls = .TRUE.
-   
+     !</GJF>
+     
+     !<GJF> These statements are not needed since the zm_conv_momtran.F90 scheme interface was modified to set the equivalent of
+     !      ptend_loc%u,v,s inside of the scheme (no intermediate variables necessary anymore)
      ptend_loc%u(:ncol,:pver) = wind_tends(:ncol,:pver,1)
      ptend_loc%v(:ncol,:pver) = wind_tends(:ncol,:pver,2)
-     ptend_loc%s(:ncol,:pver) = seten(:ncol,:pver)  
-
+     ptend_loc%s(:ncol,:pver) = seten(:ncol,:pver)
+      !</GJF>  
+     
+     !<GJF> Adding up tendencies from all ZM convection components doesn't need to happen until after all ZM components have been executed;
+     !      therefore, this functionality is now in the zm_conv_all_post.F90 scheme
      call physics_ptend_sum(ptend_loc,ptend_all, state)
-
+     
+     !<GJF> handled in zm_conv_momtran_post.F90 scheme
      ! update physics state type state1 with ptend_loc 
      call physics_update(state1, tend, ptend_loc, ztodt)
-
-
+     !</GJF>
+     
+     !<GJF> part of physics_types.F90/phys_int_ephem init/reset
      call physics_ptend_init(ptend_loc)
-
+     
+     !<GJF> handled in cam_diagnostics.F90/diag_tphysbc
      ftem(:ncol,:pver) = seten(:ncol,:pver)/cpair
      call outfld('ZMMTT', ftem             , pcols, lchnk)
      call outfld('ZMMTU', wind_tends(1,1,1), pcols, lchnk)
@@ -598,42 +701,55 @@ endif
      call outfld('ZMICUD', icwd(1,1,1), pcols, lchnk)
      call outfld('ZMICVU', icwu(1,1,2), pcols, lchnk)
      call outfld('ZMICVD', icwd(1,1,2), pcols, lchnk)
+     !</GJF>
 
    end if
-
+   
+   !<GJF> These indices are carried in physics_types.F90/physics_global and are set as part that init routine
    ! Transport cloud water and ice only
    call cnst_get_ind('CLDLIQ', ixcldliq)
    call cnst_get_ind('CLDICE', ixcldice)
+   !</GJF>
+   !<GJF> handled locally in zm_conv_convtran.F90 scheme after passing in ixcldice, ixcldliq
    ptend_loc%name = 'convtran1'
    ptend_loc%lq(ixcldice) = .true.
    ptend_loc%lq(ixcldliq) = .true.
+   !</GJF>
 
+   !<GJF> Rather than pass in a dummy array, this is now hard-coded internally (the wet mixing ratio code is never executed internally, so this is never needed to be nonzero)
    ! dpdry is not used in this call to convtran since the cloud liquid and ice mixing
    ! ratios are moist
    fake_dpdry(:,:) = 0._r8
 
-   call t_startf ('convtran1')
+   call t_startf ('convtran1') !<GJF> ignored for now
+   !<GJF> handled in the new zm_conv_convtran.F90 scheme in ccpp/physics
    call convtran (lchnk,                                        &
                   ptend_loc%lq,state1%q, pcnst,  mu(:,:,lchnk), md(:,:,lchnk),   &
                   du(:,:,lchnk), eu(:,:,lchnk), ed(:,:,lchnk), dp(:,:,lchnk), dsubcld(:,lchnk),  &
                   jt(:,lchnk),maxg(:,lchnk), ideep(:,lchnk), 1, lengath(lchnk),  &
                   nstep,   fracis,  ptend_loc%q, fake_dpdry)
-   call t_stopf ('convtran1')
-
+   !</GJF>
+   call t_stopf ('convtran1') !<GJF> ignored for now
+   
+   !<GJF> handled in cam_diagnostics.F90/diag_tphysbc
    call outfld('ZMDICE ',ptend_loc%q(1,1,ixcldice) ,pcols   ,lchnk   )
    call outfld('ZMDLIQ ',ptend_loc%q(1,1,ixcldliq) ,pcols   ,lchnk   )
-
+   !</GJF>
+  
+  !<GJF> all of the ptend_sum calls (in order to collect total ZM tendencies) are now done in zm_conv_all_post.F90 scheme in ccpp/physics
   ! add tendency from this process to tend from other processes here
   call physics_ptend_sum(ptend_loc,ptend_all, state)
 
   ! ptend_all will be applied to original state on return to tphysbc
   ! This name triggers a special case in physics_types.F90:physics_update()
+  !<GJF> since we're not carrying the DDT anymore inside ccpp/physics, this should be done as part of the interstitial scheme that updates the "real" state after ZM convection returns
   ptend_all%name = 'convect_deep'
+  !<GJF>
 
 end subroutine zm_conv_tend
 !=========================================================================================
 
-
+!<GJF> Not handled yet, since it is called later in tphysbc.F90
 subroutine zm_conv_tend_2( state,  ptend,  ztodt, pbuf  )
 
    use physics_types, only: physics_state, physics_ptend, physics_ptend_init
@@ -708,7 +824,7 @@ subroutine zm_conv_tend_2( state,  ptend,  ztodt, pbuf  )
    call t_stopf ('convtran2')
 
 end subroutine zm_conv_tend_2
-
+!</GJF>
 !=========================================================================================
 
 
