@@ -1,4 +1,5 @@
 module ccpp_data
+#ifdef CCPP
   use shr_kind_mod,      only: r8 => SHR_KIND_R8
   use physics_types,     only: physics_state, physics_int_ephem, physics_int_pers, physics_global
   use phys_grid,         only: ngcols
@@ -30,4 +31,5 @@ module ccpp_data
   type(physics_state),     save, pointer :: phys_state(:) => null()
 
   type(cam_in_t),          save, pointer :: cam_in(:) => null()
+#endif
 end module ccpp_data
