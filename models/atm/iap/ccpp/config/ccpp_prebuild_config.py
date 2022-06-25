@@ -71,7 +71,6 @@ SCHEME_FILES = [
     'ccpp/physics/physics/zm_conv_momtran_post.F90' ,
     'ccpp/physics/physics/zm_conv_convtran.F90'     ,
     'ccpp/physics/physics/zm_conv_all_post.F90'     ,
-    'ccpp/physics/physics/dummy_loop.F90',
     ]
 
 # Default build dir, relative to current working directory,
@@ -112,7 +111,8 @@ OPTIONAL_ARGUMENTS = {
 
 # Directory where to write static API to
 STATIC_API_DIR = '{build_dir}/ccpp/physics'
-STATIC_API_SRCFILE = '{build_dir}/ccpp/physics/CCPP_STATIC_API.sh'
+STATIC_API_CMAKEFILE = '{build_dir}/ccpp/physics/CCPP_STATIC_API.cmake'
+STATIC_API_SOURCEFILE = '{build_dir}/ccpp/physics/CCPP_STATIC_API.sh'
 
 # Directory for writing HTML pages generated from metadata files
 METADATA_HTML_OUTPUT_DIR = '{build_dir}/ccpp/physics/physics/docs'
