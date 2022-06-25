@@ -406,8 +406,8 @@ contains
    use cloud_fraction,      only: cldfrc_readnl
 #ifndef CCPP
    use zm_conv,             only: zmconv_readnl
-   use cldwat,              only: cldwat_readnl
 #endif
+   use cldwat,              only: cldwat_readnl
 !zmh
    use zyx1_conv,           only: zyx1_conv_readnl
    use hk_conv,             only: hkconv_readnl
@@ -924,6 +924,9 @@ contains
 ! zmh
    call zyx1_conv_readnl(nlfilename)
    call cldwat_readnl(nlfilename)
+#ifdef CCPP
+   call cldwat_readnl_ccpp(nlfilename)
+#endif
    call hkconv_readnl(nlfilename)
    call uwshcu_readnl(nlfilename)
    call zwshcu_readnl(nlfilename)
@@ -1293,7 +1296,7 @@ subroutine zmconv_readnl(nlfile)
 
 end subroutine zmconv_readnl
 
-subroutine cldwat_readnl(nlfile)
+subroutine cldwat_readnl_ccpp(nlfile)
 
  use namelist_utils,  only: find_group_name
  use units,           only: getunit, freeunit
@@ -1348,7 +1351,7 @@ subroutine cldwat_readnl(nlfile)
  call mpibcast(r3lcrit,           1, mpir8,  0, mpicom)
 #endif
 
-end subroutine cldwat_readnl
+end subroutine cldwat_readnl_ccpp
 #endif
 
 end module runtime_opts
