@@ -45,11 +45,12 @@ module physpkg
   use phys_control,     only: phys_do_flux_avg
   use scamMod,          only: single_column, scm_crm_mode
   use flux_avg,         only: flux_avg_init
-! DH* need both cldwat, for CCPP and no CCPP
 #ifdef CCPP
   use cldwat_ccpp,      only: inimc_ccpp => inimc
 #endif
+!!!#else
   use cldwat,           only: inimc
+!!!#endif
 #ifdef SPMD
   use mpishorthand
 #endif
@@ -715,7 +716,9 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
 #ifdef CCPP
    call inimc_ccpp(tmelt, rhodair/1000.0_r8, gravit, rh2o, hypm, microp_scheme, iulog, pver, masterproc)
 #endif
+!!!#else
    call inimc(tmelt, rhodair/1000.0_r8, gravit, rh2o)
+!!!#endif
 
 #if ( defined WACCM_PHYS )
    call iondrag_init( hypm )
@@ -909,6 +912,9 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
                        phys_tend(c), pbuf,  fsds(1,c), landm(1,c),                       &
                        cam_out(c), cam_in(c), cdata, ccpp_suite )
 #else
+         ! DH*
+         write(0,'(a,i6,a,2i6)') "Calling tphysbc with c =", c, " begchunk/endchunk:", begchunk, endchunk
+         ! *DH
          call tphysbc (ztodt, pblht(1,c), tpert(1,c), qpert(1,1,c),tpert2(1,c), qpert2(1,c),&
                        fsns(1,c), fsnt(1,c), flns(1,c), flnt(1,c), phys_state(c),        &
                        phys_tend(c), pbuf,  fsds(1,c), landm(1,c),                       &
