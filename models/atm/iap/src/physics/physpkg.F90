@@ -45,10 +45,9 @@ module physpkg
   use scamMod,          only: single_column, scm_crm_mode
   use flux_avg,         only: flux_avg_init
 #ifdef CCPP
-  use cldwat_ccpp,           only: inimc
-#else
-  use cldwat,      only: inimc
+  use cldwat_ccpp,      only: inimc_ccpp => inimc
 #endif
+  use cldwat,           only: inimc
 #ifdef SPMD
   use mpishorthand
 #endif
@@ -712,10 +711,9 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    end if
 
 #ifdef CCPP
-   call inimc(tmelt, rhodair/1000.0_r8, gravit, rh2o, hypm, microp_scheme, iulog, pver, masterproc)
-#else
-   call inimc(tmelt, rhodair/1000.0_r8, gravit, rh2o)
+   call inimc_ccpp(tmelt, rhodair/1000.0_r8, gravit, rh2o, hypm, microp_scheme, iulog, pver, masterproc)
 #endif
+   call inimc(tmelt, rhodair/1000.0_r8, gravit, rh2o)
 
 #if ( defined WACCM_PHYS )
    call iondrag_init( hypm )
@@ -798,7 +796,9 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 !
 !---------------------------Local workspace-----------------------------
 !
+#ifdef CCPP
    type(ccpp_t) :: cdata
+#endif
    integer :: c                                 ! indices
    integer :: ncol                              ! number of columns
    integer :: nstep                             ! current timestep number
@@ -899,9 +899,6 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 #else
          call cdata_init(cdata, blk=c, thrd=1)
 #endif
-         ! DH*
-         write(0,'(a,i6,a,i6)') "XXX: Calling tphysbc with c =", c," and cdata%blk_no = ", cdata%blk_no
-         ! *DH
          call tphysbc (ztodt, pblht(1,c), tpert(1,c), qpert(1,1,c),tpert2(1,c), qpert2(1,c),&
                        fsns(1,c), fsnt(1,c), flns(1,c), flnt(1,c), phys_state(c),        &
                        phys_tend(c), pbuf,  fsds(1,c), landm(1,c),                       &
