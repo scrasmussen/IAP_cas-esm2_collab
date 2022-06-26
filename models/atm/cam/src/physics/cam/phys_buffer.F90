@@ -338,8 +338,12 @@ subroutine pbuf_allocate(scope)
          if ( istat /= 0 ) then
             call endrun (sub//': ERROR: allocate failed for '//pbuf(i)%name)
          end if
-         pbuf(i)%fld_ptr = nan
-         
+         ! DH*
+         ! This change is needed to print the contents of the pbuf fields
+         ! in tphysbc.F90 --> pbuf_print_data
+         !pbuf(i)%fld_ptr = nan
+         pbuf(i)%fld_ptr = 0.0_r8
+         ! *DH
       end if
    end do
 
