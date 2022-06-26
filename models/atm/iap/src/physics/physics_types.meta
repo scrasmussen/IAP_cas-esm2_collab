@@ -372,6 +372,32 @@
   dimensions = (horizontal_loop_extent)
   type = real
   kind = shr_kind_r8
+[doconvtran_name]
+  standard_name = control_for_name_of_moisture_tendencies_calculation
+  long_name = control for process name of moisture tendencies
+  units = none
+  dimensions = ()
+  type = character
+  kind = len=24
+[doconvtran_suv]
+  standard_name = control_for_suv_moisture_tendencies_calculation
+  long_name = control for calculating and returning moisture tendencies of suv
+  units = flag
+  dimensions = (3)
+  type = logical
+[doconvtran_q]
+  standard_name = control_for_tracer_moisture_tendencies_calculation
+  long_name = control for calculating and returning moisture tendencies of tracers
+  units = flag
+  dimensions = (number_of_tracers)
+  type = logical
+[dpdry]
+  standard_name = dry_pressure_thickness_in_hPa
+  long_name = dry model layer thickness in hPa modified for use in convtran
+  units = hPa
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = shr_kind_r8
 [temp_state_u]
   standard_name = temporary_x_wind
   long_name = temporary state x wind

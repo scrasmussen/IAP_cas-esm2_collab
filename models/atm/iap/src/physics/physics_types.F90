@@ -192,6 +192,8 @@ module physics_types
 !====Jinbo Xie===========
 !-czy20181120==================================================
 
+  contains
+     procedure :: print => physics_state_print
   end type physics_state
 
 !-------------------------------------------------------------------------------
@@ -249,6 +251,9 @@ module physics_types
                                                      rtndgdten, &  ! t tendency
                                                      rqndgdten  ! q tendency
 #endif
+
+contains
+   procedure :: print => physics_ptend_print
   end type physics_ptend
 
 #ifdef CCPP
@@ -260,7 +265,6 @@ module physics_types
     !variables previously internal to tphysbc; there need to be n_threads of this type
     real(kind=r8), pointer              :: prec(:)  => null()  !<
     real(kind=r8), pointer              :: snow(:)  => null()  !<
-    type(physics_ptend),   pointer      :: ptend_deep_conv_tot => null()
     real(kind=r8), pointer              :: cmfmc(:,:) => null()       !< Convective mass flux--m sub c
     real(kind=r8), pointer              :: cmfcme(:,:)=> null()           !< cmf condensation - evaporation
     real(kind=r8), pointer              :: dlf(:,:)   => null()           !< Detraining cld H20 from shallow + deep convections
@@ -272,6 +276,10 @@ module physics_types
     real(kind=r8), pointer              :: cape(:) => null() ! convective available potential energy.
     real(kind=r8), pointer              :: pcont(:) => null()
     real(kind=r8), pointer              :: pconb(:) => null()
+    character(len=24)                   :: doconvtran_name
+    logical, pointer                    :: doconvtran_suv(:) => null()
+    logical, pointer                    :: doconvtran_q(:) => null()
+    real(kind=r8), pointer              :: dpdry(:,:) => null()
     real(kind=r8), pointer              :: ptend_deep_conv_qv(:,:) => null()
     real(kind=r8), pointer              :: ptend_deep_conv_s(:,:) => null()
     real(kind=r8), pointer              :: ptend_deep_conv_evap_qv(:,:) => null()
@@ -386,6 +394,98 @@ module physics_types
 !===============================================================================
 contains
 !===============================================================================
+
+  subroutine physics_state_print(State, c, when)
+     implicit none
+     class(physics_state) :: State
+     integer, intent(in)  :: c
+     character(len=*), intent(in) :: when
+     !
+     write(0,'(a,i6,a,1i8)')    "chunk", c, "; psetcols                   ) " // trim(when) // " ", State%psetcols
+     write(0,'(a,i6,a,1i8)')    "chunk", c, "; lchnk                      ) " // trim(when) // " ", State%lchnk
+     write(0,'(a,i6,a,1i8)')    "chunk", c, "; ncol                       ) " // trim(when) // " ", State%ncol
+     write(0,'(a,i6,a,1i8)')    "chunk", c, "; count                      ) " // trim(when) // " ", State%count
+     write(0,'(a,i6,a,1i8)')    "chunk", c, "; ulatcnt                    ) " // trim(when) // " ", State%ulatcnt
+     write(0,'(a,i6,a,1i8)')    "chunk", c, "; uloncnt                    ) " // trim(when) // " ", State%uloncnt
+     !
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(lat            ) " // trim(when) // " ", minval(State%lat            ), maxval(State%lat            ), sum(State%lat            )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(lon            ) " // trim(when) // " ", minval(State%lon            ), maxval(State%lon            ), sum(State%lon            )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(ps             ) " // trim(when) // " ", minval(State%ps             ), maxval(State%ps             ), sum(State%ps             )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(psdry          ) " // trim(when) // " ", minval(State%psdry          ), maxval(State%psdry          ), sum(State%psdry          )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(phis           ) " // trim(when) // " ", minval(State%phis           ), maxval(State%phis           ), sum(State%phis           )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(psl            ) " // trim(when) // " ", minval(State%psl            ), maxval(State%psl            ), sum(State%psl            )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(ulat           ) " // trim(when) // " ", minval(State%ulat           ), maxval(State%ulat           ), sum(State%ulat           )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(ulon           ) " // trim(when) // " ", minval(State%ulon           ), maxval(State%ulon           ), sum(State%ulon           )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(t              ) " // trim(when) // " ", minval(State%t              ), maxval(State%t              ), sum(State%t              )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(u              ) " // trim(when) // " ", minval(State%u              ), maxval(State%u              ), sum(State%u              )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(v              ) " // trim(when) // " ", minval(State%v              ), maxval(State%v              ), sum(State%v              )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(rh             ) " // trim(when) // " ", minval(State%rh             ), maxval(State%rh             ), sum(State%rh             )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(s              ) " // trim(when) // " ", minval(State%s              ), maxval(State%s              ), sum(State%s              )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(omega          ) " // trim(when) // " ", minval(State%omega          ), maxval(State%omega          ), sum(State%omega          )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(pmid           ) " // trim(when) // " ", minval(State%pmid           ), maxval(State%pmid           ), sum(State%pmid           )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(pmiddry        ) " // trim(when) // " ", minval(State%pmiddry        ), maxval(State%pmiddry        ), sum(State%pmiddry        )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(pdel           ) " // trim(when) // " ", minval(State%pdel           ), maxval(State%pdel           ), sum(State%pdel           )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(pdeldry        ) " // trim(when) // " ", minval(State%pdeldry        ), maxval(State%pdeldry        ), sum(State%pdeldry        )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(rpdel          ) " // trim(when) // " ", minval(State%rpdel          ), maxval(State%rpdel          ), sum(State%rpdel          )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(rpdeldry       ) " // trim(when) // " ", minval(State%rpdeldry       ), maxval(State%rpdeldry       ), sum(State%rpdeldry       )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(lnpmid         ) " // trim(when) // " ", minval(State%lnpmid         ), maxval(State%lnpmid         ), sum(State%lnpmid         )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(lnpmiddry      ) " // trim(when) // " ", minval(State%lnpmiddry      ), maxval(State%lnpmiddry      ), sum(State%lnpmiddry      )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(exner          ) " // trim(when) // " ", minval(State%exner          ), maxval(State%exner          ), sum(State%exner          )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(uzm            ) " // trim(when) // " ", minval(State%uzm            ), maxval(State%uzm            ), sum(State%uzm            )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(zm             ) " // trim(when) // " ", minval(State%zm             ), maxval(State%zm             ), sum(State%zm             )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(q              ) " // trim(when) // " ", minval(State%q              ), maxval(State%q              ), sum(State%q              )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(pint           ) " // trim(when) // " ", minval(State%pint           ), maxval(State%pint           ), sum(State%pint           )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(pintdry        ) " // trim(when) // " ", minval(State%pintdry        ), maxval(State%pintdry        ), sum(State%pintdry        )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(lnpint         ) " // trim(when) // " ", minval(State%lnpint         ), maxval(State%lnpint         ), sum(State%lnpint         )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(lnpintdry      ) " // trim(when) // " ", minval(State%lnpintdry      ), maxval(State%lnpintdry      ), sum(State%lnpintdry      )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(zi             ) " // trim(when) // " ", minval(State%zi             ), maxval(State%zi             ), sum(State%zi             )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(te_ini         ) " // trim(when) // " ", minval(State%te_ini         ), maxval(State%te_ini         ), sum(State%te_ini         )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(te_cur         ) " // trim(when) // " ", minval(State%te_cur         ), maxval(State%te_cur         ), sum(State%te_cur         )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(tw_ini         ) " // trim(when) // " ", minval(State%tw_ini         ), maxval(State%tw_ini         ), sum(State%tw_ini         )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(tw_cur         ) " // trim(when) // " ", minval(State%tw_cur         ), maxval(State%tw_cur         ), sum(State%tw_cur         )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(latmapback     ) " // trim(when) // " ", minval(State%latmapback     ), maxval(State%latmapback     ), sum(State%latmapback     )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(lonmapback     ) " // trim(when) // " ", minval(State%lonmapback     ), maxval(State%lonmapback     ), sum(State%lonmapback     )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(cid            ) " // trim(when) // " ", minval(State%cid            ), maxval(State%cid            ), sum(State%cid            )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(frontgf        ) " // trim(when) // " ", minval(State%frontgf        ), maxval(State%frontgf        ), sum(State%frontgf        )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(frontga        ) " // trim(when) // " ", minval(State%frontga        ), maxval(State%frontga        ), sum(State%frontga        )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(var            ) " // trim(when) // " ", minval(State%var            ), maxval(State%var            ), sum(State%var            )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(oc             ) " // trim(when) // " ", minval(State%oc             ), maxval(State%oc             ), sum(State%oc             )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(oadir          ) " // trim(when) // " ", minval(State%oadir          ), maxval(State%oadir          ), sum(State%oadir          )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(ol             ) " // trim(when) // " ", minval(State%ol             ), maxval(State%ol             ), sum(State%ol             )
+     !write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(terrout        ) " // trim(when) // " ", minval(State%terrout        ), maxval(State%terrout        ), sum(State%terrout        )
+     !
+  end subroutine physics_state_print
+
+  subroutine physics_ptend_print(Ptend, c, when)
+     implicit none
+     class(physics_ptend) :: Ptend
+     integer, intent(in)  :: c
+     character(len=*), intent(in) :: when
+     !
+     write(0,'(a,i6,a,1i8)')       "chunk", c, "; psetcols                   ) " // trim(when) // " ", Ptend%psetcols
+     write(0,'(a,i6,a,a)')         "chunk", c, "; name                       ) " // trim(when) // " ", " '" // trim(Ptend%name) // "' "
+     write(0,'(a,i6,a,(*(1x,l)))') "chunk", c, "; ls                         ) " // trim(when) // " ", Ptend%ls
+     write(0,'(a,i6,a,(*(1x,l)))') "chunk", c, "; lu                         ) " // trim(when) // " ", Ptend%lu
+     write(0,'(a,i6,a,(*(1x,l)))') "chunk", c, "; lv                         ) " // trim(when) // " ", Ptend%lv
+     write(0,'(a,i6,a,(*(1x,l)))') "chunk", c, "; lq                         ) " // trim(when) // " ", Ptend%lq
+     write(0,'(a,i6,a,1i8)')       "chunk", c, "; top_level                  ) " // trim(when) // " ", Ptend%top_level
+     write(0,'(a,i6,a,1i8)')       "chunk", c, "; bot_level                  ) " // trim(when) // " ", Ptend%bot_level
+     !
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(s              ) " // trim(when) // " ", minval(Ptend%s              ), maxval(Ptend%s              ), sum(Ptend%s              )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(u              ) " // trim(when) // " ", minval(Ptend%u              ), maxval(Ptend%u              ), sum(Ptend%u              )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(v              ) " // trim(when) // " ", minval(Ptend%v              ), maxval(Ptend%v              ), sum(Ptend%v              )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(q              ) " // trim(when) // " ", minval(Ptend%q              ), maxval(Ptend%q              ), sum(Ptend%q              )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(hflux_srf      ) " // trim(when) // " ", minval(Ptend%hflux_srf      ), maxval(Ptend%hflux_srf      ), sum(Ptend%hflux_srf      )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(hflux_top      ) " // trim(when) // " ", minval(Ptend%hflux_top      ), maxval(Ptend%hflux_top      ), sum(Ptend%hflux_top      )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(taux_srf       ) " // trim(when) // " ", minval(Ptend%taux_srf       ), maxval(Ptend%taux_srf       ), sum(Ptend%taux_srf       )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(taux_top       ) " // trim(when) // " ", minval(Ptend%taux_top       ), maxval(Ptend%taux_top       ), sum(Ptend%taux_top       )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(tauy_srf       ) " // trim(when) // " ", minval(Ptend%tauy_srf       ), maxval(Ptend%tauy_srf       ), sum(Ptend%tauy_srf       )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(tauy_top       ) " // trim(when) // " ", minval(Ptend%tauy_top       ), maxval(Ptend%tauy_top       ), sum(Ptend%tauy_top       )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(cflx_srf       ) " // trim(when) // " ", minval(Ptend%cflx_srf       ), maxval(Ptend%cflx_srf       ), sum(Ptend%cflx_srf       )
+     write(0,'(a,i6,a,3e16.7)') "chunk", c, "; min/max/sum(cflx_top       ) " // trim(when) // " ", minval(Ptend%cflx_top       ), maxval(Ptend%cflx_top       ), sum(Ptend%cflx_top       )
+     !
+  end subroutine physics_ptend_print
+
 #ifdef CCPP
   subroutine physics_type_alloc(phys_state, phys_tend, phys_int_ephem, phys_int_pers, begchunk, endchunk)
 #else
@@ -423,7 +523,6 @@ contains
        call endrun('physics_types: failed to allocate physics_int_ephem array')
     end if
 
-    write(0,'(a,2i6)') "Calling allocate(phys_int_pers(begchunk:endchunk)) with:", begchunk, endchunk
     allocate(phys_int_pers(begchunk:endchunk), stat=ierr)
     if( ierr /= 0 ) then
        write(iulog,*) 'physics_types: phys_int_pers allocation error = ',ierr
@@ -523,7 +622,7 @@ state%terrout=inf
 #endif
 #ifdef CCPP
        !call create for each block
-       write(0,'(a,3i6)') "Calling phys_int_pers % create with:", lchnk, pcols, pver
+       !write(0,'(a,3i6)') "Calling phys_int_pers % create with:", lchnk, pcols, pver
        call phys_int_ephem(lchnk)%create(pcols, pver, pverp, pcnst)
        call phys_int_pers (lchnk)%create(pcols, pver)
 #endif
@@ -1298,6 +1397,9 @@ subroutine interstitial_ephemeral_create (int_ephem, ncol, pver, pverp, pcnst)
   allocate (int_ephem%rliq  (ncol))
   allocate (int_ephem%pcont (ncol))
   allocate (int_ephem%pconb (ncol))
+  allocate (int_ephem%doconvtran_suv(3))
+  allocate (int_ephem%doconvtran_q(pcnst))
+  allocate (int_ephem%dpdry(ncol,pver))
   allocate (int_ephem%ptend_deep_conv_qv(ncol,pver))
   allocate (int_ephem%ptend_deep_conv_s(ncol,pver))
   allocate (int_ephem%ptend_deep_conv_evap_qv(ncol,pver))
@@ -1344,6 +1446,10 @@ subroutine interstitial_ephemeral_reset(int_ephem)
   int_ephem%rliq            = clear_val
   int_ephem%pcont           = clear_val
   int_ephem%pconb           = clear_val
+  int_ephem%doconvtran_name = ''
+  int_ephem%doconvtran_suv  = .true.
+  int_ephem%doconvtran_q    = .true.
+  int_ephem%dpdry           = clear_val
   int_ephem%ptend_deep_conv_qv = clear_val
   int_ephem%ptend_deep_conv_s  = clear_val
   int_ephem%ptend_deep_conv_evap_qv = clear_val

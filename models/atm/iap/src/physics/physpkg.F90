@@ -13,7 +13,8 @@ module physpkg
 ! Nov 2010    A. Gettelman   Put micro/macro physics into separate routines
 !-----------------------------------------------------------------------
   use shr_kind_mod,     only: r8 => shr_kind_r8
-  use spmd_utils,       only: masterproc
+  use spmd_utils,       only: masterproc, mpicom
+  use mpi
 #ifdef CCPP
   use physics_types,    only: physics_state, physics_tend, physics_state_set_grid, &
                               physics_ptend, physics_tend_init, physics_update,    &
@@ -45,10 +46,11 @@ module physpkg
   use scamMod,          only: single_column, scm_crm_mode
   use flux_avg,         only: flux_avg_init
 #ifdef CCPP
-  use cldwat_ccpp,           only: inimc
-#else
-  use cldwat,      only: inimc
+  use cldwat_ccpp,      only: inimc_ccpp => inimc
 #endif
+!!!#else
+  use cldwat,           only: inimc
+!!!#endif
 #ifdef SPMD
   use mpishorthand
 #endif
@@ -712,10 +714,11 @@ subroutine phys_init( phys_state, phys_tend, pbuf, cam_out )
    end if
 
 #ifdef CCPP
-   call inimc(tmelt, rhodair/1000.0_r8, gravit, rh2o, hypm, microp_scheme, iulog, pver, masterproc)
-#else
-   call inimc(tmelt, rhodair/1000.0_r8, gravit, rh2o)
+   call inimc_ccpp(tmelt, rhodair/1000.0_r8, gravit, rh2o, hypm, microp_scheme, iulog, pver, masterproc)
 #endif
+!!!#else
+   call inimc(tmelt, rhodair/1000.0_r8, gravit, rh2o)
+!!!#endif
 
 #if ( defined WACCM_PHYS )
    call iondrag_init( hypm )
@@ -798,7 +801,9 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 !
 !---------------------------Local workspace-----------------------------
 !
+#ifdef CCPP
    type(ccpp_t) :: cdata
+#endif
    integer :: c                                 ! indices
    integer :: ncol                              ! number of columns
    integer :: nstep                             ! current timestep number
@@ -900,22 +905,36 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
          call cdata_init(cdata, blk=c, thrd=1)
 #endif
          ! DH*
-         write(0,'(a,i6,a,i6)') "XXX: Calling tphysbc with c =", c," and cdata%blk_no = ", cdata%blk_no
+         write(0,'(a,i6,a,2i6)') "Calling tphysbc with c =", c, " begchunk/endchunk:", begchunk, endchunk
          ! *DH
          call tphysbc (ztodt, pblht(1,c), tpert(1,c), qpert(1,1,c),tpert2(1,c), qpert2(1,c),&
                        fsns(1,c), fsnt(1,c), flns(1,c), flnt(1,c), phys_state(c),        &
                        phys_tend(c), pbuf,  fsds(1,c), landm(1,c),                       &
-                       cam_out(c), cam_in(c), cdata, ccpp_suite)
+                       cam_out(c), cam_in(c), cdata, ccpp_suite )
 #else
+         ! DH*
+         write(0,'(a,i6,a,2i6)') "Calling tphysbc with c =", c, " begchunk/endchunk:", begchunk, endchunk
+         ! *DH
          call tphysbc (ztodt, pblht(1,c), tpert(1,c), qpert(1,1,c),tpert2(1,c), qpert2(1,c),&
                        fsns(1,c), fsnt(1,c), flns(1,c), flnt(1,c), phys_state(c),        &
                        phys_tend(c), pbuf,  fsds(1,c), landm(1,c),                       &
                        cam_out(c), cam_in(c) )
 #endif
 #endif
+         ! DH*
+         write(0,'(a,i6,a,2i6)') "   return from call to tphysbc with c =", c, " begchunk/endchunk:", begchunk, endchunk
+         ! *DH
       end do
 !$OMP END DO
 
+! DH*
+call MPI_BARRIER(mpicom, c)
+write(0,'(a,i6,a,i6,a,2i6)') "STOP BEFORE BYPASSING CCPP diag_tphysbc"
+call MPI_BARRIER(mpicom, c)
+!STOP
+! *DH
+
+#if 0
 #ifdef CCPP
 !$OMP DO
       do c=begchunk, endchunk
@@ -923,6 +942,7 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
         call diag_tphysbc(c, phys_int_ephem(c), phys_int_pers(c), phys_global, phys_state(c))
       end do
 !$OMP END DO
+#endif
 #endif
 
 !$OMP END PARALLEL

@@ -131,7 +131,8 @@ FIXEDFLAGS    := -132
 FREEFLAGS     := -FR
 #FFLAGS        := $(CPPDEFS) -no-prec-div -traceback -convert big_endian -fp-model source  -assume byterecl -ftz  -traceback -m64 -shared-intel -mcmodel=large -safe-cray-ptr
 FFLAGS        := $(CPPDEFS)  -no-prec-div -traceback -convert big_endian -fp-model source  -assume byterecl -ftz   -m64  -mcmodel=large -safe-cray-ptr
-FFLAGS_NOOPT  := $(FFLAGS) -O0 -g -check all
+#FFLAGS_NOOPT  := $(FFLAGS) -O0 -g -check all
+FFLAGS_NOOPT  := $(FFLAGS) -O0
 FFLAGS_OPT    := -O1
 #FFLAGS_NOOPT  := $(FFLAGS) -O3
 #FFLAGS_OPT    := -O3
