@@ -929,11 +929,12 @@ subroutine phys_run1(phys_state, ztodt, phys_tend, pbuf, cam_in, cam_out)
 
 ! DH*
 call MPI_BARRIER(mpicom, c)
-write(0,'(a,i6,a,i6,a,2i6)') "STOP BEFORE diag_tphysbc"
+write(0,'(a,i6,a,i6,a,2i6)') "STOP BEFORE BYPASSING CCPP diag_tphysbc"
 call MPI_BARRIER(mpicom, c)
-STOP
+!STOP
 ! *DH
 
+#if 0
 #ifdef CCPP
 !$OMP DO
       do c=begchunk, endchunk
@@ -941,6 +942,7 @@ STOP
         call diag_tphysbc(c, phys_int_ephem(c), phys_int_pers(c), phys_global, phys_state(c))
       end do
 !$OMP END DO
+#endif
 #endif
 
 !$OMP END PARALLEL
