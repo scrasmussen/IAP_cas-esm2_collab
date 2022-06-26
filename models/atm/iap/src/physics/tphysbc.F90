@@ -77,6 +77,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
    use comsrf,          only: sgh30
    use mzfunctions_mod, only: fout_phy,zmh_ramp
 #ifdef CCPP
+   use ccpp_data,       only: phys_int_ephem
    use ccpp_static_api, only: ccpp_physics_run
    use ccpp_types,      only: ccpp_t
 #endif
@@ -402,25 +403,62 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 ! are zeroed here for input to the moist convection routine
 !print*,'ptend%s1',ptend%s(2,1)
 !
+! DH* 20220615
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(prec_zmc       ) before deep convection", minval(prec_zmc       ), maxval(prec_zmc       ), sum(prec_zmc       )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pblht          ) before deep convection", minval(pblht          ), maxval(pblht          ), sum(pblht          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc          ) before deep convection", minval(cmfmc          ), maxval(cmfmc          ), sum(cmfmc          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfcme         ) before deep convection", minval(cmfcme         ), maxval(cmfcme         ), sum(cmfcme         )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(tpert          ) before deep convection", minval(tpert          ), maxval(tpert          ), sum(tpert          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,1)     ) before deep convection", minval(qpert(:,1)     ), maxval(qpert(:,1)     ), sum(qpert(:,1)     )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,2:)    ) before deep convection", minval(qpert(:,2:)    ), maxval(qpert(:,2:)    ), sum(qpert(:,2:)    )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradt          ) before deep convection", minval(gradt          ), maxval(gradt          ), sum(gradt          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradq          ) before deep convection", minval(gradq          ), maxval(gradq          ), sum(gradq          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(vort3          ) before deep convection", minval(vort3          ), maxval(vort3          ), sum(vort3          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(dlf            ) before deep convection", minval(dlf            ), maxval(dlf            ), sum(dlf            )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pflx           ) before deep convection", minval(pflx           ), maxval(pflx           ), sum(pflx           )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(zdu            ) before deep convection", minval(zdu            ), maxval(zdu            ), sum(zdu            )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(rliq           ) before deep convection", minval(rliq           ), maxval(rliq           ), sum(rliq           )
+!   write(0,'(a,i6,a,1e16.7)') "chunk", lchnk, "; ztodt                      ) before deep convection", ztodt
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(snow_zmc       ) before deep convection", minval(snow_zmc       ), maxval(snow_zmc       ), sum(snow_zmc       )
+!   call state%print(lchnk, "before deep convection")
+!   call ptend%print(lchnk, "before deep convection")
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%landfrac) before deep convection", minval(cam_in%landfrac), maxval(cam_in%landfrac), sum(cam_in%landfrac)
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%lhf     ) before deep convection", minval(cam_in%lhf     ), maxval(cam_in%lhf     ), sum(cam_in%lhf     )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%shf     ) before deep convection", minval(cam_in%shf     ), maxval(cam_in%shf     ), sum(cam_in%shf     )
+!   call pbuf_print_data(pbuf, lchnk, "before deep convection")
+   !end if
+! *DH 20220615
    call t_startf ('convect_deep_tend')
 #ifdef CCPP
    !GJF: while all IAP physics are being worked on, ccpp_physics_run calls are placed within tphysbc; eventually,
    !     these calls should be in physpkg instead of tphysbc, tphysac, etc. which can be groups within an SDF
-   write(0,'(a,i6)') "XXX: Calling ccpp_physics_run for suite " // trim(ccpp_suite) // ", group test1 and block ", cdata%blk_no
-   write(0,'(a,3i6)') "XXX: loop_cnt, loop_max, thrd_no:", cdata%loop_cnt, cdata%loop_max, cdata%thrd_no
-   write(0,'(a,3i6)') "XXX: shape(state%q(:,:,:))               :", shape(state%q(:,:,:))
-   write(0,'(a,3i6)') "XXX: shape(state%q(:ncol,:pver,       1)):", shape(state%q(:ncol,:pver,       1))
-   write(0,'(a,2i6)') "XXX: ncol, pver:", ncol, pver
+   !write(0,'(a,i6)') "Calling ccpp_physics_run for suite " // trim(ccpp_suite) // ", group test1 and block ", cdata%blk_no
    call ccpp_physics_run(cdata, suite_name=trim(ccpp_suite), group_name='test1', ierr=ierr)
    if (ierr/=0) then
       write(0,'(3a,i4)') "An error occurred in ccpp_physics_run for group ", "test1", &
                                 ", chunk ", lchnk
       write(0,'(a)') trim(cdata%errmsg)
    end if
-   write(0,'(3(a,i6))') "XXX: Call to ccpp_physics_run for suite " // trim(ccpp_suite) // ", group test1 and block ", cdata%blk_no, &
-       " returned with error code ", cdata%errflg, " = ", ierr
-   !GJF: If we need to transfer data between new CCPP data types (physics_int_ephem) and the rest of physics, that
-   !     should be done here
+   !write(0,'(a)') 'Transferring data from phys_int_ephem etc. to local physics variables'
+   ! The easy stuff
+   prec_zmc(1:pcols)        = phys_int_ephem(cdata%blk_no)%prec
+   cmfmc(1:pcols,1:pverp)   = phys_int_ephem(cdata%blk_no)%cmfmc
+   cmfcme(1:pcols,1:pver)   = phys_int_ephem(cdata%blk_no)%cmfcme
+   dlf                      = phys_int_ephem(cdata%blk_no)%dlf
+   pflx                     = phys_int_ephem(cdata%blk_no)%pflx
+   zdu                      = phys_int_ephem(cdata%blk_no)%zdu
+   rliq                     = phys_int_ephem(cdata%blk_no)%rliq
+   snow_zmc                 = phys_int_ephem(cdata%blk_no)%snow
+   ! The not so easy stuff
+   ptend%name = trim(phys_int_ephem(cdata%blk_no)%doconvtran_name)
+   ptend%ls   = phys_int_ephem(cdata%blk_no)%doconvtran_suv(1)
+   ptend%lu   = phys_int_ephem(cdata%blk_no)%doconvtran_suv(2)
+   ptend%lv   = phys_int_ephem(cdata%blk_no)%doconvtran_suv(3)
+   ptend%lq   = phys_int_ephem(cdata%blk_no)%doconvtran_q
+   ptend%s(1:pcols,1:pver)         = phys_int_ephem(cdata%blk_no)%ptend_deep_conv_tot_s
+   ptend%u(1:pcols,1:pver)         = phys_int_ephem(cdata%blk_no)%ptend_deep_conv_tot_u
+   ptend%v(1:pcols,1:pver)         = phys_int_ephem(cdata%blk_no)%ptend_deep_conv_tot_v
+   ptend%q(1:pcols,1:pver,1:pcnst) = phys_int_ephem(cdata%blk_no)%ptend_deep_conv_tot_q
 #else
    call convect_deep_tend(  prec_zmc,   &
         pblht,    cmfmc,      cmfcme,             &
@@ -431,6 +469,32 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
         state,   ptend, cam_in%landfrac, cam_in%lhf, cam_in%shf, pbuf )  !zmh
 #endif
    call t_stopf('convect_deep_tend')
+
+! DH* 20220615
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(prec_zmc       ) after deep convection", minval(prec_zmc       ), maxval(prec_zmc       ), sum(prec_zmc       )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pblht          ) after deep convection", minval(pblht          ), maxval(pblht          ), sum(pblht          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc          ) after deep convection", minval(cmfmc          ), maxval(cmfmc          ), sum(cmfmc          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfcme         ) after deep convection", minval(cmfcme         ), maxval(cmfcme         ), sum(cmfcme         )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(tpert          ) after deep convection", minval(tpert          ), maxval(tpert          ), sum(tpert          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,1)     ) after deep convection", minval(qpert(:,1)     ), maxval(qpert(:,1)     ), sum(qpert(:,1)     )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,2:)    ) after deep convection", minval(qpert(:,2:)    ), maxval(qpert(:,2:)    ), sum(qpert(:,2:)    )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradt          ) after deep convection", minval(gradt          ), maxval(gradt          ), sum(gradt          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradq          ) after deep convection", minval(gradq          ), maxval(gradq          ), sum(gradq          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(vort3          ) after deep convection", minval(vort3          ), maxval(vort3          ), sum(vort3          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(dlf            ) after deep convection", minval(dlf            ), maxval(dlf            ), sum(dlf            )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pflx           ) after deep convection", minval(pflx           ), maxval(pflx           ), sum(pflx           )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(zdu            ) after deep convection", minval(zdu            ), maxval(zdu            ), sum(zdu            )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(rliq           ) after deep convection", minval(rliq           ), maxval(rliq           ), sum(rliq           )
+!   write(0,'(a,i6,a,1e16.7)') "chunk", lchnk, "; ztodt                      ) after deep convection", ztodt
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(snow_zmc       ) after deep convection", minval(snow_zmc       ), maxval(snow_zmc       ), sum(snow_zmc       )
+!   call state%print(lchnk, "after deep convection")
+!   call ptend%print(lchnk, "after deep convection")
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%landfrac) after deep convection", minval(cam_in%landfrac), maxval(cam_in%landfrac), sum(cam_in%landfrac)
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%lhf     ) after deep convection", minval(cam_in%lhf     ), maxval(cam_in%lhf     ), sum(cam_in%lhf     )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%shf     ) after deep convection", minval(cam_in%shf     ), maxval(cam_in%shf     ), sum(cam_in%shf     )
+!   call pbuf_print_data(pbuf, lchnk, "after deep convection")
+   !end if
+! *DH 20220615
 
 !zmh
 #ifdef MODAL_AERO
@@ -452,6 +516,34 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 !
 ! Call Hack (1994) convection scheme to deal with shallow/mid-level convection
 !
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(prec_zmc       ) before shallow convection", minval(prec_zmc       ), maxval(prec_zmc       ), sum(prec_zmc       )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc2         ) before shallow convection", minval(prec_cmf       ), maxval(prec_cmf       ), sum(prec_cmf       )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pblht          ) before shallow convection", minval(pblht          ), maxval(pblht          ), sum(pblht          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc          ) before shallow convection", minval(cmfmc          ), maxval(cmfmc          ), sum(cmfmc          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc2         ) before shallow convection", minval(cmfmc2         ), maxval(cmfmc2         ), sum(cmfmc2         )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfcme         ) before shallow convection", minval(cmfcme         ), maxval(cmfcme         ), sum(cmfcme         )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(tpert          ) before shallow convection", minval(tpert          ), maxval(tpert          ), sum(tpert          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,1)     ) before shallow convection", minval(qpert(:,1)     ), maxval(qpert(:,1)     ), sum(qpert(:,1)     )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,2:)    ) before shallow convection", minval(qpert(:,2:)    ), maxval(qpert(:,2:)    ), sum(qpert(:,2:)    )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradt          ) before shallow convection", minval(gradt          ), maxval(gradt          ), sum(gradt          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradq          ) before shallow convection", minval(gradq          ), maxval(gradq          ), sum(gradq          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(vort3          ) before shallow convection", minval(vort3          ), maxval(vort3          ), sum(vort3          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(dlf            ) before shallow convection", minval(dlf            ), maxval(dlf            ), sum(dlf            )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(dlf            ) before shallow convection", minval(dlf2           ), maxval(dlf2           ), sum(dlf2           )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pflx           ) before shallow convection", minval(pflx           ), maxval(pflx           ), sum(pflx           )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(zdu            ) before shallow convection", minval(zdu            ), maxval(zdu            ), sum(zdu            )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(rliq           ) before shallow convection", minval(rliq           ), maxval(rliq           ), sum(rliq           )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(rliq           ) before shallow convection", minval(rliq2          ), maxval(rliq2          ), sum(rliq2          )
+!   write(0,'(a,i6,a,1e16.7)') "chunk", lchnk, "; ztodt                      ) before shallow convection", ztodt
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(snow_zmc       ) before shallow convection", minval(snow_zmc       ), maxval(snow_zmc       ), sum(snow_zmc       )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(snow_zmc       ) before shallow convection", minval(snow_cmf       ), maxval(snow_cmf       ), sum(snow_cmf       )
+!   call state%print(lchnk, "before shallow convection")
+!   call ptend%print(lchnk, "before shallow convection")
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%landfrac) before shallow convection", minval(cam_in%landfrac), maxval(cam_in%landfrac), sum(cam_in%landfrac)
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%lhf     ) before shallow convection", minval(cam_in%lhf     ), maxval(cam_in%lhf     ), sum(cam_in%lhf     )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%shf     ) before shallow convection", minval(cam_in%shf     ), maxval(cam_in%shf     ), sum(cam_in%shf     )
+!   call pbuf_print_data(pbuf, lchnk, "before shallow convection")
+
    call t_startf ('convect_shallow_tend')
 
    call convect_shallow_tend (ztodt   ,&
@@ -462,6 +554,34 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
         !snow_cmf   , state, ptend,  ,pbuf       )   !zmh
         snow_cmf   , state, ptend,  cam_in%landfrac,pbuf       )   !zmh
    call t_stopf ('convect_shallow_tend')
+
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(prec_zmc       ) after shallow convection", minval(prec_zmc       ), maxval(prec_zmc       ), sum(prec_zmc       )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc2         ) after shallow convection", minval(prec_cmf       ), maxval(prec_cmf       ), sum(prec_cmf       )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pblht          ) after shallow convection", minval(pblht          ), maxval(pblht          ), sum(pblht          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc          ) after shallow convection", minval(cmfmc          ), maxval(cmfmc          ), sum(cmfmc          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc2         ) after shallow convection", minval(cmfmc2         ), maxval(cmfmc2         ), sum(cmfmc2         )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfcme         ) after shallow convection", minval(cmfcme         ), maxval(cmfcme         ), sum(cmfcme         )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(tpert          ) after shallow convection", minval(tpert          ), maxval(tpert          ), sum(tpert          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,1)     ) after shallow convection", minval(qpert(:,1)     ), maxval(qpert(:,1)     ), sum(qpert(:,1)     )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,2:)    ) after shallow convection", minval(qpert(:,2:)    ), maxval(qpert(:,2:)    ), sum(qpert(:,2:)    )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradt          ) after shallow convection", minval(gradt          ), maxval(gradt          ), sum(gradt          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradq          ) after shallow convection", minval(gradq          ), maxval(gradq          ), sum(gradq          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(vort3          ) after shallow convection", minval(vort3          ), maxval(vort3          ), sum(vort3          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(dlf            ) after shallow convection", minval(dlf            ), maxval(dlf            ), sum(dlf            )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(dlf            ) after shallow convection", minval(dlf2           ), maxval(dlf2           ), sum(dlf2           )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pflx           ) after shallow convection", minval(pflx           ), maxval(pflx           ), sum(pflx           )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(zdu            ) after shallow convection", minval(zdu            ), maxval(zdu            ), sum(zdu            )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(rliq           ) after shallow convection", minval(rliq           ), maxval(rliq           ), sum(rliq           )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(rliq           ) after shallow convection", minval(rliq2          ), maxval(rliq2          ), sum(rliq2          )
+!   write(0,'(a,i6,a,1e16.7)') "chunk", lchnk, "; ztodt                      ) after shallow convection", ztodt
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(snow_zmc       ) after shallow convection", minval(snow_zmc       ), maxval(snow_zmc       ), sum(snow_zmc       )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(snow_zmc       ) after shallow convection", minval(snow_cmf       ), maxval(snow_cmf       ), sum(snow_cmf       )
+!   call state%print(lchnk, "after shallow convection")
+!   call ptend%print(lchnk, "after shallow convection")
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%landfrac) after shallow convection", minval(cam_in%landfrac), maxval(cam_in%landfrac), sum(cam_in%landfrac)
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%lhf     ) after shallow convection", minval(cam_in%lhf     ), maxval(cam_in%lhf     ), sum(cam_in%lhf     )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%shf     ) after shallow convection", minval(cam_in%shf     ), maxval(cam_in%shf     ), sum(cam_in%shf     )
+!   call pbuf_print_data(pbuf, lchnk, "after shallow convection")
 
 !zmh
 #ifdef MODAL_AERO
@@ -490,6 +610,34 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 
 !if CAM4/RK microphysics
 !print*,'state%t4',state%t(2,1)
+
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(prec_zmc       ) before macrophysics", minval(prec_zmc       ), maxval(prec_zmc       ), sum(prec_zmc       )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc2         ) before macrophysics", minval(prec_cmf       ), maxval(prec_cmf       ), sum(prec_cmf       )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pblht          ) before macrophysics", minval(pblht          ), maxval(pblht          ), sum(pblht          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc          ) before macrophysics", minval(cmfmc          ), maxval(cmfmc          ), sum(cmfmc          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc2         ) before macrophysics", minval(cmfmc2         ), maxval(cmfmc2         ), sum(cmfmc2         )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfcme         ) before macrophysics", minval(cmfcme         ), maxval(cmfcme         ), sum(cmfcme         )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(tpert          ) before macrophysics", minval(tpert          ), maxval(tpert          ), sum(tpert          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,1)     ) before macrophysics", minval(qpert(:,1)     ), maxval(qpert(:,1)     ), sum(qpert(:,1)     )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,2:)    ) before macrophysics", minval(qpert(:,2:)    ), maxval(qpert(:,2:)    ), sum(qpert(:,2:)    )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradt          ) before macrophysics", minval(gradt          ), maxval(gradt          ), sum(gradt          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradq          ) before macrophysics", minval(gradq          ), maxval(gradq          ), sum(gradq          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(vort3          ) before macrophysics", minval(vort3          ), maxval(vort3          ), sum(vort3          )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(dlf            ) before macrophysics", minval(dlf            ), maxval(dlf            ), sum(dlf            )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(dlf            ) before macrophysics", minval(dlf2           ), maxval(dlf2           ), sum(dlf2           )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pflx           ) before macrophysics", minval(pflx           ), maxval(pflx           ), sum(pflx           )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(zdu            ) before macrophysics", minval(zdu            ), maxval(zdu            ), sum(zdu            )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(rliq           ) before macrophysics", minval(rliq           ), maxval(rliq           ), sum(rliq           )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(rliq           ) before macrophysics", minval(rliq2          ), maxval(rliq2          ), sum(rliq2          )
+!   write(0,'(a,i6,a,1e16.7)') "chunk", lchnk, "; ztodt                      ) before macrophysics", ztodt
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(snow_zmc       ) before macrophysics", minval(snow_zmc       ), maxval(snow_zmc       ), sum(snow_zmc       )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(snow_zmc       ) before macrophysics", minval(snow_cmf       ), maxval(snow_cmf       ), sum(snow_cmf       )
+!   call state%print(lchnk, "before macrophysics")
+!   call ptend%print(lchnk, "before macrophysics")
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%landfrac) before macrophysics", minval(cam_in%landfrac), maxval(cam_in%landfrac), sum(cam_in%landfrac)
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%lhf     ) before macrophysics", minval(cam_in%lhf     ), maxval(cam_in%lhf     ), sum(cam_in%lhf     )
+!   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%shf     ) before macrophysics", minval(cam_in%shf     ), maxval(cam_in%shf     ), sum(cam_in%shf     )
+!   call pbuf_print_data(pbuf, lchnk, "before macrophysics")
 
    if( microp_scheme .eq. 'RK' ) then
 
@@ -547,6 +695,34 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 ! Calculate cloud microphysics 
 !===================================================
 
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(prec_zmc       ) before microphysics", minval(prec_zmc       ), maxval(prec_zmc       ), sum(prec_zmc       )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc2         ) before microphysics", minval(prec_cmf       ), maxval(prec_cmf       ), sum(prec_cmf       )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pblht          ) before microphysics", minval(pblht          ), maxval(pblht          ), sum(pblht          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc          ) before microphysics", minval(cmfmc          ), maxval(cmfmc          ), sum(cmfmc          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc2         ) before microphysics", minval(cmfmc2         ), maxval(cmfmc2         ), sum(cmfmc2         )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfcme         ) before microphysics", minval(cmfcme         ), maxval(cmfcme         ), sum(cmfcme         )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(tpert          ) before microphysics", minval(tpert          ), maxval(tpert          ), sum(tpert          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,1)     ) before microphysics", minval(qpert(:,1)     ), maxval(qpert(:,1)     ), sum(qpert(:,1)     )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,2:)    ) before microphysics", minval(qpert(:,2:)    ), maxval(qpert(:,2:)    ), sum(qpert(:,2:)    )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradt          ) before microphysics", minval(gradt          ), maxval(gradt          ), sum(gradt          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradq          ) before microphysics", minval(gradq          ), maxval(gradq          ), sum(gradq          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(vort3          ) before microphysics", minval(vort3          ), maxval(vort3          ), sum(vort3          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(dlf            ) before microphysics", minval(dlf            ), maxval(dlf            ), sum(dlf            )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(dlf            ) before microphysics", minval(dlf2           ), maxval(dlf2           ), sum(dlf2           )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pflx           ) before microphysics", minval(pflx           ), maxval(pflx           ), sum(pflx           )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(zdu            ) before microphysics", minval(zdu            ), maxval(zdu            ), sum(zdu            )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(rliq           ) before microphysics", minval(rliq           ), maxval(rliq           ), sum(rliq           )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(rliq           ) before microphysics", minval(rliq2          ), maxval(rliq2          ), sum(rliq2          )
+!      write(0,'(a,i6,a,1e16.7)') "chunk", lchnk, "; ztodt                      ) before microphysics", ztodt
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(snow_zmc       ) before microphysics", minval(snow_zmc       ), maxval(snow_zmc       ), sum(snow_zmc       )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(snow_zmc       ) before microphysics", minval(snow_cmf       ), maxval(snow_cmf       ), sum(snow_cmf       )
+   !   call state%print(lchnk, "before microphysics")
+!      call ptend%print(lchnk, "before microphysics")
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%landfrac) before microphysics", minval(cam_in%landfrac), maxval(cam_in%landfrac), sum(cam_in%landfrac)
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%lhf     ) before microphysics", minval(cam_in%lhf     ), maxval(cam_in%lhf     ), sum(cam_in%lhf     )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%shf     ) before microphysics", minval(cam_in%shf     ), maxval(cam_in%shf     ), sum(cam_in%shf     )
+   !   call pbuf_print_data(pbuf, lchnk, "before microphysics")
+
 !print*,'state%t5',state%t(2,1)
       call t_startf('microp_tend')
 
@@ -575,8 +751,11 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 
 !end microphysics conditional.
 
+! Need to execute for CCPP ZM, but CCPP doesn't initialize the non-CCPP code
+! properly and deep_scheme_does_scav_trans() returns .true.
+#ifndef CCPP
    if ( .not. deep_scheme_does_scav_trans() ) then
-
+#endif
       !===================================================
       !  Aerosol wet chemistry determines scavenging fractions, and transformations
       !
@@ -590,17 +769,83 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
       call aerosol_wet_intr (state, ptend, ztodt, pbuf, cam_out, dlf)
       call physics_update (state, tend, ptend, ztodt)
 
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(prec_zmc       ) before deep convection 2", minval(prec_zmc       ), maxval(prec_zmc       ), sum(prec_zmc       )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pblht          ) before deep convection 2", minval(pblht          ), maxval(pblht          ), sum(pblht          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc          ) before deep convection 2", minval(cmfmc          ), maxval(cmfmc          ), sum(cmfmc          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfcme         ) before deep convection 2", minval(cmfcme         ), maxval(cmfcme         ), sum(cmfcme         )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(tpert          ) before deep convection 2", minval(tpert          ), maxval(tpert          ), sum(tpert          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,1)     ) before deep convection 2", minval(qpert(:,1)     ), maxval(qpert(:,1)     ), sum(qpert(:,1)     )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,2:)    ) before deep convection 2", minval(qpert(:,2:)    ), maxval(qpert(:,2:)    ), sum(qpert(:,2:)    )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradt          ) before deep convection 2", minval(gradt          ), maxval(gradt          ), sum(gradt          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradq          ) before deep convection 2", minval(gradq          ), maxval(gradq          ), sum(gradq          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(vort3          ) before deep convection 2", minval(vort3          ), maxval(vort3          ), sum(vort3          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(dlf            ) before deep convection 2", minval(dlf            ), maxval(dlf            ), sum(dlf            )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pflx           ) before deep convection 2", minval(pflx           ), maxval(pflx           ), sum(pflx           )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(zdu            ) before deep convection 2", minval(zdu            ), maxval(zdu            ), sum(zdu            )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(rliq           ) before deep convection 2", minval(rliq           ), maxval(rliq           ), sum(rliq           )
+!      write(0,'(a,i6,a,1e16.7)') "chunk", lchnk, "; ztodt                      ) before deep convection 2", ztodt
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(snow_zmc       ) before deep convection 2", minval(snow_zmc       ), maxval(snow_zmc       ), sum(snow_zmc       )
+   !   call state%print(lchnk, "before deep convection 2")
+!      call ptend%print(lchnk, "before deep convection 2")
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%landfrac) before deep convection 2", minval(cam_in%landfrac), maxval(cam_in%landfrac), sum(cam_in%landfrac)
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%lhf     ) before deep convection 2", minval(cam_in%lhf     ), maxval(cam_in%lhf     ), sum(cam_in%lhf     )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%shf     ) before deep convection 2", minval(cam_in%shf     ), maxval(cam_in%shf     ), sum(cam_in%shf     )
+   !   call pbuf_print_data(pbuf, lchnk, "before deep convection 2")
+
       call t_startf ('convect_deep_tend2')
-      call convect_deep_tend_2( state,   ptend,  ztodt,  pbuf ) 
+#ifdef CCPP
+      !write(0,'(a,i6)') "XXX: Calling phys_int_ephem(cdata%blk_no)%reset() for block ", cdata%blk_no
+      call phys_int_ephem(cdata%blk_no)%reset()
+      !write(0,'(a,i6)') "XXX: Calling ccpp_physics_run for suite " // trim(ccpp_suite) // ", group test2 and block ", cdata%blk_no
+      call ccpp_physics_run(cdata, suite_name=trim(ccpp_suite), group_name='test2', ierr=ierr)
+      if (ierr/=0) then
+         write(0,'(3a,i4)') "An error occurred in ccpp_physics_run for group ", "test2", &
+                                   ", chunk ", lchnk
+         write(0,'(a)') trim(cdata%errmsg)
+      end if
+      !
+      !write(0,'(a)') 'Transferring data from phys_int_ephem etc. to local physics variables'
+      ptend%q(1:pcols,1:pver,1:pcnst) = phys_int_ephem(cdata%blk_no)%ptend_deep_conv_convtran_q
+      ptend%name = trim(phys_int_ephem(cdata%blk_no)%doconvtran_name)
+      ptend%ls   = phys_int_ephem(cdata%blk_no)%doconvtran_suv(1)
+      ptend%lu   = phys_int_ephem(cdata%blk_no)%doconvtran_suv(2)
+      ptend%lv   = phys_int_ephem(cdata%blk_no)%doconvtran_suv(3)
+      ptend%lq   = phys_int_ephem(cdata%blk_no)%doconvtran_q
+#else
+      call convect_deep_tend_2( state,   ptend,  ztodt,  pbuf )
+#endif
       call t_stopf ('convect_deep_tend2')
+
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(prec_zmc       ) after deep convection 2", minval(prec_zmc       ), maxval(prec_zmc       ), sum(prec_zmc       )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pblht          ) after deep convection 2", minval(pblht          ), maxval(pblht          ), sum(pblht          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc          ) after deep convection 2", minval(cmfmc          ), maxval(cmfmc          ), sum(cmfmc          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfcme         ) after deep convection 2", minval(cmfcme         ), maxval(cmfcme         ), sum(cmfcme         )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(tpert          ) after deep convection 2", minval(tpert          ), maxval(tpert          ), sum(tpert          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,1)     ) after deep convection 2", minval(qpert(:,1)     ), maxval(qpert(:,1)     ), sum(qpert(:,1)     )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,2:)    ) after deep convection 2", minval(qpert(:,2:)    ), maxval(qpert(:,2:)    ), sum(qpert(:,2:)    )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradt          ) after deep convection 2", minval(gradt          ), maxval(gradt          ), sum(gradt          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradq          ) after deep convection 2", minval(gradq          ), maxval(gradq          ), sum(gradq          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(vort3          ) after deep convection 2", minval(vort3          ), maxval(vort3          ), sum(vort3          )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(dlf            ) after deep convection 2", minval(dlf            ), maxval(dlf            ), sum(dlf            )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pflx           ) after deep convection 2", minval(pflx           ), maxval(pflx           ), sum(pflx           )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(zdu            ) after deep convection 2", minval(zdu            ), maxval(zdu            ), sum(zdu            )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(rliq           ) after deep convection 2", minval(rliq           ), maxval(rliq           ), sum(rliq           )
+!      write(0,'(a,i6,a,1e16.7)') "chunk", lchnk, "; ztodt                      ) after deep convection 2", ztodt
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(snow_zmc       ) after deep convection 2", minval(snow_zmc       ), maxval(snow_zmc       ), sum(snow_zmc       )
+   !   call state%print(lchnk, "after deep convection 2")
+!      call ptend%print(lchnk, "after deep convection 2")
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%landfrac) after deep convection 2", minval(cam_in%landfrac), maxval(cam_in%landfrac), sum(cam_in%landfrac)
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%lhf     ) after deep convection 2", minval(cam_in%lhf     ), maxval(cam_in%lhf     ), sum(cam_in%lhf     )
+!      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%shf     ) after deep convection 2", minval(cam_in%shf     ), maxval(cam_in%shf     ), sum(cam_in%shf     )
+   !   call pbuf_print_data(pbuf, lchnk, "after deep convection 2")
 
       call physics_update (state, tend, ptend, ztodt)
 
       ! check tracer integrals
       call check_tracers_chng(state, tracerint, "cmfmca", nstep, ztodt, ptend%cflx_srf)
-
+#ifndef CCPP
    endif
-
+#endif
    call t_stopf('bc_aerosols')
 
    !===================================================
@@ -670,6 +915,35 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
    call tropopause_output(state)
    call t_stopf('tropopause')
 
+! DH* 20220615
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(prec_zmc       ) after radiation", minval(prec_zmc       ), maxval(prec_zmc       ), sum(prec_zmc       )
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pblht          ) after radiation", minval(pblht          ), maxval(pblht          ), sum(pblht          )
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfmc          ) after radiation", minval(cmfmc          ), maxval(cmfmc          ), sum(cmfmc          )
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cmfcme         ) after radiation", minval(cmfcme         ), maxval(cmfcme         ), sum(cmfcme         )
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(tpert          ) after radiation", minval(tpert          ), maxval(tpert          ), sum(tpert          )
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,1)     ) after radiation", minval(qpert(:,1)     ), maxval(qpert(:,1)     ), sum(qpert(:,1)     )
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(qpert(:,2:)    ) after radiation", minval(qpert(:,2:)    ), maxval(qpert(:,2:)    ), sum(qpert(:,2:)    )
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradt          ) after radiation", minval(gradt          ), maxval(gradt          ), sum(gradt          )
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(gradq          ) after radiation", minval(gradq          ), maxval(gradq          ), sum(gradq          )
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(vort3          ) after radiation", minval(vort3          ), maxval(vort3          ), sum(vort3          )
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(dlf            ) after radiation", minval(dlf            ), maxval(dlf            ), sum(dlf            )
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(pflx           ) after radiation", minval(pflx           ), maxval(pflx           ), sum(pflx           )
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(zdu            ) after radiation", minval(zdu            ), maxval(zdu            ), sum(zdu            )
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(rliq           ) after radiation", minval(rliq           ), maxval(rliq           ), sum(rliq           )
+   write(0,'(a,i6,a,1e16.7)') "chunk", lchnk, "; ztodt                      ) after radiation", ztodt
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(snow_zmc       ) after radiation", minval(snow_zmc       ), maxval(snow_zmc       ), sum(snow_zmc       )
+   call state%print(lchnk, "after radiation")
+   call ptend%print(lchnk, "after radiation")
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%landfrac) after radiation", minval(cam_in%landfrac), maxval(cam_in%landfrac), sum(cam_in%landfrac)
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%lhf     ) after radiation", minval(cam_in%lhf     ), maxval(cam_in%lhf     ), sum(cam_in%lhf     )
+   write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(cam_in%shf     ) after radiation", minval(cam_in%shf     ), maxval(cam_in%shf     ), sum(cam_in%shf     )
+   call pbuf_print_data(pbuf, lchnk, "after radiation")
+   !end if
+   !write(0,'(a,i6)') "At the end of tphysbc after radiation, before saving fields for chunk", lchnk
+   !CALL FLUSH()
+   !call sleep(5)
+! *DH 20220615
+
    ! Save atmospheric fields to force surface models
    call t_startf('srfxfer')
    call srfxfer (state,cam_out,prec_zmc,snow_zmc, &
@@ -683,3 +957,51 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
    call t_stopf('diag_export')
 
 end subroutine tphysbc
+
+subroutine pbuf_print_data(pbuf, c, when)
+   use phys_buffer, only: pbuf_size_max, pbuf_fld, pbuf_get_fld_idx
+   implicit none
+   type(pbuf_fld), intent(in) :: pbuf(pbuf_size_max)
+   integer, intent(in) :: c
+   character(len=*), intent(in) :: when
+   ! Local variables
+   integer :: i
+   !-----------------------------------------------------------------------------------------
+   do i = 1, 138 !pbuf_size_max
+      call pbuf_print_field(pbuf(i), i, c, when)
+   end do
+
+contains
+    subroutine pbuf_print_field(pbufsc, i, c, when)
+       use shr_kind_mod, only: r8 => shr_kind_r8
+       implicit none
+       type(pbuf_fld), intent(in) :: pbufsc
+       integer, intent(in) :: i, c
+       character(len=*), intent(in) :: when
+       !
+       integer :: i1, i2, i3, i4, i5
+       real(r8) :: arrmin, arrmax, arrsum
+       !
+       arrmin = +huge(arrmin)
+       arrmax = -huge(arrmax)
+       arrsum = 0
+       if (.not.associated(pbufsc%fld_ptr)) then
+          write(0,'(2(a,i6),a)') "chunk", c, "; idx=", i, "; pbuf not associated"
+          return
+       end if
+       do i1=lbound(pbufsc%fld_ptr,dim=1),ubound(pbufsc%fld_ptr,dim=1)
+       do i2=lbound(pbufsc%fld_ptr,dim=2),ubound(pbufsc%fld_ptr,dim=2)
+       do i3=lbound(pbufsc%fld_ptr,dim=3),ubound(pbufsc%fld_ptr,dim=3)
+       do i4=lbound(pbufsc%fld_ptr,dim=4),ubound(pbufsc%fld_ptr,dim=4)
+       do i5=lbound(pbufsc%fld_ptr,dim=5),ubound(pbufsc%fld_ptr,dim=5)
+         arrmin = min(arrmin, pbufsc%fld_ptr(i1,i2,i3,i4,i5))
+         arrmax = max(arrmax, pbufsc%fld_ptr(i1,i2,i3,i4,i5))
+         arrsum = arrsum + pbufsc%fld_ptr(i1,i2,i3,i4,i5)
+       end do
+       end do
+       end do
+       end do
+       end do
+       write(0,'(2(a,i6),a,a16,a,3e16.7)') "chunk", c, "; idx=", i, "; min/max/sum(pbuf%", pbufsc%name, ") " // trim(when) // " ", arrmin, arrmax, arrsum
+    end subroutine pbuf_print_field
+end subroutine pbuf_print_data
