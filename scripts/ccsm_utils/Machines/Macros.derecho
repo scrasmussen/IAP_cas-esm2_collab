@@ -3,9 +3,9 @@
 # SVN $URL: https://svn-ccsm-models.cgd.ucar.edu/scripts/branch_tags/cesm1_0_rel_tags/cesm1_0_3_n02_scripts4_110531b/ccsm_utils/Machines/Macros.cppdefs $
 #===============================================================================
 # set CPP options (must use this before any flags or cflags settings)
-# Scripts build: this file is prepended to the $CASEROOT/Macros.machine file 
+# Scripts build: this file is prepended to the $CASEROOT/Macros.machine file
 # by create_newcase
-# Cam build: this file is prepended to the $cam_bld/Macros file 
+# Cam build: this file is prepended to the $cam_bld/Macros file
 # by cam's configure
 #===============================================================================
 
@@ -53,7 +53,7 @@ endif
 ifeq ($(strip $(COMP_WRF)),wrf)
    CPPDEFS += -DWRF
 endif
-# Set config args for pio and mct to blank and then enable serial 
+# Set config args for pio and mct to blank and then enable serial
 # if USE_MPISERIAL (in env_conf) is set
 CONFIG_ARGS :=
 ifeq ($(USE_MPISERIAL),TRUE)
@@ -68,53 +68,50 @@ endif
 #===============================================================================
 # The following always need to be set
 # SPMD             Whether to build in SPMD mode or not.  [values TRUE FALSE]
-# SMP              Set to TRUE to enable building in SMP mode (uses OpenMP).  
+# SMP              Set to TRUE to enable building in SMP mode (uses OpenMP).
 # USER_CPPDEFS     CPP definitions (non platform dependent)
 #
 #===============================================================================
 
 # Note that CPPDEFS is set in Macros.cppdefs
-CPPDEFS += -DLINUX -DSEQ_$(FRAMEWORK) -DFORTRANUNDERSCORE -DNO_R16 -DNO_SHR_VMATH 
+CPPDEFS += -DLINUX -DSEQ_$(FRAMEWORK) -DFORTRANUNDERSCORE -DNO_R16 -DNO_SHR_VMATH
 
 ifeq ($(compile_threaded), true)
    CPPDEFS += -DTHREADED_OMP
 endif
 
 ifeq ($(USE_MPISERIAL),TRUE)
-   FC            := ifort 
-   CC            := icc 
+   FC            := ftn
+   CC            := cc
 else
-#   FC            := mpif90
-   FC            := ifort
-#   CC            := mpicc
-   CC            := icc 
+   FC            := mpif90
+   CC            := mpicc
 endif
 
 #=====================================================
 # GENERIC_USER
 # The netcdf and mpi paths need to be set somewhere.  In CESM, this
 # is normally done by setting the NETCDF_PATH and MPICH_PATH
-# variables in this Macros file.  But they could also be set in the 
-# default user paths, by an explicit addition to the local path 
-# in the env_mach_specific file, or via setting NETCDF_PATH 
-# and MPICH_PATH environment variables in the env_mach_specific file.  
+# variables in this Macros file.  But they could also be set in the
+# default user paths, by an explicit addition to the local path
+# in the env_mach_specific file, or via setting NETCDF_PATH
+# and MPICH_PATH environment variables in the env_mach_specific file.
 # Also, review the relative paths of the INC_, LIB_, and MOD_ paths
 # below.  Ignore PNETCDF stuff initially, it's not required.
 
 ifeq ($(strip $(NETCDF_PATH)),)
-# NETCDF_PATH   := /glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/17.0.1
- NETCDF_PATH   := /glade/u/apps/ch/opt/netcdf/4.7.4/intel/19.0.5/
+NETCDF_PATH   := $(nf-config --prefix)
 endif
-INC_NETCDF    := $(NETCDF_PATH)/include
-LIB_NETCDF    := $(NETCDF_PATH)/lib -lnetcdff -lnetcdf
-MOD_NETCDF    := $(NETCDF_PATH)/include
+INC_NETCDF    := $(nf-config --includedir)
+LIB_NETCDF    := $(nf-config --flibs)
+MOD_NETCDF    := $(nf-config --includedir)
 ifeq ($(strip $(MPICH_PATH)),)
 #MPICH_PATH := /opt/sgi/mpt/mpt-2.15
 MPICH_PATH := /glade/u/apps/ch/opt/mpt/2.22
 endif
 ifeq ($(USE_MPISERIAL),TRUE)
    INC_MPI    := $(CODEROOT)/utils/mct/mpi-serial
-   LIB_MPI    := 
+   LIB_MPI    :=
 else
    LIB_MPI    := $(MPICH_PATH)/lib
    INC_MPI    := $(MPICH_PATH)/include
@@ -122,12 +119,12 @@ endif
 MPI_LIB_NAME  := mpi
 PNETCDF_PATH  :=
 INC_PNETCDF   :=
-LIB_PNETCDF   := 
-LAPACK_LIBDIR := 
+LIB_PNETCDF   :=
+LAPACK_LIBDIR :=
 #=====================================================
 
-CFLAGS        := $(CPPDEFS) -m64 
-FIXEDFLAGS    := -132 
+CFLAGS        := $(CPPDEFS) -m64
+FIXEDFLAGS    := -132
 FREEFLAGS     := -FR
 #FFLAGS        := $(CPPDEFS) -no-prec-div -traceback -convert big_endian -fp-model source  -assume byterecl -ftz  -traceback -m64 -shared-intel -mcmodel=large -safe-cray-ptr
 FFLAGS        := $(CPPDEFS)  -no-prec-div -traceback -convert big_endian -fp-model source  -assume byterecl -ftz   -m64  -mcmodel=large -safe-cray-ptr
@@ -146,7 +143,7 @@ CONFIG_SHELL  :=
 # Set include paths (needed after override for any model specific builds below)
 #===============================================================================
 
-INCLDIR := -I. 
+INCLDIR := -I.
 ifneq ($(strip $(INC_NETCDF)),)
 INCLDIR += -I$(INC_NETCDF)
 endif
@@ -155,7 +152,7 @@ INCLDIR += -I$(MOD_NETCDF)
 endif
 ifneq ($(strip $(INC_MPI)),)
 INCLDIR += -I$(INC_MPI)
-endif 
+endif
 ifneq ($(strip $(INC_PNETCDF)),)
 INCLDIR += -I$(INC_PNETCDF)
 endif
@@ -209,9 +206,8 @@ endif
 ifeq ($(MODEL),pio)
   ifneq ($(strip $(PIO_CONFIG_OPTS)),)
     CONFIG_ARGS += $(PIO_CONFIG_OPTS)
-  endif 
+  endif
   #CONFIG_ARGS += MPIF90="mpif90" CC="$(CC)" F90="$(FC)" NETCDF_PATH="$(NETCDF_PATH)" MPI_INC="-I$(INC_MPI)"
   CONFIG_ARGS += MPIF90="$(FC)" MPICC="$(CC)" CC="$(CC)" F90="$(FC)" NETCDF_PATH="$(NETCDF_PATH)" MPI_INC="-I$(INC_MPI)"
 endif
 #=====================================================
-

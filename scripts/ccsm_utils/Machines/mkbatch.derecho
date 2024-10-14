@@ -1,6 +1,6 @@
 #! /bin/csh -f
 
-set mach = cheyenne
+set mach = derecho
 
 #################################################################################
 if ($PHASE == set_batch) then
@@ -65,7 +65,7 @@ cat >> ${CASEROOT}/${CASE}.${MACH}.run << EOF1
 
 sleep 25
 cd \$RUNDIR
-echo "\`date\` -- CSM EXECUTION BEGINS HERE" 
+echo "\`date\` -- CSM EXECUTION BEGINS HERE"
 
 #===============================================================================
 # GENERIC_USER
@@ -88,7 +88,7 @@ else
 endif
 
 wait
-echo "\`date\` -- CSM EXECUTION HAS FINISHED" 
+echo "\`date\` -- CSM EXECUTION HAS FINISHED"
 
 EOF1
 
