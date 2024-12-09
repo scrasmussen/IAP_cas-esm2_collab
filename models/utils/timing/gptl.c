@@ -17,7 +17,7 @@
 #include <assert.h>
 
 #ifndef HAVE_C99_INLINE
-#define inline 
+#define inline
 #endif
 
 #ifdef LINUX
@@ -2153,7 +2153,7 @@ static int merge_thread_data()
             sort[t][k] = timerlist[t] + x;
             x += length;
         }
-        qsort( sort[t], count[t], sizeof(char*), cmp );
+        qsort( sort[t], count[t], sizeof(char*), (int (*)(const void *, const void *))cmp );
     }
 
     newtimers = GPTLallocate( max_count * sizeof(char*) );
@@ -2184,7 +2184,7 @@ static int merge_thread_data()
             }
         }
 
-        while( n < count[t] ) { /*adds any remaining timers, since we know that all the rest 
+        while( n < count[t] ) { /*adds any remaining timers, since we know that all the rest
 								are new since have checked all master thread timers*/
             newtimers[num_newtimers] = sort[t][n];
             num_newtimers++;
@@ -2192,8 +2192,8 @@ static int merge_thread_data()
         }
 
         if( num_newtimers ) {
-	        qsort( newtimers, num_newtimers, sizeof(char*), ncmp ); /*sorts by memory address to restore original order*/
-	 
+	        qsort( newtimers, num_newtimers, sizeof(char*), (int (*)(const void *, const void *))ncmp ); /*sorts by memory address to restore original order*/
+
 
 	       /*reallocate memory to hold additional timers*/
             if( !( sort[0] = realloc( sort[0], sizeof(char*) * (count[0] + num_newtimers) ) ) )
@@ -2213,7 +2213,7 @@ static int merge_thread_data()
                sort[0][k] = timerlist[0] + x;
                x += length;
             }
-            qsort( sort[0], count[0], sizeof(char*), cmp );
+            qsort( sort[0], count[0], sizeof(char*), (int (*)(const void *, const void *)) cmp );
 
         }
     }
@@ -2337,8 +2337,8 @@ static Summarystats * collect_data( const int iam, int comm,
             x += MAX_CHARS + 1;
           }
 
-          qsort( sort_master, *count, sizeof(char*), cmp );
-          qsort( sort_slave, count_slave, sizeof(char*), cmp );
+          qsort( sort_master, *count, sizeof(char*), (int (*)(const void *, const void *))cmp );
+          qsort( sort_slave, count_slave, sizeof(char*), (int (*)(const void *, const void *))cmp );
 
           num_newtimers = 0;
           n = 0;
@@ -2374,7 +2374,7 @@ static Summarystats * collect_data( const int iam, int comm,
             n++;
           }
 
-          qsort( newtimers, num_newtimers, sizeof(char*), ncmp ); /*sorts by memory address to get original order */
+          qsort( newtimers, num_newtimers, sizeof(char*), (int (*)(const void *, const void *))ncmp ); /*sorts by memory address to get original order */
 
           /*reallocates to hold new timer names and summary stats from slave */
           if( !(timerlist[0] = realloc( timerlist[0], sizeof(char) * length * (*count + num_newtimers) ) ) )
