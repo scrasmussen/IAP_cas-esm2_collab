@@ -270,7 +270,8 @@ subroutine zyx1_conv_tend(lchnk      ,ncol    ,nstep            , &
                     lat     ,lon     ,landfrac,lhflx   ,shflx   , & 
                     psrf    ,bfls_t  ,bfls_q                    , &
                     omega   ,tpert2  ,qpert2  ,gradt   ,gradq   , &  
-                    vort3   ,tke     ,massflxbase_p             , &                                    mcon    ,cme     ,cape                      , & 
+                    vort3   ,tke     ,massflxbase_p             , &
+                    mcon    ,cme     ,cape                      , &
                     dlf     ,pflx    ,zdu     ,rprd             , &
                     mu      ,md      ,du      ,eu      ,ed      , &
                     dp      ,dsubcld ,jt      ,maxg    ,ideep   , &
