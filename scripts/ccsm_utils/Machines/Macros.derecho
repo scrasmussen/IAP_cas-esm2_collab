@@ -100,11 +100,21 @@ endif
 # below.  Ignore PNETCDF stuff initially, it's not required.
 
 ifeq ($(strip $(NETCDF_PATH)),)
-NETCDF_PATH   := $(nf-config --prefix)
+NETCDF_PATH   := $(nf-config --prefix) $(nc-config --prefix)
 endif
-INC_NETCDF    := $(nf-config --includedir)
-LIB_NETCDF    := $(nf-config --flibs)
-MOD_NETCDF    := $(nf-config --includedir)
+
+# ------
+# The INC_NETCDF, LIB_NETCDF, MOD_NETCDF have to be handled manually if the
+# NetCDF C and Fortran builds are in different locations
+# ------
+# NOTE: the first -I for INC_NETCDF is included later but the second -I needs to be added manually
+# INC_NETCDF    := $(nf-config --includedir) $(nc-config --includedir)
+INC_NETCDF    := /glade/work/epicufsrt/contrib/spack-stack/derecho/spack-stack-1.6.0/envs/unified-env/install/intel/2021.10.0/netcdf-fortran-4.6.1-bds4ndu/include -I/glade/work/epicufsrt/contrib/spack-stack/derecho/spack-stack-1.6.0/envs/unified-env/install/intel/2021.10.0/netcdf-c-4.9.2-njuismn/include
+# NOTE: the first -L for LIB_NETCDF is included later so remove it here
+# LIB_NETCDF    := $(nf-config --flibs) $(nc-config --libs)
+LIB_NETCDF    := /glade/work/epicufsrt/contrib/spack-stack/derecho/spack-stack-1.6.0/envs/unified-env/install/intel/2021.10.0/netcdf-fortran-4.6.1-bds4ndu/lib -lnetcdff -lnetcdf -lnetcdf -lm -L/glade/work/epicufsrt/contrib/spack-stack/derecho/spack-stack-1.6.0/envs/unified-env/install/intel/2021.10.0/netcdf-c-4.9.2-njuismn/lib -lnetcdf
+# MOD_NETCDF    := $(nf-config --includedir) $(nc-config --includedir)
+MOD_NETCDF    := /glade/work/epicufsrt/contrib/spack-stack/derecho/spack-stack-1.6.0/envs/unified-env/install/intel/2021.10.0/netcdf-fortran-4.6.1-bds4ndu/include -I/glade/work/epicufsrt/contrib/spack-stack/derecho/spack-stack-1.6.0/envs/unified-env/install/intel/2021.10.0/netcdf-c-4.9.2-njuismn/include
 ifeq ($(strip $(MPICH_PATH)),)
 #MPICH_PATH := /opt/sgi/mpt/mpt-2.15
 MPICH_PATH := /glade/u/apps/ch/opt/mpt/2.22
