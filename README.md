@@ -53,5 +53,16 @@ $ ./FAMIPC5_FD14.derecho.build
 
 ### Run Case
 ```
+Change to scratch directory then enter testcase run directory
+
+$ cd FAMIPC5_FD14/run
+
+Create directory for timing and checkpoint information to be written to
+$ mkdir -p timing/checkpoints
+
+Run testcase
+$ mpiexec -np 128 ./ccsm.exe &> log.txt
 
 ```
+
+# Adding CCPP Physics Schemes
