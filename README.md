@@ -2,7 +2,19 @@
 This repository contains the model source code and scripts for the IAP CCPP project.
 The initial code commit is based on tarfiles received in early 2020 by Lulin from IAP.
 
+## Resources
+- [Description and Climate Simulation Performance of CAS-ESM Version 2](https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2020MS002210) paper
+- [CCPP Documentation](https://ccpp-techdoc.readthedocs.io)
+- CCPP Codebases
+  - [CCPP Physics](https://github.com/NCAR/ccpp-physics)
+  - [CCPP Framework](https://github.com/NCAR/ccpp-framework)
 
+
+The Community Earth System Model (CESM) Coupler infrastructure is used and the CESM1.0 documentation can be useful.
+- [CESM1.0 Documenation](https://www2.cesm.ucar.edu/models/cesm1.0/cesm/)
+
+
+# Building and Running the Model
 ## Prerequisites
 - C and Fortran Compiler
 - NetCDF
@@ -14,12 +26,19 @@ After cloning the repository retrieve CCPP Framework and CCPP-Physics repos.
 $ git submodule update --init --recursive
 ```
 
+### Setup Machine
+Make sure the machine being used is listed under `scripts/ccsm_utils/Machines/` as `Macros.mach` where `mach` is the name of the machine
+If the machine in not listed the user will need to create the setup for a new machine by following the CESM1.0 [Porting to a new machine](https://www2.cesm.ucar.edu/models/cesm1.0/cesm/cesm_doc_1_0_6/c2239.html) documentation.
+
 ### Setup and Build Case
 ```
-Setup Environment
-export NETCDF_PATH=$NETCDF
+Source and setup environment variables
+$ . scripts/ccsm_utils/Machines/env_machopts.machine_name
 
-Switch to CCPP
+If Macros.mach file doesn't handle everything export needed values
+$ export NETCDF_PATH=$NETCDF
+
+Switch to CCPP to run CCPP Framework Prebuild steps, required everytime subroutines change
 $ ./switch_to_ccpp.sh
 $ cd scripts
 
@@ -65,4 +84,19 @@ $ mpiexec -np 128 ./ccsm.exe &> log.txt
 
 ```
 
-# Adding CCPP Physics Schemes
+# Background Information
+<TODO>
+
+
+## Adding CCPP Physics Schemes
+<TODO>
+The following is a guide on adding a CCPP physics scheme.
+The [CCPP Documentation](https://ccpp-techdoc.readthedocs.io/en/v7.0.0/) has the most indepth information on this process and might be useful.
+
+
+### Instructions
+<TODO>
+Setting up a physics suite for use with the CCPP framework involves three steps:
+ - preparing data to be made available to physics through the CCPP
+ - running the ccpp_prebuild.py script to reconcile SCM-provided variables with physics-required variables
+ - preparing a suite definition file.
