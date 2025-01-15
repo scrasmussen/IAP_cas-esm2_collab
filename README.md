@@ -1,6 +1,6 @@
 # IAP_cas-esm2
 This repository contains the model source code and scripts for the IAP CCPP project.
-The initial code commit is based on tarfiles received in early 2020 by Lulin from IAP.
+The initial code commit is based on tarfiles received in early 2020 by Lulin from Institute of Atmospheric Physics (IAP).
 
 ## Resources
 - [Description and Climate Simulation Performance of CAS-ESM Version 2](https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2020MS002210) paper
@@ -8,7 +8,7 @@ The initial code commit is based on tarfiles received in early 2020 by Lulin fro
 - CCPP Codebases
   - [CCPP Physics](https://github.com/NCAR/ccpp-physics)
   - [CCPP Framework](https://github.com/NCAR/ccpp-framework)
-
+- [CAM5 Scientific Documentation](https://ncar.github.io/CAM/doc/build/html/cam5_scientific_guide/index.html)
 
 The Community Earth System Model (CESM) Coupler infrastructure is used and the CESM1.0 documentation can be useful.
 - [CESM1.0 Documenation](https://www2.cesm.ucar.edu/models/cesm1.0/cesm/)
@@ -84,19 +84,40 @@ $ mpiexec -np 128 ./ccsm.exe &> log.txt
 
 ```
 
-# Background Information
-<TODO>
 
 
-## Adding CCPP Physics Schemes
-<TODO>
-The following is a guide on adding a CCPP physics scheme.
-The [CCPP Documentation](https://ccpp-techdoc.readthedocs.io/en/v7.0.0/) has the most indepth information on this process and might be useful.
+# Directory Structure
+Note, the whole directory structure is not shown, just a few directories important for this project.
+```
+IAP_cas-esm2/
+├──models/
+│   └──atm/iap
+│       ├──ccpp/
+│       │   ├──config/
+│       │   ├──framework/
+│       │   ├──physics/
+│       │   └──suites/
+│       └──src/
+│           ├──physics/
+│           └──dynamics/
+└──scripts/
+    ├──SourceMods/
+    └──ccsm_utils/
+```
+
+<!-- # Background Information -->
+<!-- <TODO> -->
 
 
-### Instructions
-<TODO>
-Setting up a physics suite for use with the CCPP framework involves three steps:
- - preparing data to be made available to physics through the CCPP
- - running the ccpp_prebuild.py script to reconcile SCM-provided variables with physics-required variables
- - preparing a suite definition file.
+<!-- ## Adding CCPP Physics Schemes -->
+<!-- <TODO> -->
+<!-- The following is a guide on adding a CCPP physics scheme. -->
+<!-- The [CCPP Documentation](https://ccpp-techdoc.readthedocs.io/en/v7.0.0/) has the most indepth information on this process and might be useful. -->
+
+
+<!-- ### Instructions -->
+<!-- <TODO> -->
+<!-- Setting up a physics suite for use with the CCPP framework involves three steps: -->
+<!--  - preparing data to be made available to physics through the CCPP -->
+<!--  - running the ccpp_prebuild.py script to reconcile SCM-provided variables with physics-required variables -->
+<!--  - preparing a suite definition file. -->
