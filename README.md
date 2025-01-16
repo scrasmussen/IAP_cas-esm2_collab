@@ -132,14 +132,16 @@ IAP_cas-esm2/
 
 | IAP Schemes Added to CCPP Physics |
 |-----------------------------------|
+|-----------------------------------|
 | Zhang-McFarlane convection scheme |
 
 
 
 | CCPP Physics Scheme Name              |
 |---------------------------------------|
+|---------------------------------------|
 | IAP's Zhang-McFarlane deep convection |
-|                                       |
+
 
 ### ZM CCPP Complient Notes
 The following is a rough guide for how the IAP's ZM convection scheme was
@@ -150,6 +152,24 @@ a near identical version of CAM's `zm_conv.F90`, found in `models/atm/cam/src/ph
 A copy of the ZM convection scheme was made CCPP complient and named
 `zm_convr.F90` and can be found in a fork of the CCPP Physics repository, in
 the branch [feature/iap_dom](https://github.com/NCAR/ccpp-physics/compare/main...climbfuji:ccpp-physics:feature/iap_dom).
+
+The following files were added to CCPP Physics
+| files                      | .meta file | from                            |
+|----------------------------|------------|---------------------------------|
+| `cldwat_ccpp.F90`          | no         | `physics/cam/cldwat.F90`        |
+| `iap_ptend_sum.F90`        | no         | `physics/cam/physics_types.F90` |
+| `iap_state_update.F90`     | no         | `physics/cam/physics_types.F90` |
+| `zm_conv_all_post.F90`     | yes        |                                 |
+| `zm_conv_common.F90`       | no         |                                 |
+| `zm_conv_convtran.F90`     | yes        |                                 |
+| `zm_conv_evap.F90`         | yes        |                                 |
+| `zm_conv_evap_post.F90`    | yes        |                                 |
+| `zm_conv_momtran.F90`      | yes        |                                 |
+| `zm_conv_momtran_post.F90` | yes        |                                 |
+| `zm_convr.F90`             | yes        | `physics/cam/zm_conv.F90`       |
+| `zm_convr_post.F90`        | yes        |                                 |
+
+
 This CCPP complient ZM version is then brought back into the IAP physics as an
 example of how to integrate CCPP physics scheme into IAP's.
 The CCPP complient ZM version is tested in `ccpp_IAP_test_test1_cap.F90`
@@ -157,25 +177,31 @@ The CCPP complient ZM version is tested in `ccpp_IAP_test_test1_cap.F90`
 `#ifdef CCPP` macros have been added to the following files in `models/atm/iap/src/physics`
 | files                   | changes                                                    |
 |-------------------------|------------------------------------------------------------|
-| `./initindx.F90`        | `use physics_register,   only: convect_deep_register`      |
-| `./buffer.F90`          | `real(r8), allocatable, target, dimension(:,:) :: &`       |
+| `./initindx.F90`        |                                                            |
+|                         | `use physics_register,   only: convect_deep_register`      |
+| `./buffer.F90`          |                                                            |
+|                         | `real(r8), allocatable, target, dimension(:,:) :: &`       |
 |                         | `pblht, tpert, tpert2, qpert2`                             |
 |                         | `real(r8), allocatable, target, dimension(:,:,:) :: &`     |
 |                         | `qpert`                                                    |
-| `./cam_diagnostics.F90` | `use phys_control, only: cam_physpkg_is`                   |
+| `./cam_diagnostics.F90` |                                                            |
+|                         | `use phys_control, only: cam_physpkg_is`                   |
 |                         | `public: diag_tphysbc`                                     |
 |                         | `character(len=16) :: deep_scheme`                         |
 |                         | ZM case to add variables using `cam_history`'s `addfld`    |
 |                         | subroutine `diag_tphysbc` for output                       |
-| `./tphysbc.F90`         | `cam_out, cam_in` arguments to `tphysbc` subroutine        |
+| `./tphysbc.F90`         |                                                            |
+|                         | `cam_out, cam_in` arguments to `tphysbc` subroutine        |
 |                         | `use ccpp_data,       only: phys_int_ephem`                |
 |                         | `use ccpp_static_api, only: ccpp_physics_run`              |
 |                         | `use ccpp_types,      only: ccpp_t`                        |
 |                         | call `ccpp_physics_run` and copy data back to IAP vars     |
 |                         | - do this for `convect_deep_tend, convect_deep_tend2`      |
-| `./runtime_opts.F90`    | `call cldwat_readnl_ccpp(nlfilename)`                      |
+| `./runtime_opts.F90`    |                                                            |
+|                         | `call cldwat_readnl_ccpp(nlfilename)`                      |
 |                         | `subroutine zmconv_readnl`                                 |
-| `./physpkg.F90`         | this file provides the interface for CAM physics packages  |
+| `./physpkg.F90`         |                                                            |
+|                         | this file provides the interface for CAM physics packages  |
 |                         | subroutines in the `physpkg` module are                    |
 |                         | - `phys_inidat`                                            |
 |                         | - `phys_init`                                              |
