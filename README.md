@@ -132,13 +132,11 @@ IAP_cas-esm2/
 
 | IAP Schemes Added to CCPP Physics |
 |-----------------------------------|
-|-----------------------------------|
 | Zhang-McFarlane convection scheme |
 
 
 
 | CCPP Physics Scheme Name              |
-|---------------------------------------|
 |---------------------------------------|
 | IAP's Zhang-McFarlane deep convection |
 
