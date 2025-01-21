@@ -24,7 +24,7 @@ cd $BASEDIR/models/atm/iap/ccpp/physics/physics/
 # cp -av  cldwat_ccpp.F90 dummy_loop.F90 iap_* zm_conv*F90 ../../../src/physics/
 cp -av  cldwat_ccpp.F90 iap_* zm_conv*F90 ../../../src/physics/
 
-cd $BASEDIR/scripts/FAMIPC5_FD14
-
-./FAMIPC5_FD14.derecho.clean_build
-./FAMIPC5_FD14.derecho.build
+echo "Now go to scripts/ directory and setup and build case, see README"
+# cd $BASEDIR/scripts/FAMIPC5_FD14
+# ./FAMIPC5_FD14.derecho.clean_build
+# ./FAMIPC5_FD14.derecho.build
