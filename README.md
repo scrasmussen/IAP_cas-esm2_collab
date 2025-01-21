@@ -70,7 +70,10 @@ $ ./FAMIPC5_FD14.derecho.build
 
 NOTE: During this process the pio library might fail to build. The build does
   not fail gracefully, meaning if you fix the issue reported in the log, the
-  user might need to clean the build and try again.
+  user might need to clean the build and try again. The user might need to go
+  to the BUILD/pio/ directory and manually run ./configure to find why the
+  build process is failing. The configure.status file will not be created
+  until ./configure successfully runs.
   - File models/utils/pio/configure was changed to handle when NetCDF C and
     NetCDF Fortran are installed in different directories.
     Variables netcdf_c_ROOT and netcdf_fortran_ROOT will be automatically set
