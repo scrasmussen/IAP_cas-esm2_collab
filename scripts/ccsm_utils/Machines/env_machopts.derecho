@@ -1,37 +1,25 @@
-#! /bin/csh -f
-
-#-------------------------------------------------------------------------------
-# GENERIC_USER
-# Platform-specific software versions/locations are set here.  This
-# might be done via modules or updates to the user PATH.  Some env
-# variables might also be set here for use in the Macros file.  Some
-# of the things that might be important here are compiler versions or
-# mpi and netcdf paths.  Samples are commented out below.
-#-------------------------------------------------------------------------------
+#!/bin/csh -f
 
 #--- set modules
-#source /usr/Modules/init/csh
-#module purge
-#module load openmpi/1.2.8-intel
-#module load netcdf/4.0-intel
-#module list
+# The default modules on Derecho will work
+
+# The following is from the CCPP SCM Repo if a user want to enter the
+# following from the terminal to load their modules
+# $ module purge
+# $ module use path_to_repo/scm/etc/modules
+# $ module load derecho_intel
 
 #--- set paths
-#setenv INTEL_PATH /usr/local/intel-cluster-3.2.02
-if ($USE_MPISERIAL == "FALSE") then
-   #setenv MPICH_PATH /usr/local/mpich-1.2.7p1-intel-3.2.02
+if ($?netcdf_fortran_ROOT) then
+   setenv NETCDF $netcdf_fortran_ROOT
 endif
-#setenv PATH ${INTEL_PATH}/fc/11.0.074/bin/intel64:${INTEL_PATH}/cc/11.0.074/bin/intel64:${MPICH_PATH}/bin:${PATH}
-#setenv LD_LIBRARY_PATH ${INTEL_PATH}/cc/11.0.074/lib/intel64:${INTEL_PATH}/fc/11.0.074/lib/intel64:${LD_LIBRARY_PATH}
 
-#--- set env variables for Macros if needed
-#setenv NETCDF_PATH something
+setenv NETCDF_PATH $NETCDF
+set LIB_NETCDF = "`nf-config --flibs` `nc-config --libs`"
+setenv LIB_NETCDF "$LIB_NETCDF"
 
-#-------------------------------------------------------------------------------
-# GENERIC_USER
-# Machine specific environment variables are set here.  This might be needed
-# to set MPI, core file, IO,  memory or many other things.  
-#-------------------------------------------------------------------------------
+# # if ($USE_MPISERIAL == "FALSE") then
+#    #export MPICH_PATH /usr/local/mpich-1.2.7p1-intel-3.2.02
+# # endif
 
-#setenv P4_GLOBMEMSIZE 500000000
-
+# #--- set env variables for Macros if needed

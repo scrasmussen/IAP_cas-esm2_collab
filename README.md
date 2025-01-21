@@ -34,6 +34,7 @@ If the machine in not listed the user will need to create the setup for a new ma
 ```
 Source and setup environment variables
 $ . scripts/ccsm_utils/Machines/env_machopts.machine_name
+$ export DIN_LOC_ROOT=path/to/iap/inputdata
 
 If Macros.mach file doesn't handle everything export needed values
 $ export NETCDF_PATH=$NETCDF
@@ -61,13 +62,20 @@ $ ./configure -case
 
 Remove "bnd_topo2 =..." line from Buildconf/cam.input_data_list
 NOTE: On Derecho the NetCDF C and Fortran builds are in different locations.
-  1. File models/utils/pio/configure was changed to handle environment
-     variables netcdf_c_ROOT and netcdf_fortran_ROOT
-  2. File scripts/ccsm_utils/Machines/Macros.derecho was changed to handle
+  1. File scripts/ccsm_utils/Machines/Macros.derecho was changed to handle
      NetCDF environment variables when C and Fortran installs are in different
      locations
 
 $ ./FAMIPC5_FD14.derecho.build
+
+NOTE: During this process the pio library might fail to build. The build does
+  not fail gracefully, meaning if you fix the issue reported in the log, the
+  user might need to clean the build and try again.
+  - File models/utils/pio/configure was changed to handle when NetCDF C and
+    NetCDF Fortran are installed in different directories.
+    Variables netcdf_c_ROOT and netcdf_fortran_ROOT will be automatically set
+    if they are not defined.
+
 ```
 
 ### Run Case

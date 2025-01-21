@@ -7749,14 +7749,19 @@ fi
 
 if test "$USE_NETCDF" = "yes"
   then
-#        if test -n "$NETCDF_PATH"
-#          then echo "using NETCDF_PATH from environment"
-#          else NETCDF_PATH=/usr/local/netcdf
-#               { echo "$as_me:$LINENO: WARNING: NETCDF_PATH not found in environment, \
-#                            defaulting to $NETCDF_PATH" >&5
-# echo "$as_me: WARNING: NETCDF_PATH not found in environment, \
-#                            defaulting to $NETCDF_PATH" >&2;}
-#        fi
+       # this was changed to handle when NetCDF has installed the C and Fortran
+       # locations in different directories
+       if test -n "$NETCDF_PATH"
+         then echo "using NETCDF_PATH from environment"
+       else
+           NETCDF_PATH=$NETCDF
+       fi
+       if [ -z "${netcdf_c_ROOT}" ]; then
+           netcdf_c_ROOT="${NETCDF_PATH}"
+       fi
+       if [ -z "${netcdf_fortran_ROOT}" ]; then
+           netcdf_fortran_ROOT="${NETCDF_PATH}"
+       fi
 
        PDEFS="$PDEFS -D_NETCDF"
        PINCS="$PINCS -I$netcdf_c_ROOT/include -I$netcdf_fortran_ROOT/include "
@@ -9438,7 +9443,3 @@ echo Have a nice day!
 
 # test -z is true for empty strings
 # test -n is true for non-empty strings
-
-
-
-
