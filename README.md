@@ -54,8 +54,8 @@ $ ./create_newcase \
     -din_loc_root_csmdata path/to/inputdata
 
 
-Need to give that configre the correct permissions to run
-$ chmod +x /glade/work/soren/src/ccpp/iap/iap_cas-esm2/models/atm/cam/bld/configure
+Need to give that configure the correct permissions to run
+$ chmod +x [base directory]/models/atm/cam/bld/configure
 $ cd FAMIPC5_FD14
 $ ./configure -case
 
