@@ -35,6 +35,7 @@ cat >! $CASEROOT/${CASE}.${mach}.run << EOF1
 ##PBS -q ${qname}
 ##PBS -l nodes=${nodes}:ppn=${taskpernode}
 ##PBS -l walltime=${tlimit}
+##PBS -A CHANGE_TO_ACCOUNT_NUMBER
 ##PBS -r n
 ##PBS -j oe
 ##PBS -S /bin/csh -V
