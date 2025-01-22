@@ -60,7 +60,10 @@ $ chmod +x [base directory]/models/atm/cam/bld/configure
 $ cd FAMIPC5_FD14
 $ ./configure -case
 
-Remove "bnd_topo2 =..." line from Buildconf/cam.input_data_list
+Remove "bnd_topo2 =..." line from Buildconf/cam.input_data_list with an editor
+or run the following command
+$ sed -i '/^bnd_topo2/d' Buildconf/cam.input_data_list
+
 NOTE: On Derecho the NetCDF C and Fortran builds are in different locations.
   1. File scripts/ccsm_utils/Machines/Macros.derecho was changed to handle
      NetCDF environment variables when C and Fortran installs are in different
