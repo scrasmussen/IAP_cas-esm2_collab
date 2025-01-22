@@ -92,6 +92,11 @@ NOTE: During this process the pio library might fail to build. The build does
 The bash script will handle the setup and running of the code and if preferable to manually running `mpiexec` but that option is explained below.
 
 ```
+To edit the namelists before running the user may need to change the
+to make those files writable
+$ cd scripts/FAMIPC5_FD14
+$ chmod +w CaseDocs/*
+
 Run as bash script
 $ ./FAMIPC5_FD14.derecho.run
 
