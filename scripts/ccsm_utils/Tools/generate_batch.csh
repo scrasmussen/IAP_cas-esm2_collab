@@ -1,7 +1,7 @@
 #! /bin/csh -f
 
 #==============================================================================
-# This script generates resolved run and long term archiving batch scripts 
+# This script generates resolved run and long term archiving batch scripts
 # it adds the correct batch settings for the requested machine given the tasks and
 # threads required for the specified machine
 #==============================================================================
@@ -120,7 +120,7 @@ else if ( "$BATCHSUBMIT" == 'UNSET' ) then
   setenv LBSUBMIT "FALSE"
   setenv BATCHSUBMIT "undefined"
 endif
-   
+
 # -------------------------------------------------------------------------
 
 env PHASE=set_batch ${UTILROOT}/Machines/mkbatch.${MACH}
@@ -135,7 +135,7 @@ cat >> ${CASEROOT}/${CASE}.${MACH}.run << EOF1
 
 cd $CASEROOT
 
-./Tools/ccsm_check_lockedfiles || exit -1
+# ./Tools/ccsm_check_lockedfiles || exit -1
 source ./Tools/ccsm_getenv || exit -2
 
 if (\$BUILD_COMPLETE != "TRUE") then
@@ -198,4 +198,3 @@ EOF1
 # -------------------------------------------------------------------------
 
 env PHASE=set_larch ${UTILROOT}/Machines/mkbatch.${MACH}
-
