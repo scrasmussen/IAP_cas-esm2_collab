@@ -4,10 +4,11 @@ set -e -x
 
 export BASEDIR=$(pwd)
 
-# sed -i 's/#CPPDEFS += -DCCPP/CPPDEFS += -DCCPP/g' Macros.derecho
-# grep -e 'CPPDEFS += -DCCPP' Macros.derecho
-cd $BASEDIR/models/atm/iap
+cd $BASEDIR/scripts/ccsm_utils/Machines/
+sed -i 's/#CPPDEFS += -DCCPP/CPPDEFS += -DCCPP/g' Macros.derecho
+grep -e 'CPPDEFS += -DCCPP' Macros.derecho
 
+cd $BASEDIR/models/atm/iap
 ./ccpp/framework/scripts/ccpp_prebuild.py --config ./ccpp/config/ccpp_prebuild_config.py --debug --verbose 2>&1 | tee ccpp_prebuild.log
 
 rsync -av bld/ccpp/physics/ src/dynamics/physics/
@@ -24,7 +25,7 @@ cd $BASEDIR/models/atm/iap/ccpp/physics/physics/
 # cp -av  cldwat_ccpp.F90 dummy_loop.F90 iap_* zm_conv*F90 ../../../src/physics/
 cp -av  cldwat_ccpp.F90 iap_* zm_conv*F90 ../../../src/physics/
 
-echo "Now go to scripts/ directory and setup and build case, see README"
+echo "Now go to scripts/ directory to setup and build case, see README"
 # cd $BASEDIR/scripts/FAMIPC5_FD14
 # ./FAMIPC5_FD14.derecho.clean_build
 # ./FAMIPC5_FD14.derecho.build
