@@ -85,6 +85,8 @@ NOTE: During this process the pio library might fail to build. The build does
 ```
 
 ### Run Case
+The bash script will handle the setup and running of the code and if preferable to manually running `mpiexec` but that option is explained below.
+
 ```
 Run as bash script
 $ ./FAMIPC5_FD14.derecho.run
@@ -94,15 +96,16 @@ OR
 Submit as batch script after modifying to match the user's system
 $ qsub ./FAMIPC5_FD14.derecho.run
 
-<!-- Change to scratch directory then enter testcase run directory -->
+OR
 
-<!-- $ cd FAMIPC5_FD14/run -->
+Change to scratch directory then enter testcase run directory
+$ cd [scratch_directory]/FAMIPC5_FD14/run
 
-<!-- Create directory for timing and checkpoint information to be written to -->
-<!-- $ mkdir -p timing/checkpoints -->
+Create directory for timing and checkpoint information to be written to
+$ mkdir -p timing/checkpoints
 
-<!-- Run testcase -->
-<!-- $ mpiexec -np 128 ./ccsm.exe &> log.txt -->
+Run testcase
+$ mpiexec -np 128 ./ccsm.exe &> log.txt
 
 ```
 
