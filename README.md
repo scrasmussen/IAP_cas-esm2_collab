@@ -32,7 +32,7 @@ If the machine in not listed the user will need to create the setup for a new ma
 
 ### Setup and Build Case
 ```
-Source and setup environment variables
+Source and setup environment variables might be needed
 $ . scripts/ccsm_utils/Machines/env_machopts.machine_name
 $ export DIN_LOC_ROOT=path/to/iap/inputdata
 
@@ -41,6 +41,10 @@ $ export NETCDF_PATH=$NETCDF
 
 Switch to CCPP to run CCPP Framework Prebuild steps, required everytime subroutines change
 $ ./switch_to_ccpp.sh
+$ cd scripts
+
+User can also run without CCPP
+$ ./switch_to_no_ccpp.sh
 $ cd scripts
 
 Choose case from list of avaible cases
