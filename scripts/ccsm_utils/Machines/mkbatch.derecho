@@ -16,7 +16,7 @@ if ( $ntasks % ${MAX_TASKS_PER_NODE} > 0) then
   @ ntasks = $nodes * ${MAX_TASKS_PER_NODE}
 endif
 @ taskpernode = ${MAX_TASKS_PER_NODE} / ${maxthrds}
-set qname = batch
+set qname = main
 set tlimit = "00:59:00"
 
 #--- Job name is first fifteen characters of case name ---
@@ -79,9 +79,9 @@ if (\$USE_MPISERIAL == "FALSE") then
    # Usually it will just be mpiexec or mpirun...
    # Remove the echo and exit below when you've done so.
    #
-   echo "GENERIC_USER: Put the correct mpirun command in your *.run script, then remove this echo/exit"
-   exit 2
-   #mpiexec -n ${maxtasks} ./ccsm.exe >&! ccsm.log.\$LID
+   # echo "GENERIC_USER: Put the correct mpirun command in your *.run script, then remove this echo/exit"
+   # exit 2
+   mpiexec -np ${maxtasks} ./ccsm.exe >&! ccsm.log.\$LID
    #mpirun -np ${maxtasks} ./ccsm.exe >&! ccsm.log.\$LID
 else
                            ./ccsm.exe >&! ccsm.log.\$LID
