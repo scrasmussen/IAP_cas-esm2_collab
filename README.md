@@ -92,12 +92,13 @@ NOTE: During this process the pio library might fail to build. The build does
 The bash script will handle the setup and running of the code and if preferable to manually running `mpiexec` but that option is explained below.
 
 ```
-To edit the namelists before running the user may need to change the
-to make those files writable
-$ cd scripts/FAMIPC5_FD14
-$ chmod +w CaseDocs/*
+To edit the namelists before running the user may need to change to the
+run directory, for instanct to edit the number of days to run change
+the stop_n value in drv_in
+$ cd [SCRATCH_DIR]/FAMIPC5_FD14/run
+$ emacs drv_in
 
-Run as bash script
+Run as bash script from [project_dir]/scripts/FAMIPC5 directory
 $ ./FAMIPC5_FD14.derecho.run
 
 OR
@@ -170,9 +171,10 @@ IAP_cas-esm2/
 
 
 
-| CCPP Physics Scheme Name              |
-|---------------------------------------|
-| IAP's Zhang-McFarlane deep convection |
+| CCPP Physics Scheme Name                                         |
+|------------------------------------------------------------------|
+| IAP's Zhang-McFarlane deep convection                            |
+| scale-aware Simplified Arakawa-Schubert (sa-SAS) deep convection |
 
 
 ### ZM CCPP Complient Notes
