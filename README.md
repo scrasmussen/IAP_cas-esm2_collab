@@ -27,16 +27,22 @@ $ git submodule update --init --recursive
 ```
 
 ### Setup Machine
-Make sure the machine being used is listed under `scripts/ccsm_utils/Machines/` as `Macros.mach` where `mach` is the name of the machine
-If the machine in not listed the user will need to create the setup for a new machine by following the CESM1.0 [Porting to a new machine](https://www2.cesm.ucar.edu/models/cesm1.0/cesm/cesm_doc_1_0_6/c2239.html) documentation.
+Make sure the machine being used is listed under `scripts/ccsm_utils/Machines/`
+as `Macros.mach` where `mach` is the name of the machine
+If the machine in not listed the user will need to create the setup for a new
+machine by following the CESM1.0 [Porting to a new machine](https://www2.cesm.ucar.edu/models/cesm1.0/cesm/cesm_doc_1_0_6/c2239.html)
+documentation.
+The file `Macros.mach` sets variables like `FFLAGS` so if the user wants to
+switch compilers they will need to modify these flags.
+NOTE: The NetCDF macro values will most likely need to be updated by the user
+using the output from the `nc-config` and `nf-config` executables.
 
 ### Setup and Build Case
 ```
-Source and setup environment variables might be needed
-$ . scripts/ccsm_utils/Machines/env_machopts.machine_name
+Setup environment variables that aren't handled in Macros.mach
 $ export DIN_LOC_ROOT=path/to/iap/inputdata
 
-If Macros.mach file doesn't handle everything export needed values
+Variables that are used by every user can be updated in Macros.mach
 $ export NETCDF_PATH=$NETCDF
 
 Switch to CCPP to run CCPP Framework Prebuild steps, required everytime subroutines change
@@ -175,6 +181,33 @@ IAP_cas-esm2/
 |------------------------------------------------------------------|
 | IAP's Zhang-McFarlane deep convection                            |
 | scale-aware Simplified Arakawa-Schubert (sa-SAS) deep convection |
+
+
+### Adding a CCPP Physics Scheme to IAP
+The build system is setup to build all `.F90,.f90,.F,.f` files in the
+`modules/atm/iap/src/physics` directory so the easiest way to make sure CCPP
+physics files are compiled is to bring them over to that directory.
+The user could also instead edit the `models/atm/cam/bld/configure` file but
+this is much more complicated.
+
+#### Steps
+1. Create a symlink from `models/atm/iap/ccpp/physics/phyics/foo.F90` into
+   `models/atm/iap/src/physics`
+```
+$ cd models/atm/iap/src/physics
+$ ln -s ../../ccpp/physics/physics/foo.F90 .
+```
+2. Check corresponding `foo.meta` file for dependencies are create symlinks for
+   those as well. For the `sascnvn.F` file two additional dependency files were
+   needed. The following was use
+```
+$ ln -s ../../ccpp/physics/physics/sascnvn.F .
+$ ln -s ../../ccpp/physics/physics/machine.F .
+$ ln -s ../../ccpp/physics/physics/funcphys.f90 .
+$ ln -s ../../ccpp/physics/physics/physcons.F90 .
+```
+3. Add the symlinked files in the `models/atm/iap/src/physics` directory
+   to `.gitignore`
 
 
 ### ZM CCPP Complient Notes
