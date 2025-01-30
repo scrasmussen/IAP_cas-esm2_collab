@@ -831,12 +831,33 @@
   units = kg m-2
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
-  kind = shr_kind_r8  
+  kind = shr_kind_r8
 [vvl]
   standard_name = lagrangian_tendency_of_air_pressure
   long_name = layer mean vertical velocity
   units = Pa s-1
   dimensions = (horizontal_dimension,vertical_layer_dimension)
+  type = real
+  kind = shr_kind_r8
+[w_upi]
+  standard_name = vertical_velocity_for_updraft
+  long_name = vertical velocity for updraft
+  units = m s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = shr_kind_r8
+[u1]
+  standard_name = x_wind_of_new_state
+  long_name = zonal wind updated by physics
+  units = m s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = shr_kind_r8
+[v1]
+  standard_name = y_wind_of_new_state
+  long_name = meridional wind updated by physics
+  units = m s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = shr_kind_r8
 [pgcon_deep]
