@@ -70,9 +70,10 @@ $ chmod +x [base directory]/models/atm/cam/bld/configure
 $ cd FAMIPC5_FD14
 $ ./configure -case
 
-Remove "bnd_topo2 =..." line from Buildconf/cam.input_data_list with an editor
-or run the following command
-$ sed -i '/^bnd_topo2/d' Buildconf/cam.input_data_list
+<!-- NOT NEEDED ANYMORE -->
+<!-- Remove "bnd_topo2 =..." line from Buildconf/cam.input_data_list with an editor -->
+<!-- or run the following command -->
+<!-- $ sed -i '/^bnd_topo2/d' Buildconf/cam.input_data_list -->
 
 NOTE: On Derecho the NetCDF C and Fortran builds are in different locations.
   1. File scripts/ccsm_utils/Machines/Macros.derecho was changed to handle
@@ -91,11 +92,15 @@ NOTE: During this process the pio library might fail to build. The build does
     NetCDF Fortran are installed in different directories.
     Variables netcdf_c_ROOT and netcdf_fortran_ROOT will be automatically set
     if they are not defined.
+  - Once the user has debugged the cause they can edit
+    `scripts/ccsm_utils/Machines/env_machopts.[machine_name] for a more
+    permanent fix.
 
 ```
 
 ### Run Case
-The bash script will handle the setup and running of the code and if preferable to manually running `mpiexec` but that option is explained below.
+The bash script will handle the setup and running of the code and is preferable
+to manually running `mpiexec` but that option is explained below.
 
 ```
 To edit the namelists before running the user may need to change to the
@@ -103,8 +108,11 @@ run directory, for instanct to edit the number of days to run change
 the stop_n value in drv_in
 $ cd [SCRATCH_DIR]/FAMIPC5_FD14/run
 $ emacs drv_in
+```
 
-Run as bash script from [project_dir]/scripts/FAMIPC5 directory
+```
+Run as bash script from [project_dir]/scripts/FAMIPC5 directory using an
+interactive node if needed
 $ ./FAMIPC5_FD14.derecho.run
 
 OR
@@ -114,13 +122,10 @@ $ qsub ./FAMIPC5_FD14.derecho.run
 
 OR
 
-Change to scratch directory then enter testcase run directory
+Change to scratch directory with the testcase run directory, create directory
+for timing and checkpoint information to be written to, run testcase
 $ cd [scratch_directory]/FAMIPC5_FD14/run
-
-Create directory for timing and checkpoint information to be written to
 $ mkdir -p timing/checkpoints
-
-Run testcase
 $ mpiexec -np 128 ./ccsm.exe &> log.txt
 
 ```
