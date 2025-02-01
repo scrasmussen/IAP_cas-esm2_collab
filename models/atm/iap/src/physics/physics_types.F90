@@ -337,6 +337,30 @@ contains
     real(kind=r8), pointer              :: pgdall(:,:,:)
     real(kind=r8), pointer              :: icwu(:,:,:)
     real(kind=r8), pointer              :: icwd(:,:,:)
+   !added for saSAS convection
+   real(kind=r8), pointer :: qli(:,:) !=> null()
+   real(kind=r8), pointer :: vvl(:,:) !=> null()
+   real(kind=r8)          :: pgcon_deep
+   integer                :: ncnd
+   integer                :: jcap
+   real(kind=r8)          :: c0s_deep
+   real(kind=r8)          :: evfactl_deep
+   real(kind=r8)          :: evfact_deep
+   real(kind=r8), pointer :: gq0(:,:) !=> null()
+   character(len=16)      :: imp_physics_mg
+   real(kind=r8), pointer :: gt0(:,:) !=> null()
+   integer                :: imfdeepcnv
+   real(kind=r8)          :: c1_deep
+   real(kind=r8)          :: betal_deep
+   real(kind=r8)          :: betas_deep
+   real(kind=r8)          :: clam_deep
+   real(kind=r8), pointer :: phil   (:,:) !=> null()
+   real(kind=r8), pointer :: w_upi  (:,:) !=> null()
+   real(kind=r8), pointer :: u1     (:,:) !=> null()
+   real(kind=r8), pointer :: v1     (:,:) !=> null()
+   integer                :: imfdeepcnv_sas
+   real(kind=r8), pointer :: dt_mf (:,:) !=> null() ! instantaneous_atmosphere_detrainment_convective_mass_flux
+
 
     contains
       procedure :: create      => interstitial_ephemeral_create     !<   allocate array data
@@ -388,30 +412,6 @@ contains
    integer      , pointer :: ideep(:) => null()
    integer                :: lengath
 
-   !added for saSAS convection
-   real(kind=r8), pointer :: qli(:,:) => null()
-   real(kind=r8), pointer :: vvl(:,:) => null()
-   real(kind=r8)          :: pgcon_deep
-   integer                :: ncnd
-   integer                :: jcap
-   real(kind=r8)          :: c0s_deep
-   real(kind=r8)          :: evfactl_deep
-   real(kind=r8)          :: evfact_deep
-   real(kind=r8), pointer :: gq0(:,:) => null()
-   character(len=16)      :: imp_physics_mg
-   real(kind=r8), pointer :: gt0(:,:) => null()
-   integer                :: imfdeepcnv
-   real(kind=r8)          :: c1_deep
-   real(kind=r8)          :: betal_deep
-   real(kind=r8)          :: betas_deep
-   real(kind=r8)          :: clam_deep
-   real(kind=r8), pointer :: phil   (:,:) => null()
-   real(kind=r8), pointer :: w_upi  (:,:) => null()
-   real(kind=r8), pointer :: u1     (:,:) => null()
-   real(kind=r8), pointer :: v1     (:,:) => null()
-   integer                :: imfdeepcnv_sas
-
-   real(kind=r8), pointer :: dt_mf (:,:) => null() ! instantaneous_atmosphere_detrainment_convective_mass_flux
 
 
    contains
@@ -1477,6 +1477,7 @@ subroutine interstitial_ephemeral_create (int_ephem, ncol, pver, pverp, pcnst)
 
   class(physics_int_ephem)       :: int_ephem
   integer,                intent(in) :: ncol, pver, pverp, pcnst
+  integer                        :: istat
 
   allocate (int_ephem%prec  (ncol))
   allocate (int_ephem%snow  (ncol))
@@ -1519,6 +1520,19 @@ subroutine interstitial_ephemeral_create (int_ephem, ncol, pver, pverp, pcnst)
   allocate (int_ephem%pgdall(ncol,pver,2))
   allocate (int_ephem%icwu(ncol,pver,2))
   allocate (int_ephem%icwd(ncol,pver,2))
+  ! added for saSAS convection
+  allocate (int_ephem%qli(pcols, pver), stat=istat)
+  allocate (int_ephem%vvl(pcols, pver), stat=istat)
+  allocate (int_ephem%gq0(pcols,pver), stat=istat)
+  allocate (int_ephem%gt0(pcols, pver), stat=istat)
+  allocate (int_ephem%phil(pcols, pver), stat=istat)
+  allocate (int_ephem%w_upi(pcols, pver), stat=istat)
+  allocate (int_ephem%u1(pcols, pver), stat=istat)
+  allocate (int_ephem%v1(pcols, pver), stat=istat)
+  allocate (int_ephem%dt_mf(pcols, pver), stat=istat)
+
+
+
 
 end subroutine interstitial_ephemeral_create
 
@@ -1569,6 +1583,24 @@ subroutine interstitial_ephemeral_reset(int_ephem)
   int_ephem%pgdall          = clear_val
   int_ephem%icwu            = clear_val
   int_ephem%icwd            = clear_val
+  int_ephem%qli = clear_val
+  int_ephem%vvl = clear_val
+  int_ephem%pgcon_deep = 0
+  int_ephem%ncnd = 0
+  int_ephem%jcap = 0
+  int_ephem%c0s_deep = 0
+  int_ephem%evfactl_deep = 0
+  int_ephem%evfact_deep = 0
+  int_ephem%gq0 = clear_val
+  int_ephem%imp_physics_mg = ""
+  int_ephem%imfdeepcnv = 0
+  int_ephem%c1_deep = 0
+  int_ephem%betal_deep = 0
+  int_ephem%betas_deep = 0
+  int_ephem%clam_deep = 0
+  int_ephem%phil = clear_val
+  int_ephem%imfdeepcnv_sas = 0
+
 
 end subroutine interstitial_ephemeral_reset
 
@@ -1649,24 +1681,24 @@ subroutine interstitial_persistent_create(int_pers, pcols, pver)
   allocate (int_pers%ideep(pcols), stat=istat)
   call alloc_err( istat, 'interstitial_persistent_create', 'ideep', pcols)
   !added for saSAS convection
-  allocate (int_pers%qli(pcols, pver), stat=istat)
-  call alloc_err( istat, 'interstitial_persistent_create', 'qli', pcols*pver)
-  allocate (int_pers%vvl(pcols, pver), stat=istat)
-  call alloc_err( istat, 'interstitial_persistent_create', 'vvl', pcols*pver)
-  allocate (int_pers%gq0(pcols,pver), stat=istat)
-  call alloc_err( istat, 'interstitial_persistent_create', 'gq0', pcols*pver)
-  allocate (int_pers%gt0(pcols, pver), stat=istat)
-  call alloc_err( istat, 'interstitial_persistent_create', 'gt0', pcols*pver)
-  allocate (int_pers%phil(pcols, pver), stat=istat)
-  call alloc_err( istat, 'interstitial_persistent_create', 'phil', pcols*pver)
-  allocate (int_pers%w_upi(pcols, pver), stat=istat)
-  call alloc_err( istat, 'interstitial_persistent_create', 'w_upi', pcols*pver)
-  allocate (int_pers%u1(pcols, pver), stat=istat)
-  call alloc_err( istat, 'interstitial_persistent_create', 'u1', pcols*pver)
-  allocate (int_pers%v1(pcols, pver), stat=istat)
-  call alloc_err( istat, 'interstitial_persistent_create', 'v1', pcols*pver)
-  allocate (int_pers%dt_mf(pcols, pver), stat=istat)
-  call alloc_err( istat, 'interstitial_persistent_create', 'dt_mf', pcols*pver)
+  ! allocate (int_pers%qli(pcols, pver), stat=istat)
+  ! call alloc_err( istat, 'interstitial_persistent_create', 'qli', pcols*pver)
+  ! allocate (int_pers%vvl(pcols, pver), stat=istat)
+  ! call alloc_err( istat, 'interstitial_persistent_create', 'vvl', pcols*pver)
+  ! allocate (int_pers%gq0(pcols,pver), stat=istat)
+  ! call alloc_err( istat, 'interstitial_persistent_create', 'gq0', pcols*pver)
+  ! allocate (int_pers%gt0(pcols, pver), stat=istat)
+  ! call alloc_err( istat, 'interstitial_persistent_create', 'gt0', pcols*pver)
+  ! allocate (int_pers%phil(pcols, pver), stat=istat)
+  ! call alloc_err( istat, 'interstitial_persistent_create', 'phil', pcols*pver)
+  ! allocate (int_pers%w_upi(pcols, pver), stat=istat)
+  ! call alloc_err( istat, 'interstitial_persistent_create', 'w_upi', pcols*pver)
+  ! allocate (int_pers%u1(pcols, pver), stat=istat)
+  ! call alloc_err( istat, 'interstitial_persistent_create', 'u1', pcols*pver)
+  ! allocate (int_pers%v1(pcols, pver), stat=istat)
+  ! call alloc_err( istat, 'interstitial_persistent_create', 'v1', pcols*pver)
+  ! allocate (int_pers%dt_mf(pcols, pver), stat=istat)
+  ! call alloc_err( istat, 'interstitial_persistent_create', 'dt_mf', pcols*pver)
 
 
 
@@ -1689,24 +1721,24 @@ subroutine interstitial_persistent_init(int_pers)
   int_pers%ideep = clear_val
   int_pers%lengath = 0
   ! added for saSAS convection
-  int_pers%qli = clear_val
-  int_pers%vvl = clear_val
-  int_pers%pgcon_deep = 0
-  int_pers%ncnd = 0
-  int_pers%jcap = 0
-  int_pers%c0s_deep = 0
-  int_pers%evfactl_deep = 0
-  int_pers%evfact_deep = 0
-  int_pers%gq0 = clear_val
-  int_pers%imp_physics_mg = ""
-  ! int_pers%t1 = clear_val
-  int_pers%imfdeepcnv = 0
-  int_pers%c1_deep = 0
-  int_pers%betal_deep = 0
-  int_pers%betas_deep = 0
-  int_pers%clam_deep = 0
-  int_pers%phil = clear_val
-  int_pers%imfdeepcnv_sas = 0
+  ! int_pers%qli = clear_val
+  ! int_pers%vvl = clear_val
+  ! int_pers%pgcon_deep = 0
+  ! int_pers%ncnd = 0
+  ! int_pers%jcap = 0
+  ! int_pers%c0s_deep = 0
+  ! int_pers%evfactl_deep = 0
+  ! int_pers%evfact_deep = 0
+  ! int_pers%gq0 = clear_val
+  ! int_pers%imp_physics_mg = ""
+  ! ! int_pers%t1 = clear_val
+  ! int_pers%imfdeepcnv = 0
+  ! int_pers%c1_deep = 0
+  ! int_pers%betal_deep = 0
+  ! int_pers%betas_deep = 0
+  ! int_pers%clam_deep = 0
+  ! int_pers%phil = clear_val
+  ! int_pers%imfdeepcnv_sas = 0
 
 end subroutine interstitial_persistent_init
 
