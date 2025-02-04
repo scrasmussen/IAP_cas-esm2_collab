@@ -1600,6 +1600,8 @@ subroutine interstitial_ephemeral_reset(int_ephem)
   int_ephem%clam_deep = 0
   int_ephem%phil = clear_val
   int_ephem%imfdeepcnv_sas = 0
+  int_ephem%u1 = 0
+  int_ephem%v1 = 0
 
 
 end subroutine interstitial_ephemeral_reset

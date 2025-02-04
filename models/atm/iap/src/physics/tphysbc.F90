@@ -118,6 +118,10 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
    character(len=256), intent(in)   :: ccpp_suite
    integer :: ierr
 #endif
+#ifdef CCPP_SASAS
+   logical :: debug_variables = .false.
+   integer :: concld_idx
+#endif
 !
 !---------------------------Local workspace-----------------------------
 !
@@ -439,11 +443,57 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 #ifdef CCPP
    !GJF: while all IAP physics are being worked on, ccpp_physics_run calls are placed within tphysbc; eventually,
    !     these calls should be in physpkg instead of tphysbc, tphysac, etc. which can be groups within an SDF
-#ifdef CCPP_IAP_SASAS
+#ifdef CCPP_SASAS
    ccpp_group_name = "sasasr"
+   call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
+
+   ! setup IN variables
+   ! setting defaults using values from SCM
+   phys_int_ephem(cdata%blk_no)%jcap = 1
+   phys_int_ephem(cdata%blk_no)%clam_deep = 0.1
+   phys_int_ephem(cdata%blk_no)%betal_deep = 0.05
+   phys_int_ephem(cdata%blk_no)%betas_deep = 0.05
+   phys_int_ephem(cdata%blk_no)%c0s_deep = 0.002
+   phys_int_ephem(cdata%blk_no)%c1_deep = 0.002
+   phys_int_ephem(cdata%blk_no)%evfactl_deep = 0.3
+   phys_int_ephem(cdata%blk_no)%evfact_deep = 0.3
+   phys_int_ephem(cdata%blk_no)%pgcon_deep = 0.55
+   phys_int_ephem(cdata%blk_no)%imp_physics_mg = "MG"
+   phys_int_ephem(cdata%blk_no)%ncnd = 3
+
+   do i=1,ncol
+      if (cam_in%landfrac(i) > 0.5) then
+         state%islimsk(i) = 1  ! Land
+      else if (cam_in%icefrac(i) > 0.5) then
+         state%islimsk(i) = 2  ! Sea Ice
+      else
+         state%islimsk(i) = 0  ! Ocean
+      end if
+   end do
+
+   ! intent(IN) dot,  lagrangian_tendency_of_air_pressure
+   phys_int_ephem(cdata%blk_no)%vvl(:,:) = state%omega(:ncol,:pver)
+
+   !! \param[inout] qlc cloud water (kg/kg)
+   call cnst_get_ind('CLDLIQ', ixcldliq)
+   state%qlc(:,:) = state%q(:ncol,:pver,ixcldliq)
+   !! \param[inout] qli ice (kg/kg)
+   call cnst_get_ind('CLDICE', ixcldice)
+   phys_int_ephem(cdata%blk_no)%qli(:,:) = state%q(:ncol,:pver,ixcldice)
+   !! \param[inout] q1 updated tracers (kg/kg)
+   phys_int_ephem(cdata%blk_no)%gq0(:,:) = state%q(:ncol,:pver,1)
+   !! \param[inout] t1 updated temperature (K)
+   phys_int_ephem(cdata%blk_no)%gt0(:,:) = state%t(:ncol,:pver)
+   !! \param[inout] u1 updated zonal wind (\f$m s^{-1}\f$)
+   phys_int_ephem(cdata%blk_no)%u1(:,:) = state%u(:ncol,:pver)
+   ! !! \param[inout] v1 updated meridional wind (\f$m s^{-1}\f$)
+   phys_int_ephem(cdata%blk_no)%v1(:,:) = state%v(:ncol,:pver)
+   ! geopotential at model layers centers
+   phys_int_ephem(cdata%blk_no)%phil(:,:) = state%zm(:ncol,:pver)
 #else
    ccpp_group_name = "test1"
 #endif
+
    print *, "Calling ccpp_physics_run for suite ", trim(ccpp_suite), &
         ", group ", trim(ccpp_group_name), " and block ", cdata%blk_no
    call ccpp_physics_run(cdata, suite_name=trim(ccpp_suite), group_name=ccpp_group_name, ierr=ierr)
@@ -455,8 +505,45 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
    end if
 
    if (trim(ccpp_group_name) == "sasasr") then
+      ! --- Variable Summary ---
+      ! INOUT VARIABLES: qlc, qli, q1, u1, v1, t1/gt0
+      ! VARIABLES INITIALIZED TO ZERO: which CAM variables do they connect to?
+      ! cnvc, cf_upi, clcn, cnv_mfd, cnv_fice, cnv_dqldt
+      ! qicn, qlcn, cnv_ndrop, cnv_nice
+      ! OUT VARIABLES: these are not used by other funcs so not copying back
+      !                right now
+      ! cldwrk, dt_mf, dd_mf, rn, kcnv
 
-   end if
+      !! \param[inout] qlc cloud water (kg/kg)
+      call cnst_get_ind('CLDLIQ', ixcldliq)
+      state%q(:ncol,:pver,ixcldliq) = state%qlc(:,:)
+      !! \param[inout] qli ice (kg/kg)
+      call cnst_get_ind('CLDICE', ixcldice)
+      state%q(:ncol,:pver,ixcldice) = phys_int_ephem(cdata%blk_no)%qli(:,:)
+      !! \param[inout] q1 updated tracers (kg/kg)
+      state%q(:ncol,:pver,1) = phys_int_ephem(cdata%blk_no)%gq0(:,:)
+      !! \param[inout] t1 updated temperature (K)
+      state%t(:ncol,:pver) = phys_int_ephem(cdata%blk_no)%gt0(:,:)
+      !! \param[inout] u1 updated zonal wind (\f$m s^{-1}\f$)
+      state%u(:ncol,:pver) = phys_int_ephem(cdata%blk_no)%u1(:,:)
+      ! !! \param[inout] v1 updated meridional wind (\f$m s^{-1}\f$)
+      state%v(:ncol,:pver) = phys_int_ephem(cdata%blk_no)%v1(:,:)
+
+      !! \param[out] cnvc convective cloud cover (unitless)
+      concld_idx   = pbuf_get_fld_idx('CONCLD')
+      pbuf(concld_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,itim) = state%cnvc(:,:)
+
+      if ((debug_variables .eqv. .true.) .and. (rank == 0)) then
+         print *, "--- DEBUG: output var report ---"
+         print *, " state%qlc(:,:) =", state%qlc(1,1)
+         print *, " state%q(:,:) =", state%q(1,1,1)
+         print *, " state%t(:,:) =", state%t(1,1)
+         print *, " state%u(:,:) =", state%u(1,1)
+         print *, " state%v(:,:) =", state%v(1,1)
+         print *, " state%cnvc(:,:) =", state%cnvc(1,1)
+      end if
+   end if ! ccpp_group_name) == "sasasr"
+
    if (trim(ccpp_group_name) == "test1") then
    !write(0,'(a)') 'Transferring data from phys_int_ephem etc. to local physics variables'
    ! The easy stuff
@@ -818,7 +905,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
       !write(0,'(a,i6)') "XXX: Calling phys_int_ephem(cdata%blk_no)%reset() for block ", cdata%blk_no
       call phys_int_ephem(cdata%blk_no)%reset()
 
-#ifdef CCPP_IAP_SASAS
+#ifdef CCPP_SASAS
       ccpp_group_name = "sasasr"
 #else
       ccpp_group_name = "test2"
@@ -925,16 +1012,12 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 
 !   call fout_phy(cam_in%ts(1:ncol),lchnk,ncol,1,state%lat,state%lon,'ts')
 
-   call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
-   ! if (rank == 0) print *, "DEBUG:", rank, ": pre rad_tend"
-
    call radiation_tend(state,ptend,pbuf, &
         cam_out, cam_in, &
         cam_in%landfrac,landm,cam_in%icefrac, cam_in%snowhland, &
         fsns,    fsnt, flns,    flnt,  &
         fsds, net_flx)
    ! Set net flux used by spectral dycores
-   if (rank == 0) print *, "DEBUG:", rank, ": post rad_tend"
    do i=1,ncol
       tend%flx_net(i) = net_flx(i)
    end do
