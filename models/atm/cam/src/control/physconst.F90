@@ -85,7 +85,14 @@ module physconst
    real(r8), public           :: cappa        = (shr_const_rgas/shr_const_mwdair)/shr_const_cpdair  ! R/Cp
    real(r8), public           :: ez           ! Coriolis expansion coeff -> omega/sqrt(0.375)   
    real(r8), public           :: Cpd_on_Cpv   = shr_const_cpdair/shr_const_cpwv
-                         
+
+   ! Variables for CCPP Physics
+   real(kind=r8), public, parameter:: con_rd     =2.8705e+2
+   real(kind=r8), public, parameter:: con_rv     =4.6150e+2
+   real(kind=r8), public, parameter:: con_eps    =con_rd/con_rv
+   real(kind=r8), public, parameter:: con_epsm1  =con_rd/con_rv - 1._r8
+   real(kind=r8), public, parameter:: con_t0c    =2.7315e+2
+
 !================================================================================================
 contains
 !================================================================================================
