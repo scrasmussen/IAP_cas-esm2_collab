@@ -8,7 +8,9 @@ The initial code commit is based on tarfiles received in early 2020 by Lulin fro
 - CCPP Codebases
   - [CCPP Physics](https://github.com/NCAR/ccpp-physics)
   - [CCPP Framework](https://github.com/NCAR/ccpp-framework)
+  - [CCPP Single Column Model (SCM)](https://github.com/NCAR/ccpp-scm)
 - [CAM5 Scientific Documentation](https://ncar.github.io/CAM/doc/build/html/cam5_scientific_guide/index.html)
+- [CCPP SCM Documentation](https://ccpp-scm.readthedocs.io/en/latest/)
 
 The Community Earth System Model (CESM) Coupler infrastructure is used and the CESM1.0 documentation can be useful.
 - [CESM1.0 Documenation](https://www2.cesm.ucar.edu/models/cesm1.0/cesm/)
@@ -45,8 +47,12 @@ $ export DIN_LOC_ROOT=path/to/iap/inputdata
 Variables that are used by every user can be updated in Macros.mach
 $ export NETCDF_PATH=$NETCDF
 
-Switch to CCPP to run CCPP Framework Prebuild steps, required everytime subroutines change
+Switch to CCPP to run CCPP Framework Prebuild steps
 $ ./switch_to_ccpp.sh
+$ cd scripts
+
+Switch to CCPP saSAS scheme, run CCPP Framework Prebuild steps
+$ ./switch_to_sasas_ccpp.sh
 $ cd scripts
 
 User can also run without CCPP
@@ -65,14 +71,14 @@ $ ./create_newcase \
     -din_loc_root_csmdata path/to/inputdata
 
 
-Need to give that configure the correct permissions to run
+User might need to give ./configure the correct permissions to run
 $ chmod +x [base directory]/models/atm/cam/bld/configure
 $ cd FAMIPC5_FD14
 $ ./configure -case
 
 
 NOTE: On Derecho the NetCDF C and Fortran builds are in different locations.
-  1. File scripts/ccsm_utils/Machines/Macros.derecho was changed to handle
+   1. File scripts/ccsm_utils/Machines/Macros.derecho was changed to handle
      NetCDF environment variables when C and Fortran installs are in different
      locations
 
@@ -166,16 +172,11 @@ IAP_cas-esm2/
 
 # Using CCPP Physics in IAP
 
-
-## Instructions
-
-
 ## Scheme Tables
 
 | IAP Schemes Added to CCPP Physics |
 |-----------------------------------|
 | Zhang-McFarlane convection scheme |
-
 
 
 | CCPP Physics Scheme Name                                         |
@@ -228,82 +229,80 @@ subroutines and lists the details of the arguments.
 Every subroutine should have two additional arguments for the error code and
 message.
 
-| Function            | Argument         | Details                                                  | IAP Variable |
-|---------------------|------------------|----------------------------------------------------------|--------------|
-| `sascnvnr_init`     | `imfdeepcnv`     | flag for mass-flux deep convection scheme                |              |
-|                     | `imfdeepcnv_sas` | flag for mass-flux deep convection scheme                |              |
-|                     |                  |                                                          |              |
-| `sascnvnr_run`      | `grav`           | gravitational acceleration                               |              |
-|                     | `cp`             | specific heat of dry air at constant pressure            |              |
-|                     | `hvap`           | latent heat of evaporation/sublimation                   |              |
-|                     | `rv`             | ideal gas constant for water vapor                       |              |
-|                     | `fv`             | (rv/rd) - 1 (rv = ideal gas constant for water vapor)    |              |
-|                     | `t0c`            | temperature at 0 degree Celsius                          |              |
-|                     | `rgas`           | ideal gas constant for dry air                           |              |
-|                     | `cvap`           | specific heat of water vapor at constant pressure        |              |
-|                     | `cliq`           | specific heat of liquid water at constant pressure       |              |
-|                     | `eps`            | rd/rv                                                    |              |
-|                     | `epsm1`          | (rd/rv) - 1                                              |              |
-|                     | `im`             | horizontal loop extent                                   |              |
-|                     | `km`             | number of vertical levels                                |              |
-|                     | `jcap`           | number of spectral wave trancation used only by          |              |
-|                     |                  | sascnvn                                                  |              |
-|                     | `delt`           | physics timestep                                         |              |
-|                     | `delp`           | air pressure difference between midlayers                |              |
-|                     | `prslp`          | mean layer pressure                                      |              |
-|                     | `psp`            | surface pressure                                         |              |
-|                     | `phil`           | geopotential at model layer centers                      |              |
-|                     | `qlc`            | ratio of mass of cloud water to mass of dry air plus     |              |
-|                     |                  | vapor (without condensates) in the convectively          |              |
-|                     |                  | transported tracer array                                 |              |
-|                     | `qli`            | ratio of mass of ice water to mass of dry air plus vapor |              |
-|                     |                  | (without condensates) in the convectively transported    |              |
-|                     |                  | tracer array                                             |              |
-|                     | `q1`             | water vapor specific humidity updated by physics         |              |
-|                     | `t1`             | temperature updated by physics                           |              |
-|                     | `u1`             | zonal wind updated by physics                            |              |
-|                     | `v1`             | meridional wind updated by physics                       |              |
-|                     | `cldwrk`         | cloud work function                                      |              |
-|                     | `rn`             | deep convective rainfall amount on physics timestep      |              |
-|                     | `kbot`           | index for cloud base                                     |              |
-|                     | `ktop`           | index for cloud top                                      |              |
-|                     | `kcnv`           | deep convection: 0=no, 1=yes                             |              |
-|                     | `islimsk`        | landmask: sea/land/ice=0/1/2                             |              |
-|                     | `dot`            | layer mean vertical velocity                             |              |
-|                     | `ncloud`         | number of cloud condensate types                         |              |
-|                     | `ud`             | (updraft mass flux) * delt                               |              |
-|                     | `dd`             | (downdraft mass flux) * delt                             |              |
-|                     | `dt`             | (detrainment mass flux) * delt                           |              |
-|                     | `cnvw`           | moist convective cloud water mixing ratio                |              |
-|                     | `cnvc`           | convective cloud cover                                   |              |
-|                     | `qlcn`           | mass fraction of convective cloud liquid water           |              |
-|                     | `qicn`           | mass fraction of convective cloud ice water              |              |
-|                     | `w`              | vertical velocity for updraft                            |              |
-|                     | `cf`             | convective cloud fraction for microphysics               |              |
-|                     | `cnv`            | detrained mass flux                                      |              |
-|                     | `cnv`            | tendency of cloud water due to convective microphysics   |              |
-|                     | `clcn`           | convective cloud volume fraction                         |              |
-|                     | `cnv`            | ice fraction in convective tower                         |              |
-|                     | `cnv`            | droplet number concentration in convective detrainment   |              |
-|                     | `cnv`            | crystal number concentration in convective detrainment   |              |
-|                     | `mp`             | choice of microphysics scheme                            |              |
-|                     | `mp`             | choice of Morrison-Gettelman microphysics scheme         |              |
-|                     | `clam`           | entrainment rate coefficient for deep convection         |              |
-|                     | `c0`             | convective rain conversion parameter for deep convection |              |
-|                     | `c1`             | convective detrainment conversion parameter for deep     |              |
-|                     |                  | convection                                               |              |
-|                     | `betal`          | downdraft fraction reaching surface over land for deep   |              |
-|                     |                  | convection                                               |              |
-|                     | `betas`          | downdraft fraction reaching surface over water for deep  |              |
-|                     |                  | convection                                               |              |
-|                     | `evfact`         | convective rain evaporation coefficient for deep         |              |
-|                     |                  | convection                                               |              |
-|                     | `evfactl`        | convective rain evaporation coefficient over land for    |              |
-|                     |                  | deep convection                                          |              |
-|                     | `pgcon`          | reduction factor in momentum transport due to deep       |              |
-|                     |                  | convection induced pressure gradient force               |              |
-|                     |                  |                                                          |              |
-| `sascnvnr_finalize` |                  | No arguments and empty routine                           |              |
+| Function            | Argument  | Details                                                  | IAP Variable |
+|---------------------|-----------|----------------------------------------------------------|--------------|
+| `sascnvnr_run`      | `grav`    | gravitational acceleration                               |              |
+|                     | `cp`      | specific heat of dry air at constant pressure            |              |
+|                     | `hvap`    | latent heat of evaporation/sublimation                   |              |
+|                     | `rv`      | ideal gas constant for water vapor                       |              |
+|                     | `fv`      | (rv/rd) - 1 (rv = ideal gas constant for water vapor)    |              |
+|                     | `t0c`     | temperature at 0 degree Celsius                          |              |
+|                     | `rgas`    | ideal gas constant for dry air                           |              |
+|                     | `cvap`    | specific heat of water vapor at constant pressure        |              |
+|                     | `cliq`    | specific heat of liquid water at constant pressure       |              |
+|                     | `eps`     | rd/rv                                                    |              |
+|                     | `epsm1`   | (rd/rv) - 1                                              |              |
+|                     | `im`      | horizontal loop extent                                   |              |
+|                     | `km`      | number of vertical levels                                |              |
+|                     | `jcap`    | number of spectral wave trancation used only by          |              |
+|                     |           | sascnvn                                                  |              |
+|                     | `delt`    | physics timestep                                         |              |
+|                     | `delp`    | air pressure difference between midlayers                |              |
+|                     | `prslp`   | mean layer pressure                                      |              |
+|                     | `psp`     | surface pressure                                         |              |
+|                     | `phil`    | geopotential at model layer centers                      |              |
+|                     | `qlc`     | ratio of mass of cloud water to mass of dry air plus     |              |
+|                     |           | vapor (without condensates) in the convectively          |              |
+|                     |           | transported tracer array                                 |              |
+|                     | `qli`     | ratio of mass of ice water to mass of dry air plus vapor |              |
+|                     |           | (without condensates) in the convectively transported    |              |
+|                     |           | tracer array                                             |              |
+|                     | `q1`      | water vapor specific humidity updated by physics         |              |
+|                     | `t1`      | temperature updated by physics                           |              |
+|                     | `u1`      | zonal wind updated by physics                            |              |
+|                     | `v1`      | meridional wind updated by physics                       |              |
+|                     | `cldwrk`  | cloud work function                                      |              |
+|                     | `rn`      | deep convective rainfall amount on physics timestep      |              |
+|                     | `kbot`    | index for cloud base                                     |              |
+|                     | `ktop`    | index for cloud top                                      |              |
+|                     | `kcnv`    | deep convection: 0=no, 1=yes                             |              |
+|                     | `islimsk` | landmask: sea/land/ice=0/1/2                             |              |
+|                     | `dot`     | layer mean vertical velocity                             |              |
+|                     | `ncloud`  | number of cloud condensate types                         |              |
+|                     | `ud`      | (updraft mass flux) * delt                               |              |
+|                     | `dd`      | (downdraft mass flux) * delt                             |              |
+|                     | `dt`      | (detrainment mass flux) * delt                           |              |
+|                     | `cnvw`    | moist convective cloud water mixing ratio                |              |
+|                     | `cnvc`    | convective cloud cover                                   |              |
+|                     | `qlcn`    | mass fraction of convective cloud liquid water           |              |
+|                     | `qicn`    | mass fraction of convective cloud ice water              |              |
+|                     | `w`       | vertical velocity for updraft                            |              |
+|                     | `cf`      | convective cloud fraction for microphysics               |              |
+|                     | `cnv`     | detrained mass flux                                      |              |
+|                     | `cnv`     | tendency of cloud water due to convective microphysics   |              |
+|                     | `clcn`    | convective cloud volume fraction                         |              |
+|                     | `cnv`     | ice fraction in convective tower                         |              |
+|                     | `cnv`     | droplet number concentration in convective detrainment   |              |
+|                     | `cnv`     | crystal number concentration in convective detrainment   |              |
+|                     | `mp`      | choice of microphysics scheme                            |              |
+|                     | `mp`      | choice of Morrison-Gettelman microphysics scheme         |              |
+|                     | `clam`    | entrainment rate coefficient for deep convection         |              |
+|                     | `c0`      | convective rain conversion parameter for deep convection |              |
+|                     | `c1`      | convective detrainment conversion parameter for deep     |              |
+|                     |           | convection                                               |              |
+|                     | `betal`   | downdraft fraction reaching surface over land for deep   |              |
+|                     |           | convection                                               |              |
+|                     | `betas`   | downdraft fraction reaching surface over water for deep  |              |
+|                     |           | convection                                               |              |
+|                     | `evfact`  | convective rain evaporation coefficient for deep         |              |
+|                     |           | convection                                               |              |
+|                     | `evfactl` | convective rain evaporation coefficient over land for    |              |
+|                     |           | deep convection                                          |              |
+|                     | `pgcon`   | reduction factor in momentum transport due to deep       |              |
+|                     |           | convection induced pressure gradient force               |              |
+|                     |           |                                                          |              |
+| `sascnvnr_init`     |           | No arguments and empty routine                           |              |
+| `sascnvnr_finalize` |           | No arguments and empty routine                           |              |
 
 - Call Graph With CCPP: when running with CCPP `tphysbc.F90` calls CCPP physics instead
   of functions from `convect_deep.F90`.
