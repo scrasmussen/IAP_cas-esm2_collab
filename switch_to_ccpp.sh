@@ -6,6 +6,7 @@ export BASEDIR=$(pwd)
 
 cd $BASEDIR/scripts/ccsm_utils/Machines/
 sed -i 's/#CPPDEFS += -DCCPP/CPPDEFS += -DCCPP/g' Macros.derecho
+sed -i 's/CPPDEFS += -DCCPP -DCCPP_SASAS/CPPDEFS += -DCCPP/g' Macros.derecho
 grep -e 'CPPDEFS += -DCCPP' Macros.derecho
 
 cd $BASEDIR/models/atm/iap
@@ -16,6 +17,7 @@ rm -rf bld/ccpp/physics
 
 mv -v $BASEDIR/models/atm/cam/src/dynamics/iap/physics/ccpp_static_api.F90 $BASEDIR/models/atm/cam/src/dynamics/iap/
 mv -v $BASEDIR/models/atm/cam/src/dynamics/iap/physics/ccpp_IAP_test_cap.F90 $BASEDIR/models/atm/cam/src/dynamics/iap/
+mv -v $BASEDIR/models/atm/cam/src/dynamics/iap/physics/ccpp_IAP_test_sasasr_cap.F90 $BASEDIR/models/atm/cam/src/dynamics/iap/
 mv -v $BASEDIR/models/atm/cam/src/dynamics/iap/physics/ccpp_IAP_test_test1_cap.F90 $BASEDIR/models/atm/cam/src/dynamics/iap/
 mv -v $BASEDIR/models/atm/cam/src/dynamics/iap/physics/ccpp_IAP_test_test2_cap.F90 $BASEDIR/models/atm/cam/src/dynamics/iap/
 
