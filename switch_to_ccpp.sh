@@ -6,7 +6,7 @@ export BASEDIR=$(pwd)
 
 cd $BASEDIR/scripts/ccsm_utils/Machines/
 sed -i 's/#CPPDEFS += -DCCPP/CPPDEFS += -DCCPP/g' Macros.derecho
-sed -i 's/CPPDEFS += -DCCPP -DCCPP_SASAS/CPPDEFS += -DCCPP/g' Macros.derecho
+sed -i 's/CPPDEFS += -DCCPP -DCCPP_SASAS$/CPPDEFS += -DCCPP/g' Macros.derecho
 grep -e 'CPPDEFS += -DCCPP' Macros.derecho
 
 cd $BASEDIR/models/atm/iap
