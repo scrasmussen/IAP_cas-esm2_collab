@@ -6,5 +6,5 @@
 [submodule "models/atm/iap/ccpp/physics"]
   path = models/atm/iap/ccpp/physics
   #url = https://github.com/NCAR/ccpp-physics
-  url = https://github.com/climbfuji/ccpp-physics
-  branch = feature/iap_dom
+  url = https://github.com/scrasmussen/ccpp-physics
+  branch = feature/iap_scrasmussen
