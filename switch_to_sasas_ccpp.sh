@@ -13,10 +13,27 @@ sed -i 's/#CPPDEFS += -DCCPP$/CPPDEFS += -DCCPP -DCCPP_SASAS/g' Macros.derecho
 cd $BASEDIR/models/atm/iap
 ./ccpp/framework/scripts/ccpp_prebuild.py --config ./ccpp/config/ccpp_prebuild_config.py --debug --verbose 2>&1 | tee ccpp_prebuild.log
 
-cd $BASEDIR/models/atm/iap/src/physics
-ln -s ../../ccpp/physics/physics/sascnvnr.F .
-ln -s ../../ccpp/physics/physics/sascnvnr.meta .
+rsync -av bld/ccpp/physics/ src/dynamics/physics/
+rm -rf bld/ccpp/physics
+cp -av ccpp/framework/src/ccpp_types.F90 src/dynamics
 
+mv -v $BASEDIR/models/atm/cam/src/dynamics/iap/physics/ccpp_static_api.F90 $BASEDIR/models/atm/cam/src/dynamics/iap/
+mv -v $BASEDIR/models/atm/cam/src/dynamics/iap/physics/ccpp_IAP_test_cap.F90 $BASEDIR/models/atm/cam/src/dynamics/iap/
+mv -v $BASEDIR/models/atm/cam/src/dynamics/iap/physics/ccpp_IAP_test_sasasr_cap.F90 $BASEDIR/models/atm/cam/src/dynamics/iap/
+mv -v $BASEDIR/models/atm/cam/src/dynamics/iap/physics/ccpp_IAP_test_test1_cap.F90 $BASEDIR/models/atm/cam/src/dynamics/iap/
+mv -v $BASEDIR/models/atm/cam/src/dynamics/iap/physics/ccpp_IAP_test_test2_cap.F90 $BASEDIR/models/atm/cam/src/dynamics/iap/
+
+
+cd $BASEDIR/models/atm/iap/src/physics
+ln -sf ../../ccpp/physics/physics/sascnvnr.F .
+ln -sf ../../ccpp/physics/physics/sascnvnr.meta .
+ln -sf ../../ccpp/physics/physics/funcphys.f90 .
+ln -sf ../../ccpp/physics/physics/physcons.F90 .
+ln -sf ../../ccpp/physics/physics/physcons.F90 .
+ln -sf ../../ccpp/physics/physics/machine.F .
+
+cd $BASEDIR/models/atm/iap/ccpp/physics/physics/
+cp -av  cldwat_ccpp.F90 iap_* zm_conv*F90 ../../../src/physics/
 # cd $BASEDIR
 # # rm -vf models/atm/cam/src/dynamics/iap/ccpp_static_api.F90
 # rm -vf models/atm/cam/src/dynamics/iap/ccpp_types.F90
