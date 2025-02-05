@@ -13,6 +13,9 @@ sed -i 's/#CPPDEFS += -DCCPP$/CPPDEFS += -DCCPP -DCCPP_SASAS/g' Macros.derecho
 cd $BASEDIR/models/atm/iap
 ./ccpp/framework/scripts/ccpp_prebuild.py --config ./ccpp/config/ccpp_prebuild_config.py --debug --verbose 2>&1 | tee ccpp_prebuild.log
 
+cd $BASEDIR/models/atm/iap/src/physics
+ln -s ../../ccpp/physics/physics/sascnvnr.F .
+ln -s ../../ccpp/physics/physics/sascnvnr.meta .
 
 # cd $BASEDIR
 # # rm -vf models/atm/cam/src/dynamics/iap/ccpp_static_api.F90
