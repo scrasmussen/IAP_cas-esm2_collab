@@ -17,7 +17,7 @@
     <NTASKS_CPL>$NTASKS_ATM</NTASKS_CPL> <NTHRDS_CPL>$NTHRDS_ATM</NTHRDS_CPL> <ROOTPE_CPL>$ROOTPE_ATM</ROOTPE_CPL>
     <NTASKS_GLC>$NTASKS_ATM</NTASKS_GLC> <NTHRDS_GLC>$NTHRDS_ATM</NTHRDS_GLC> <ROOTPE_GLC>$ROOTPE_ATM</ROOTPE_GLC>
 
-    <OCN_PIO_NUMTASKS>1</OCN_PIO_NUMTASKS><OCN_PIO_ROOT>0</OCN_PIO_ROOT>    
+    <OCN_PIO_NUMTASKS>1</OCN_PIO_NUMTASKS><OCN_PIO_ROOT>0</OCN_PIO_ROOT>
     <PIO_NUMTASKS>-1</PIO_NUMTASKS><PIO_STRIDE>-1</PIO_STRIDE> <PIO_TYPENAME>netcdf</PIO_TYPENAME> <PIO_ROOT>1</PIO_ROOT>
     <PES_LEVEL>0</PES_LEVEL>
 </pes>
@@ -906,7 +906,7 @@
 </pes>
 
 <!-------------------------------------------------------------------------------
-  tasks/thread setup, grid_match: machine only, reduce pes for small machines 
+  tasks/thread setup, grid_match: machine only, reduce pes for small machines
  ------------------------------------------------------------------------------->
 
 <pes mach_match="edinburgh" >
@@ -1139,7 +1139,7 @@
     <NTASKS_GLC>128</NTASKS_GLC> <NTHRDS_GLC>1</NTHRDS_GLC> <ROOTPE_GLC>0</ROOTPE_GLC>
     <PES_LEVEL>1m</PES_LEVEL>
 </pes>
-<pes mach_match="cheyenne" >
+<pes mach_match="derecho" >
     <NTASKS_ATM>128</NTASKS_ATM> <NTHRDS_ATM>1</NTHRDS_ATM> <ROOTPE_ATM>0</ROOTPE_ATM>
     <NTASKS_LND>16</NTASKS_LND> <NTHRDS_LND>1</NTHRDS_LND> <ROOTPE_LND>0</ROOTPE_LND>
     <NTASKS_ICE>16</NTASKS_ICE> <NTHRDS_ICE>1</NTHRDS_ICE> <ROOTPE_ICE>0</ROOTPE_ICE>

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 # CCPP prebuild config for IAP AGCM
 
 
@@ -63,6 +62,7 @@ SCHEME_FILES = [
     # Relative path to source (from where ccpp_prebuild.py is called) : [ list of physics sets in which scheme may be called ];
     # current restrictions are that each scheme can only belong to one physics set, and all schemes within one group in the
     # suite definition file have to belong to the same physics set
+    'ccpp/physics/physics/sascnvnr.F'             ,
     'ccpp/physics/physics/zm_convr.F90'             ,
     'ccpp/physics/physics/zm_convr_post.F90'        ,
     'ccpp/physics/physics/zm_conv_evap.F90'         ,

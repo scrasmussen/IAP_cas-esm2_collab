@@ -1,1 +1,24 @@
 *.DS_Store
+*~
+.svn/
+__pycache__/
+
+# ignore CCPP Physics symlinked files
+models/atm/iap/src/physics/machine.F
+models/atm/iap/src/physics/sascnvn.F
+models/atm/iap/src/physics/funcphys.f90
+models/atm/iap/src/physics/physcons.F90
+
+# ignore IAP files that have been CCPP-ified and copied over
+models/atm/iap/src/physics/cldwat_ccpp.F90
+models/atm/iap/src/physics/iap_ptend_sum.F90
+models/atm/iap/src/physics/iap_state_update.F90
+models/atm/iap/src/physics/zm_conv_all_post.F90
+models/atm/iap/src/physics/zm_conv_common.F90
+models/atm/iap/src/physics/zm_conv_convtran.F90
+models/atm/iap/src/physics/zm_conv_evap.F90
+models/atm/iap/src/physics/zm_conv_evap_post.F90
+models/atm/iap/src/physics/zm_conv_momtran.F90
+models/atm/iap/src/physics/zm_conv_momtran_post.F90
+models/atm/iap/src/physics/zm_convr.F90
+models/atm/iap/src/physics/zm_convr_post.F90

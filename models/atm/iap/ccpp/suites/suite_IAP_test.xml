@@ -2,6 +2,13 @@
 
 <suite name="IAP_test" version="1">
   <!-- <init></init> -->
+  <group name="sasasr">
+    <subcycle loop="1">
+      <!-- <scheme>sascnvnr_pre</scheme> -->
+      <scheme>sascnvnr</scheme>
+      <!-- <scheme>cs_convr</scheme> -->
+    </subcycle>
+  </group>
   <group name="test1">
     <subcycle loop="1">
       <scheme>zm_convr</scheme>

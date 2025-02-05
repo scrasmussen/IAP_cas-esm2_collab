@@ -17,30 +17,30 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
                     cam_out, cam_in )
 #endif
 #endif
-!----------------------------------------------------------------------- 
-! 
-! Purpose: 
-! Evaluate and apply physical processes that are calculated BEFORE 
-! coupling to land, sea, and ice models.  
+!-----------------------------------------------------------------------
 !
-! Processes currently included are: 
+! Purpose:
+! Evaluate and apply physical processes that are calculated BEFORE
+! coupling to land, sea, and ice models.
+!
+! Processes currently included are:
 ! dry adjustment, moist convection, stratiform, wet deposition, radiation
 !
 ! Pass surface fields for separate surface flux calculations
 ! Dump appropriate fields to history file.
-! 
-! Method: 
+!
+! Method:
 !
 ! Each parameterization should be implemented with this sequence of calls:
 !  1)  Call physics interface
 !  2)  Check energy
 !  3)  Call physics_update
-! See Interface to Column Physics and Chemistry Packages 
+! See Interface to Column Physics and Chemistry Packages
 !   http://www.ccsm.ucar.edu/models/atm-cam/docs/phys-interface/index.html
-! 
+!
 ! Author: CCM1, CMS Contact: J. Truesdale
 !         modified by A. Gettelman and C. Craig Nov 2010 to separate micro/macro physics
-! 
+!
 !-----------------------------------------------------------------------
 
    use shr_kind_mod,    only: r8 => shr_kind_r8
@@ -81,6 +81,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
    use ccpp_static_api, only: ccpp_physics_run
    use ccpp_types,      only: ccpp_t
 #endif
+   use mpi
 
    implicit none
 
@@ -117,6 +118,10 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
    character(len=256), intent(in)   :: ccpp_suite
    integer :: ierr
 #endif
+#ifdef CCPP_SASAS
+   logical :: debug_variables = .false.
+   integer :: concld_idx
+#endif
 !
 !---------------------------Local workspace-----------------------------
 !
@@ -146,10 +151,10 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 
    integer  i,k,m                             ! Longitude, level, constituent indices
    integer :: ixcldice, ixcldliq              ! constituent indices for cloud liquid and ice water.
-                                           
+
 
    real(r8) dellow(pcols)                     ! delta p for bottom three levels of model
-   real(r8) tavg(pcols)                       ! mass weighted average temperature for 
+   real(r8) tavg(pcols)                       ! mass weighted average temperature for
 
 ! physics buffer fields to compute tendencies for stratiform package
    integer itim, ifld
@@ -183,7 +188,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
    real(r8) :: snow_pcw(pcols)     ! snow from prognostic cloud scheme
    real(r8) :: prec_sed(pcols)     ! total precip from cloud sedimentation
    real(r8) :: snow_sed(pcols)     ! snow from cloud ice sedimentation
-   real(r8), pointer, dimension(:,:) :: cldo 
+   real(r8), pointer, dimension(:,:) :: cldo
 
 ! energy checking variables
    real(r8) :: zero(pcols)                    ! array of zeros
@@ -212,7 +217,11 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
    real(r8) :: drhlims(pcols)
 !zmh
 
-   character(len=16) :: microp_scheme 
+   character(len=16) :: microp_scheme
+   character(:), allocatable :: ccpp_group_name
+   integer :: rank
+
+
    call phys_getopts( microp_scheme_out = microp_scheme )
 
 !-----------------------------------------------------------------------
@@ -267,7 +276,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 !
 ! Make sure that input tracers are all positive (probably unnecessary)
 !
-    
+
 #ifdef MODAL_AERO
    call qneg3_modalx1( &
               'TPHYSBCb',lchnk  ,ncol    ,pcols   ,pver    , &
@@ -429,16 +438,114 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
    !end if
 ! *DH 20220615
    call t_startf ('convect_deep_tend')
+
+
 #ifdef CCPP
    !GJF: while all IAP physics are being worked on, ccpp_physics_run calls are placed within tphysbc; eventually,
    !     these calls should be in physpkg instead of tphysbc, tphysac, etc. which can be groups within an SDF
-   !write(0,'(a,i6)') "Calling ccpp_physics_run for suite " // trim(ccpp_suite) // ", group test1 and block ", cdata%blk_no
-   call ccpp_physics_run(cdata, suite_name=trim(ccpp_suite), group_name='test1', ierr=ierr)
+#ifdef CCPP_SASAS
+   ccpp_group_name = "sasasr"
+   call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
+
+   ! setup IN variables
+   ! setting defaults using values from SCM
+   phys_int_ephem(cdata%blk_no)%jcap = 1
+   phys_int_ephem(cdata%blk_no)%clam_deep = 0.1
+   phys_int_ephem(cdata%blk_no)%betal_deep = 0.05
+   phys_int_ephem(cdata%blk_no)%betas_deep = 0.05
+   phys_int_ephem(cdata%blk_no)%c0s_deep = 0.002
+   phys_int_ephem(cdata%blk_no)%c1_deep = 0.002
+   phys_int_ephem(cdata%blk_no)%evfactl_deep = 0.3
+   phys_int_ephem(cdata%blk_no)%evfact_deep = 0.3
+   phys_int_ephem(cdata%blk_no)%pgcon_deep = 0.55
+   phys_int_ephem(cdata%blk_no)%imp_physics_mg = "MG"
+   phys_int_ephem(cdata%blk_no)%ncnd = 3
+
+   do i=1,ncol
+      if (cam_in%landfrac(i) > 0.5) then
+         state%islimsk(i) = 1  ! Land
+      else if (cam_in%icefrac(i) > 0.5) then
+         state%islimsk(i) = 2  ! Sea Ice
+      else
+         state%islimsk(i) = 0  ! Ocean
+      end if
+   end do
+
+   ! intent(IN) dot,  lagrangian_tendency_of_air_pressure
+   phys_int_ephem(cdata%blk_no)%vvl(:,:) = state%omega(:ncol,:pver)
+
+   !! \param[inout] qlc cloud water (kg/kg)
+   call cnst_get_ind('CLDLIQ', ixcldliq)
+   state%qlc(:,:) = state%q(:ncol,:pver,ixcldliq)
+   !! \param[inout] qli ice (kg/kg)
+   call cnst_get_ind('CLDICE', ixcldice)
+   phys_int_ephem(cdata%blk_no)%qli(:,:) = state%q(:ncol,:pver,ixcldice)
+   !! \param[inout] q1 updated tracers (kg/kg)
+   phys_int_ephem(cdata%blk_no)%gq0(:,:) = state%q(:ncol,:pver,1)
+   !! \param[inout] t1 updated temperature (K)
+   phys_int_ephem(cdata%blk_no)%gt0(:,:) = state%t(:ncol,:pver)
+   !! \param[inout] u1 updated zonal wind (\f$m s^{-1}\f$)
+   phys_int_ephem(cdata%blk_no)%u1(:,:) = state%u(:ncol,:pver)
+   ! !! \param[inout] v1 updated meridional wind (\f$m s^{-1}\f$)
+   phys_int_ephem(cdata%blk_no)%v1(:,:) = state%v(:ncol,:pver)
+   ! geopotential at model layers centers
+   phys_int_ephem(cdata%blk_no)%phil(:,:) = state%zm(:ncol,:pver)
+#else
+   ccpp_group_name = "test1"
+#endif
+
+   print *, "Calling ccpp_physics_run for suite ", trim(ccpp_suite), &
+        ", group ", trim(ccpp_group_name), " and block ", cdata%blk_no
+   call ccpp_physics_run(cdata, suite_name=trim(ccpp_suite), group_name=ccpp_group_name, ierr=ierr)
+
    if (ierr/=0) then
-      write(0,'(3a,i4)') "An error occurred in ccpp_physics_run for group ", "test1", &
-                                ", chunk ", lchnk
+      write(0,'(3a,i4)') "An error occurred in ccpp_physics_run for group ", &
+           trim(ccpp_group_name), ", chunk ", lchnk
       write(0,'(a)') trim(cdata%errmsg)
    end if
+#ifdef CCPP_SASAS
+   if (trim(ccpp_group_name) == "sasasr") then
+      ! --- Variable Summary ---
+      ! INOUT VARIABLES: qlc, qli, q1, u1, v1, t1/gt0
+      ! VARIABLES INITIALIZED TO ZERO: which CAM variables do they connect to?
+      ! cnvc, cf_upi, clcn, cnv_mfd, cnv_fice, cnv_dqldt
+      ! qicn, qlcn, cnv_ndrop, cnv_nice
+      ! OUT VARIABLES: these are not used by other funcs so not copying back
+      !                right now
+      ! cldwrk, dt_mf, dd_mf, rn, kcnv
+
+      !! \param[inout] qlc cloud water (kg/kg)
+      call cnst_get_ind('CLDLIQ', ixcldliq)
+      state%q(:ncol,:pver,ixcldliq) = state%qlc(:,:)
+      !! \param[inout] qli ice (kg/kg)
+      call cnst_get_ind('CLDICE', ixcldice)
+      state%q(:ncol,:pver,ixcldice) = phys_int_ephem(cdata%blk_no)%qli(:,:)
+      !! \param[inout] q1 updated tracers (kg/kg)
+      state%q(:ncol,:pver,1) = phys_int_ephem(cdata%blk_no)%gq0(:,:)
+      !! \param[inout] t1 updated temperature (K)
+      state%t(:ncol,:pver) = phys_int_ephem(cdata%blk_no)%gt0(:,:)
+      !! \param[inout] u1 updated zonal wind (\f$m s^{-1}\f$)
+      state%u(:ncol,:pver) = phys_int_ephem(cdata%blk_no)%u1(:,:)
+      ! !! \param[inout] v1 updated meridional wind (\f$m s^{-1}\f$)
+      state%v(:ncol,:pver) = phys_int_ephem(cdata%blk_no)%v1(:,:)
+
+      !! \param[out] cnvc convective cloud cover (unitless)
+      concld_idx   = pbuf_get_fld_idx('CONCLD')
+      pbuf(concld_idx)%fld_ptr(1,1:pcols,1:pver,lchnk,itim) = state%cnvc(:,:)
+
+      if ((debug_variables .eqv. .true.) .and. (rank == 0)) then
+         print *, "--- DEBUG: output var report ---"
+         print *, " state%qlc(:,:) =", state%qlc(1,1)
+         print *, " state%q(:,:) =", state%q(1,1,1)
+         print *, " state%t(:,:) =", state%t(1,1)
+         print *, " state%u(:,:) =", state%u(1,1)
+         print *, " state%v(:,:) =", state%v(1,1)
+         print *, " state%cnvc(:,:) =", state%cnvc(1,1)
+      end if
+   end if ! ccpp_group_name) == "sasasr"
+#endif
+
+   if (trim(ccpp_group_name) == "test1") then
    !write(0,'(a)') 'Transferring data from phys_int_ephem etc. to local physics variables'
    ! The easy stuff
    prec_zmc(1:pcols)        = phys_int_ephem(cdata%blk_no)%prec
@@ -459,13 +566,14 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
    ptend%u(1:pcols,1:pver)         = phys_int_ephem(cdata%blk_no)%ptend_deep_conv_tot_u
    ptend%v(1:pcols,1:pver)         = phys_int_ephem(cdata%blk_no)%ptend_deep_conv_tot_v
    ptend%q(1:pcols,1:pver,1:pcnst) = phys_int_ephem(cdata%blk_no)%ptend_deep_conv_tot_q
+   endif
 #else
    call convect_deep_tend(  prec_zmc,   &
         pblht,    cmfmc,      cmfcme,             &
-        tpert,    qpert(:,1), gradt, gradq, vort3, dlf, pflx,    zdu,       & 
+        tpert,    qpert(:,1), gradt, gradq, vort3, dlf, pflx,    zdu,       &
         rliq,    &
         ztodt,    snow_zmc,  &
-        !state,   ptend, cam_in%landfrac,  pbuf ) 
+        !state,   ptend, cam_in%landfrac,  pbuf )
         state,   ptend, cam_in%landfrac, cam_in%lhf, cam_in%shf, pbuf )  !zmh
 #endif
    call t_stopf('convect_deep_tend')
@@ -550,7 +658,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
         tpert      ,qpert     , gradt, gradq,  &                 !zmh
         pblht      ,     &
         cmfmc      ,cmfmc2  ,  prec_cmf,   &
-        dlf        , dlf2,   rliq      , rliq2, & 
+        dlf        , dlf2,   rliq      , rliq2, &
         !snow_cmf   , state, ptend,  ,pbuf       )   !zmh
         snow_cmf   , state, ptend,  cam_in%landfrac,pbuf       )   !zmh
    call t_stopf ('convect_shallow_tend')
@@ -653,12 +761,12 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
            rliq  , & ! check energy after detrain
            cmfmc,   cmfmc2, &
            cam_in%ts,      cam_in%sst,        zdu,  tpert, qpert, &  !zmh tpert2 qpert2
-           prec_str, snow_str, prec_sed, snow_sed, prec_pcw, snow_pcw, & 
+           prec_str, snow_str, prec_sed, snow_sed, prec_pcw, snow_pcw, &
            pbuf, state_eq)
 
       call physics_update (state, tend, ptend, ztodt)
       call check_energy_chng(state, tend, "cldwat_tend", nstep, ztodt, zero, prec_str, snow_str, zero)
-   
+
       call t_stopf('stratiform_tend')
 
     elseif( microp_scheme .eq. 'MG' .or. microp_scheme .eq. 'M2M' ) then
@@ -668,7 +776,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 !===================================================
 
       call t_startf('macrop_tend')
-    
+
       call macrop_driver_tend(state, ptend, ztodt, pblht, &  !zmh added pblht
            cam_in%landfrac, cam_in%ocnfrac, &
            cam_in%snowhland, & ! sediment
@@ -692,7 +800,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
 #endif
       call t_stopf('macrop_tend')
 !===================================================
-! Calculate cloud microphysics 
+! Calculate cloud microphysics
 !===================================================
 
 !      write(0,'(a,i6,a,3e16.7)') "chunk", lchnk, "; min/max/sum(prec_zmc       ) before microphysics", minval(prec_zmc       ), maxval(prec_zmc       ), sum(prec_zmc       )
@@ -731,7 +839,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
            cam_in%cflx, & ! constituent sources
 #endif
            rliq  , & ! check energy after detrain
-           prec_str, snow_str, prec_sed, snow_sed, prec_pcw, snow_pcw, & 
+           prec_str, snow_str, prec_sed, snow_sed, prec_pcw, snow_pcw, &
            pbuf, state_eq, cmeliq)
 !zmh
 #ifdef MODAL_AERO
@@ -762,7 +870,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
       !
       !  Then do convective transport of all trace species except water vapor and
       !     cloud liquid and ice (we needed to do the scavenging first
-      !     to determine the interstitial fraction) 
+      !     to determine the interstitial fraction)
       !===================================================
 
       call t_startf('bc_aerosols')
@@ -793,14 +901,21 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
    !   call pbuf_print_data(pbuf, lchnk, "before deep convection 2")
 
       call t_startf ('convect_deep_tend2')
+      ! call convect_deep_tend_2( state,   ptend,  ztodt,  pbuf )
 #ifdef CCPP
       !write(0,'(a,i6)') "XXX: Calling phys_int_ephem(cdata%blk_no)%reset() for block ", cdata%blk_no
+#ifdef CCPP_SASAS
+      ccpp_group_name = "sasasr"
+#else
       call phys_int_ephem(cdata%blk_no)%reset()
-      !write(0,'(a,i6)') "XXX: Calling ccpp_physics_run for suite " // trim(ccpp_suite) // ", group test2 and block ", cdata%blk_no
-      call ccpp_physics_run(cdata, suite_name=trim(ccpp_suite), group_name='test2', ierr=ierr)
+      ccpp_group_name = "test2"
+
+
+      if (ccpp_group_name == "test2") then
+      call ccpp_physics_run(cdata, suite_name=trim(ccpp_suite), group_name=ccpp_group_name, ierr=ierr)
       if (ierr/=0) then
-         write(0,'(3a,i4)') "An error occurred in ccpp_physics_run for group ", "test2", &
-                                   ", chunk ", lchnk
+         write(0,'(3a,i4)') "An error occurred in ccpp_physics_run for group ", &
+              ccpp_group_name, ", chunk ", lchnk
          write(0,'(a)') trim(cdata%errmsg)
       end if
       !
@@ -811,6 +926,8 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
       ptend%lu   = phys_int_ephem(cdata%blk_no)%doconvtran_suv(2)
       ptend%lv   = phys_int_ephem(cdata%blk_no)%doconvtran_suv(3)
       ptend%lq   = phys_int_ephem(cdata%blk_no)%doconvtran_q
+      end if
+#endif
 #else
       call convect_deep_tend_2( state,   ptend,  ztodt,  pbuf )
 #endif
@@ -849,7 +966,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
    call t_stopf('bc_aerosols')
 
    !===================================================
-   ! Moist physical parameteriztions complete: 
+   ! Moist physical parameteriztions complete:
    ! send dynamical variables, and derived variables to history file
    !===================================================
 

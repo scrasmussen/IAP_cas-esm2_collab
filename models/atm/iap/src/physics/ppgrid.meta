@@ -1,9 +1,9 @@
 [ccpp-table-properties]
   name = ppgrid
   type = module
-  relative_path = 
-  dependencies = 
- 
+  relative_path =
+  dependencies =
+
 [ccpp-arg-table]
   name = ppgrid
   type = module

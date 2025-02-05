@@ -1,0 +1,25 @@
+#!/bin/csh -f
+
+#--- set modules
+# The default modules on Derecho will work
+
+# The following is from the CCPP SCM Repo if a user want to enter the
+# following from the terminal to load their modules
+# $ module purge
+# $ module use path_to_repo/scm/etc/modules
+# $ module load derecho_intel
+
+#--- set paths
+if ($?netcdf_fortran_ROOT) then
+   setenv NETCDF $netcdf_fortran_ROOT
+endif
+
+setenv NETCDF_PATH $NETCDF
+set LIB_NETCDF = "`nf-config --flibs` `nc-config --libs`"
+setenv LIB_NETCDF "$LIB_NETCDF"
+
+# # if ($USE_MPISERIAL == "FALSE") then
+#    #export MPICH_PATH /usr/local/mpich-1.2.7p1-intel-3.2.02
+# # endif
+
+# #--- set env variables for Macros if needed

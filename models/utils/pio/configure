@@ -7749,30 +7749,35 @@ fi
 
 if test "$USE_NETCDF" = "yes"
   then
+       # this was changed to handle when NetCDF has installed the C and Fortran
+       # locations in different directories
        if test -n "$NETCDF_PATH"
          then echo "using NETCDF_PATH from environment"
-         else NETCDF_PATH=/usr/local/netcdf
-              { echo "$as_me:$LINENO: WARNING: NETCDF_PATH not found in environment, \
-                           defaulting to $NETCDF_PATH" >&5
-echo "$as_me: WARNING: NETCDF_PATH not found in environment, \
-                           defaulting to $NETCDF_PATH" >&2;}
+       else
+           NETCDF_PATH=$NETCDF
+       fi
+       if [ -z "${netcdf_c_ROOT}" ]; then
+           netcdf_c_ROOT="${NETCDF_PATH}"
+       fi
+       if [ -z "${netcdf_fortran_ROOT}" ]; then
+           netcdf_fortran_ROOT="${NETCDF_PATH}"
        fi
 
        PDEFS="$PDEFS -D_NETCDF"
-       PINCS="$PINCS -I$NETCDF_PATH/include"
-       PLIBS="$PLIBS -L$NETCDF_PATH/lib -lnetcdf"
+       PINCS="$PINCS -I$netcdf_c_ROOT/include -I$netcdf_fortran_ROOT/include "
+       PLIBS="$PLIBS -L$netcdf_c_ROOT/lib -lnetcdf -L$netcdf_fortran_ROOT/lib -lnetcdff"
 
-       if test ! -f $NETCDF_PATH/include/netcdf.mod && \
-          test ! -f $NETCDF_PATH/include/NETCDF.mod
-         then { { echo "$as_me:$LINENO: error: netcdf.mod not found in NETCDF_PATH/include \
+       if test ! -f $netcdf_fortran_ROOT/include/netcdf.mod && \
+          test ! -f $netcdf_fortran_ROOT/include/NETCDF.mod
+         then { { echo "$as_me:$LINENO: error: netcdf.mod not found in netcdf_fortran_ROOT/include \
                             check the environment variable NETCDF_PATH" >&5
-echo "$as_me: error: netcdf.mod not found in NETCDF_PATH/include \
+echo "$as_me: error: netcdf.mod not found in netcdf_fortran_ROOT/include \
                             check the environment variable NETCDF_PATH" >&2;}
    { (exit 1); exit 1; }; }
        fi
 
-       if test ! -f $NETCDF_PATH/lib/libnetcdf.a
-         then { { echo "$as_me:$LINENO: error: libnetcdf.a not found in NETCDF_PATH/lib \
+       if test ! -f $netcdf_c_ROOT/lib/libnetcdf.a
+         then { { echo "$as_me:$LINENO: error: libnetcdf.a not found in netcdf_c_ROOT/lib \
                             check the environment variable NETCDF_PATH " >&5
 echo "$as_me: error: libnetcdf.a not found in NETCDF_PATH/lib \
                             check the environment variable NETCDF_PATH " >&2;}
@@ -7788,7 +7793,7 @@ if test "$USE_NETCDF4" = "yes"
    PDEFS="$PDEFS -D_NETCDF4"
    if test -e "$NETCDF_PATH/lib/pkgconfig/"
      then
-     export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$NETCDF_PATH/lib/pkgconfig/"
+     export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$netcdf_c_ROOT/lib/pkgconfig/:$netcdf_fortran_ROOT/lib/pkgconfig/"
 
 
 if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
@@ -9438,7 +9443,3 @@ echo Have a nice day!
 
 # test -z is true for empty strings
 # test -n is true for non-empty strings
-
-
-
-

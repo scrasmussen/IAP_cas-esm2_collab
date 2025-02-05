@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = physconst
   type = module
-  relative_path = 
+  relative_path =
   dependencies = ../../../../csm_share/shr/shr_kind_mod.F90,../../../../csm_share/shr/shr_const_mod.F90,../utils/namelist_utils.F90,../utils/string_utils.F90
   dependencies = units.F90,../../../../csm_share/shr/shr_file_mod.F90,../../../../csm_share/shr/shr_sys_mod.F90
   dependencies = ../../../../csm_share/shr/shr_mpi_mod.F90,../../../../csm_share/shr/shr_log_mod.F90,mpishorthand.F
@@ -84,6 +84,35 @@
   standard_name = ratio_of_vapor_to_dry_air_gas_constants_minus_one
   long_name = (rv/rd) - 1 (rv = ideal gas constant for water vapor)
   units = none
+  dimensions = ()
+  type = real
+  kind = shr_kind_r8
+# CCPP Physics Constants
+[con_rd]
+  standard_name = gas_constant_of_dry_air
+  long_name = ideal gas constant for dry air
+  units = J kg-1 K-1
+  dimensions = ()
+  type = real
+  kind = shr_kind_r8
+[con_eps]
+  standard_name = ratio_of_dry_air_to_water_vapor_gas_constants
+  long_name = rd/rv
+  units = none
+  dimensions = ()
+  type = real
+  kind = shr_kind_r8
+[con_epsm1]
+  standard_name = ratio_of_dry_air_to_water_vapor_gas_constants_minus_one
+  long_name = (rd/rv) - 1
+  units = none
+  dimensions = ()
+  type = real
+  kind = shr_kind_r8
+[con_t0c]
+  standard_name = temperature_at_zero_celsius
+  long_name = temperature at 0 degrees Celsius
+  units = K
   dimensions = ()
   type = real
   kind = shr_kind_r8
