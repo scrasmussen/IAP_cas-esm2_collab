@@ -503,7 +503,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
            trim(ccpp_group_name), ", chunk ", lchnk
       write(0,'(a)') trim(cdata%errmsg)
    end if
-
+#ifdef CCPP_SASAS
    if (trim(ccpp_group_name) == "sasasr") then
       ! --- Variable Summary ---
       ! INOUT VARIABLES: qlc, qli, q1, u1, v1, t1/gt0
@@ -543,6 +543,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
          print *, " state%cnvc(:,:) =", state%cnvc(1,1)
       end if
    end if ! ccpp_group_name) == "sasasr"
+#endif
 
    if (trim(ccpp_group_name) == "test1") then
    !write(0,'(a)') 'Transferring data from phys_int_ephem etc. to local physics variables'
@@ -903,13 +904,12 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
       ! call convect_deep_tend_2( state,   ptend,  ztodt,  pbuf )
 #ifdef CCPP
       !write(0,'(a,i6)') "XXX: Calling phys_int_ephem(cdata%blk_no)%reset() for block ", cdata%blk_no
-      call phys_int_ephem(cdata%blk_no)%reset()
-
 #ifdef CCPP_SASAS
       ccpp_group_name = "sasasr"
 #else
+      call phys_int_ephem(cdata%blk_no)%reset()
       ccpp_group_name = "test2"
-#endif
+
 
       if (ccpp_group_name == "test2") then
       call ccpp_physics_run(cdata, suite_name=trim(ccpp_suite), group_name=ccpp_group_name, ierr=ierr)
@@ -927,6 +927,7 @@ subroutine tphysbc (ztodt,   pblht,   tpert,   qpert,   tpert2,   qpert2,       
       ptend%lv   = phys_int_ephem(cdata%blk_no)%doconvtran_suv(3)
       ptend%lq   = phys_int_ephem(cdata%blk_no)%doconvtran_q
       end if
+#endif
 #else
       call convect_deep_tend_2( state,   ptend,  ztodt,  pbuf )
 #endif
